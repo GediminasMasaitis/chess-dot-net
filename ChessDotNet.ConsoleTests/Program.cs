@@ -14,7 +14,7 @@ namespace ChessDotNet.ConsoleTests
             var arrayBoard = fact.ParseFENToArrayBoard("rnbqkbnr/ppp2ppp/8/3pp3/4P3/2P5/PP1P1PPP/RNBQKBNR w KQkq - 0 3");
             var bitBoard = fact.ArrayBoardToBitBoard(arrayBoard);
 
-            Debugging.ShowBitBoard(bitBoard.WhitePawns);
+            Debugging.ShowBitBoard(bitBoard.Files[0]);
             Console.ReadLine();
         }
     }

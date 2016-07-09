@@ -87,16 +87,16 @@ namespace ChessDotNet
             return board;
         }
 
-        public BitBoard ParseFENToBitBoard(string fen)
+        public BitBoards ParseFENToBitBoard(string fen)
         {
             var arrayBoard = ParseFENToArrayBoard(fen);
             var bitBoard = ArrayBoardToBitBoard(arrayBoard);
             return bitBoard;
         }
 
-        public BitBoard ArrayBoardToBitBoard(ArrayBoard arrayBoard)
+        public BitBoards ArrayBoardToBitBoard(ArrayBoard arrayBoard)
         {
-            var bitBoard = new BitBoard();
+            var bitBoard = new BitBoards();
 
             for (var i = 0; i < 64; i++)
             {

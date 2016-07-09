@@ -8,9 +8,11 @@ namespace ChessDotNet
 {
     class Moves
     {
-        void GetPossibleWhitePawnMoves()
+        ulong GetPossibleWhitePawnMoves(BitBoards bitBoards)
         {
-            
+            var takeLeft = bitBoards.WhitePawns << 7;
+
+            return 0;
         }
     }
 }
