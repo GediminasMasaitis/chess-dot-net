@@ -30,6 +30,7 @@ namespace ChessDotNet
 
         public static ulong AllBoard { get; }
         public static ulong KnightSpan { get; private set; }
+        public static int KnightSpanPosition { get; private set; }
         public static IReadOnlyList<ulong> Files { get; private set; }
         public static IReadOnlyList<ulong> Ranks { get; private set; }
         public static IReadOnlyList<ulong> Diagonals { get; private set; }
@@ -48,6 +49,7 @@ namespace ChessDotNet
         public static void Initialize()
         {
             KnightSpan = 43234889994UL;
+            KnightSpanPosition = 18;
 
             var files = new List<ulong>(8);
             for (var i = 0; i < 8; i++)

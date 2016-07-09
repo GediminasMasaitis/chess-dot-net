@@ -18,10 +18,11 @@ namespace ChessDotNet
         public IEnumerable<Move> GetPossibleMoves(BitBoards bitBoards, bool isWhite)
         {
             var pawnMoves = GetPossiblePawnMoves(bitBoards, isWhite);
-            var rookMoves = GetPossibleRookMoves(bitBoards, isWhite);
+            var knightMoves = GetPossibleKnightMoves(bitBoards, isWhite);
             var bishopMoves = GetPossibleBishopMoves(bitBoards, isWhite);
+            var rookMoves = GetPossibleRookMoves(bitBoards, isWhite);
             var queenMoves = GetPossibleQueenMoves(bitBoards, isWhite);
-            var allMoves = pawnMoves.Concat(rookMoves).Concat(bishopMoves).Concat(queenMoves);
+            var allMoves = pawnMoves.Concat(knightMoves).Concat(bishopMoves).Concat(rookMoves).Concat(queenMoves);
             return allMoves;
         }
 
@@ -70,6 +71,35 @@ namespace ChessDotNet
             }
         }
 
+        public IEnumerable<Move> GetPossibleKnightMoves(BitBoards bitBoards, bool forWhite)
+        {
+            var knights = forWhite ? bitBoards.WhiteNights : bitBoards.BlackNights;
+            var ownPieces = forWhite ? bitBoards.WhitePieces : bitBoards.BlackPieces;
+            for (var i = 0; i < 64; i++)
+            {
+                if (knights.HasBit(i))
+                {
+                    ulong jumps;
+                    if (i > BitBoards.KnightSpanPosition)
+                    {
+                        jumps = BitBoards.KnightSpan << (i - BitBoards.KnightSpanPosition);
+                    }
+                    else
+                    {
+                        jumps = BitBoards.KnightSpan >> (BitBoards.KnightSpanPosition - i);
+                    }
+
+                    jumps &= ~(i%8 < 4 ? BitBoards.Files[6] | BitBoards.Files[7] : BitBoards.Files[0] | BitBoards.Files[1]);
+                    jumps &= ~ownPieces;
+
+                    foreach (var move in BitmaskToMoves(jumps, i))
+                    {
+                        yield return move;
+                    }
+                }
+            }
+        }
+
         public IEnumerable<Move> GetPossibleRookMoves(BitBoards bitBoards, bool forWhite)
         {
             var rooks = forWhite ? bitBoards.WhiteRooks : bitBoards.BlackRooks;
@@ -96,15 +126,23 @@ namespace ChessDotNet
                 if (slidingPieces.HasBit(i))
                 {
                     var slide = slideResolutionFunc.Invoke(bitBoards, i);
-                    var validSlide = slide & ~ownPieces;
-                    for (var j = 0; j < 64; j++)
+                    slide &= ~ownPieces;
+                    foreach (var move in BitmaskToMoves(slide, i))
                     {
-                        if (validSlide.HasBit(j))
-                        {
-                            var move = new Move(i, j);
-                            yield return move;
-                        }
+                        yield return move;
                     }
+                }
+            }
+        }
+
+        private static IEnumerable<Move> BitmaskToMoves(ulong bitmask, int positionFrom)
+        {
+            for (var j = 0; j < 64; j++)
+            {
+                if (bitmask.HasBit(j))
+                {
+                    var move = new Move(positionFrom, j);
+                    yield return move;
                 }
             }
         }
