@@ -13,5 +13,17 @@ namespace ChessDotNet
         {
             return (bitboard & (1UL << bit)) != 0;
         }
+
+        public static ulong Reverse(this ulong bitboard)
+        {
+            var num = 0UL;
+            for (var i = 0; i < 64; i++)
+            {
+                num <<= 1;
+                num |= (bitboard & 1);
+                bitboard >>= 1;
+            }
+            return num;
+        }
     }
 }

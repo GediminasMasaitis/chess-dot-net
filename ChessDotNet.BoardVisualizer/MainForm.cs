@@ -70,9 +70,14 @@ namespace ChessDotNet.BoardVisualizer
 
             var bmp = new Bitmap(MainPictureBox.Width, MainPictureBox.Height);
             var emptyBrush = new SolidBrush(Color.FromArgb(50,50,50));
-            var filledBrush1 = new SolidBrush(Color.FromArgb(10, 100, 10));
-            var filledBrush2 = new SolidBrush(Color.FromArgb(120, 100, 00));
-            var filledBrush3 = new SolidBrush(Color.FromArgb(50, 70, 150));
+
+            var color1 = Color.FromArgb(10, 100, 10);
+            var color2 = Color.FromArgb(120, 100, 00);
+            var color3 = Color.FromArgb(50, 70, 150);
+
+            var filledBrush1 = new SolidBrush(color1);
+            var filledBrush2 = new SolidBrush(color2);
+            var filledBrush3 = new SolidBrush(color3);
             var textBrush = new SolidBrush(Color.FromArgb(255,255,255));
             var cellWidth = bmp.Width/8;
             var cellHeight = bmp.Height/8;

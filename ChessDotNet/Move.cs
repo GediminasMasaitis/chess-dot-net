@@ -2,13 +2,13 @@
 {
     public struct Move
     {
-        public Move(byte from, byte to)
+        public Move(int from, int to)
         {
             From = from;
             To = to;
         }
 
-        public byte From { get; }
-        public byte To { get; }
+        public int From { get; }
+        public int To { get; }
     }
 }

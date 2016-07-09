@@ -87,7 +87,7 @@ namespace ChessDotNet
             return board;
         }
 
-        public ulong PiecesToBitBoard(IEnumerable<byte> pieces)
+        public ulong PiecesToBitBoard(IEnumerable<int> pieces)
         {
             var board = 0UL;
             foreach (var piece in pieces)

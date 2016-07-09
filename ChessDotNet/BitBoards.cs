@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace ChessDotNet
 {
@@ -24,19 +25,26 @@ namespace ChessDotNet
         public ulong BlackPieces { get; set; }
         public ulong EmptySquares { get; set; }
         public ulong FilledSquares { get; set; }
+       
+        public ulong EnPassantFile { get; set; }
 
-        public ulong AllBoard { get; }
-
-        public IReadOnlyList<ulong> Files { get; private set; }
-        public IReadOnlyList<ulong> Ranks { get; private set; }
+        public static bool IsInitialized { get; private set; }
+        public static ulong AllBoard { get; }
+        public static IReadOnlyList<ulong> Files { get; private set; }
+        public static IReadOnlyList<ulong> Ranks { get; private set; }
 
         public BitBoards()
         {
             Initialize();
         }
 
-        public void Initialize()
+        public static void Initialize()
         {
+            if (IsInitialized)
+            {
+                return;
+            }
+
             var files = new List<ulong>(8);
             for (var i = 0; i < 8; i++)
             {
@@ -60,6 +68,7 @@ namespace ChessDotNet
                 ranks.Add(rank);
             }
             Ranks = ranks;
+            IsInitialized = true;
         }
 
     
