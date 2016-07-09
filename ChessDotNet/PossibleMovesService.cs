@@ -15,14 +15,27 @@ namespace ChessDotNet
     public class PossibleMovesService
     {
 
-        public IEnumerable<Move> GetPossibleWhiteMoves(BitBoards bitBoards)
+        public IEnumerable<Move> GetPossibleMoves(BitBoards bitBoards, bool isWhite)
         {
-            var pawnMoves = GetPossibleWhitePawnMoves(bitBoards);
-            var rookMoves = GetPossibleRookMoves(bitBoards, true);
-            return pawnMoves.Concat(rookMoves);
+            var pawnMoves = GetPossiblePawnMoves(bitBoards, isWhite);
+            var rookMoves = GetPossibleRookMoves(bitBoards, isWhite);
+            var bishopMoves = GetPossibleBishopMoves(bitBoards, isWhite);
+            var queenMoves = GetPossibleQueenMoves(bitBoards, isWhite);
+            var allMoves = pawnMoves.Concat(rookMoves).Concat(bishopMoves).Concat(queenMoves);
+            return allMoves;
         }
 
-        public IEnumerable<Move> GetPossibleWhitePawnMoves(BitBoards bitBoards)
+        public IEnumerable<Move> GetPossiblePawnMoves(BitBoards bitBoards, bool isWhite)
+        {
+            return isWhite ? GetPossibleWhitePawnMoves(bitBoards) : GetPossibleBlackPawnMoves(bitBoards);
+        }
+
+        private IEnumerable<Move> GetPossibleBlackPawnMoves(BitBoards bitBoards)
+        {
+            throw new NotImplementedException();
+        }
+
+        private IEnumerable<Move> GetPossibleWhitePawnMoves(BitBoards bitBoards)
         {
             var takeLeft = (bitBoards.WhitePawns << 7) & bitBoards.BlackPieces & ~BitBoards.Files[7];
             var takeRight = (bitBoards.WhitePawns << 9) & bitBoards.BlackPieces & ~BitBoards.Files[0];
@@ -60,12 +73,29 @@ namespace ChessDotNet
         public IEnumerable<Move> GetPossibleRookMoves(BitBoards bitBoards, bool forWhite)
         {
             var rooks = forWhite ? bitBoards.WhiteRooks : bitBoards.BlackRooks;
+            return GetPossibleSlidingPieceMoves(bitBoards, rooks, forWhite, HorizontalVerticalSlide);
+        }
+
+        public IEnumerable<Move> GetPossibleBishopMoves(BitBoards bitBoards, bool forWhite)
+        {
+            var bishops = forWhite ? bitBoards.WhiteBishops : bitBoards.BlackBishops;
+            return GetPossibleSlidingPieceMoves(bitBoards, bishops, forWhite, DiagonalAntidiagonalSlide);
+        }
+
+        public IEnumerable<Move> GetPossibleQueenMoves(BitBoards bitBoards, bool forWhite)
+        {
+            var bishops = forWhite ? bitBoards.WhiteQueens : bitBoards.BlackQueens;
+            return GetPossibleSlidingPieceMoves(bitBoards, bishops, forWhite, AllSlide);
+        }
+
+        private IEnumerable<Move> GetPossibleSlidingPieceMoves(BitBoards bitBoards, ulong slidingPieces, bool forWhite, Func<BitBoards, int, ulong> slideResolutionFunc)
+        {
             var ownPieces = forWhite ? bitBoards.WhitePieces : bitBoards.BlackPieces;
             for (var i = 0; i < 64; i++)
             {
-                if (rooks.HasBit(i))
+                if (slidingPieces.HasBit(i))
                 {
-                    var slide = HorizontalVerticalSlide(bitBoards, i);
+                    var slide = slideResolutionFunc.Invoke(bitBoards, i);
                     var validSlide = slide & ~ownPieces;
                     for (var j = 0; j < 64; j++)
                     {
@@ -79,7 +109,14 @@ namespace ChessDotNet
             }
         }
 
-        public ulong HorizontalVerticalSlide(BitBoards bitboards, int position)
+        private ulong AllSlide(BitBoards bitboards, int position)
+        {
+            var hv = HorizontalVerticalSlide(bitboards, position);
+            var dad = DiagonalAntidiagonalSlide(bitboards, position);
+            return hv | dad;
+        }
+
+        private ulong HorizontalVerticalSlide(BitBoards bitboards, int position)
         {
             var pieceBitboard = 1UL << position;
             var horizontal = MaskedSlide(bitboards, pieceBitboard, BitBoards.Ranks[position/8]);
@@ -87,7 +124,15 @@ namespace ChessDotNet
             return horizontal | vertical;
         }
 
-        public ulong MaskedSlide(BitBoards bitboards, ulong pieceBitboard, ulong mask)
+        private ulong DiagonalAntidiagonalSlide(BitBoards bitboards, int position)
+        {
+            var pieceBitboard = 1UL << position;
+            var horizontal = MaskedSlide(bitboards, pieceBitboard, BitBoards.Diagonals[position/8 + position%8]);
+            var vertical = MaskedSlide(bitboards, pieceBitboard, BitBoards.Antidiagonals[position/8 + 7 - position%8]);
+            return horizontal | vertical;
+        }
+
+        private ulong MaskedSlide(BitBoards bitboards, ulong pieceBitboard, ulong mask)
         {
             var slide = (((bitboards.FilledSquares & mask) - 2 * pieceBitboard) ^ ((bitboards.FilledSquares & mask).Reverse() - 2 * pieceBitboard.Reverse()).Reverse()) & mask;
             return slide;
