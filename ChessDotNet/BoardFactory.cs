@@ -145,7 +145,7 @@ namespace ChessDotNet
                         throw new ArgumentOutOfRangeException(nameof(piece), piece, null);
                 }
             }
-
+            bitBoard.Sync();
             return bitBoard;
         }
     }
