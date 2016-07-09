@@ -12,21 +12,47 @@ namespace ChessDotNet.BoardVisualizer
 {
     public partial class MainForm : Form
     {
-        public MainForm(ulong bitBoard = 0)
+        public MainForm() : this(new ulong[0])
+        {
+        }
+
+        public MainForm(ulong[] bitboards)
         {
             InitializeComponent();
-            DisplayBitBoard(bitBoard);
+            var allBitboards = bitboards.ToList();
+            while (allBitboards.Count < 3)
+            {
+                allBitboards.Add(0UL);
+            }
+            Bitboard1TextBox.Text = allBitboards[0].ToString();
+            Bitboard2TextBox.Text = allBitboards[1].ToString();
+            Bitboard3TextBox.Text = allBitboards[2].ToString();
+            DisplayBitBoards(allBitboards.ToArray());
         }
 
         private void ShowBitboardButton_Click(object sender, EventArgs e)
         {
-            ulong bitboard;
-            if (!ulong.TryParse(BitboardTextBox.Text, out bitboard))
+            ulong bitboard1;
+            if (!ulong.TryParse(Bitboard1TextBox.Text, out bitboard1))
             {
-                MessageBox.Show("Invalid bitboard");
+                MessageBox.Show("Invalid bitboard 1");
                 return;
             }
-            DisplayBitBoard(bitboard);
+
+            ulong bitboard2;
+            if (!ulong.TryParse(Bitboard2TextBox.Text, out bitboard2))
+            {
+                MessageBox.Show("Invalid bitboard 2");
+                return;
+            }
+
+            ulong bitboard3;
+            if (!ulong.TryParse(Bitboard3TextBox.Text, out bitboard3))
+            {
+                MessageBox.Show("Invalid bitboard 3");
+                return;
+            }
+            DisplayBitBoards(bitboard1, bitboard2, bitboard3);
         }
 
         private IEnumerable<bool> BitboardToCells(ulong bitboard)
@@ -38,24 +64,38 @@ namespace ChessDotNet.BoardVisualizer
             }
         }
 
-        private void DisplayBitBoard(ulong bitboard)
+        private void DisplayBitBoards(params ulong[] bitboards)
         {
-            var cells = BitboardToCells(bitboard).ToList();
+            var cells = bitboards.Select(x => BitboardToCells(x).ToList()).ToList();
 
             var bmp = new Bitmap(MainPictureBox.Width, MainPictureBox.Height);
-            var emptyBrush = new SolidBrush(Color.FromArgb(50,10,10));
-            var filledBrush = new SolidBrush(Color.FromArgb(10, 80, 10));
+            var emptyBrush = new SolidBrush(Color.FromArgb(50,50,50));
+            var filledBrush1 = new SolidBrush(Color.FromArgb(10, 100, 10));
+            var filledBrush2 = new SolidBrush(Color.FromArgb(120, 100, 00));
+            var filledBrush3 = new SolidBrush(Color.FromArgb(50, 70, 150));
             var textBrush = new SolidBrush(Color.FromArgb(255,255,255));
             var cellWidth = bmp.Width/8;
             var cellHeight = bmp.Height/8;
             using (var graphics = Graphics.FromImage(bmp))
             {
-                for (var i = 0; i < cells.Count; i++)
+                for (var i = 0; i < 64; i++)
                 {
                     var cellX = 7-(i/8);
                     var cellY = i%8;
 
-                    var brush = cells[i] ? filledBrush : emptyBrush;
+                    var brush = emptyBrush;
+                    if (cells[0][i])
+                    {
+                        brush = filledBrush1;
+                    }
+                    if (cells[1][i])
+                    {
+                        brush = filledBrush2;
+                    }
+                    if (cells[2][i])
+                    {
+                        brush = filledBrush3;
+                    }
                     graphics.FillRectangle(brush, cellY * cellWidth, cellX * cellHeight, cellWidth, cellHeight);
 
                     var text = (char)(65+(cellY)) + (8-cellX).ToString();

@@ -14,20 +14,19 @@ namespace ChessDotNet.BoardVisualizer
         [STAThread]
         static void Main(string[] args)
         {
-            ulong bitboard;
-            if (args.Length == 0)
+            var bitboards = new ulong[args.Length];
+            for (var i = 0; i < args.Length; i++)
             {
-                bitboard = 0;
-            }
-            else if (!ulong.TryParse(args[0], out bitboard))
-            {
-                MessageBox.Show("Invalid bitboard");
-                return;
+                if (!ulong.TryParse(args[i], out bitboards[i]))
+                {
+                    MessageBox.Show("Invalid bitboard");
+                    return;
+                }
             }
 
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new MainForm(bitboard));
+            Application.Run(new MainForm(bitboards));
         }
     }
 }

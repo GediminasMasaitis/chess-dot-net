@@ -22,7 +22,7 @@ namespace ChessDotNet.ConsoleTests
             var destBoard = fact.PiecesToBitBoard(dests);
             
 
-            Debugging.ShowBitBoard(destBoard);
+            Debugging.ShowBitBoard(bitBoard.WhitePawns, bitBoard.BlackPieces, destBoard);
             Console.ReadLine();
         }
     }
