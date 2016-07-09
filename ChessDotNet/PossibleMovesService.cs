@@ -15,7 +15,7 @@ namespace ChessDotNet
     public class PossibleMovesService
     {
 
-        public IEnumerable<Move> GetPossibleMoves(BitBoards bitBoards, bool isWhite)
+        public IEnumerable<Move> GetAllPossibleMoves(BitBoards bitBoards, bool isWhite)
         {
             var pawnMoves = GetPossiblePawnMoves(bitBoards, isWhite);
             var knightMoves = GetPossibleKnightMoves(bitBoards, isWhite);
@@ -187,6 +187,104 @@ namespace ChessDotNet
                     yield return move;
                 }
             }
+        }
+
+        public ulong GetAllAttacked(BitBoards bitBoards, bool forWhite)
+        {
+            var pawnsAttack = GetAttackedByPawns(bitBoards, forWhite);
+            var knightsAttack = GetAttackedByKnights(bitBoards, forWhite);
+            var bishopsAttack = GetAttackedByBishops(bitBoards, forWhite);
+            var rooksAttack = GetAttackedByRooks(bitBoards, forWhite);
+            var queensAttack = GetAttackedByQueens(bitBoards, forWhite);
+            var kingsAttack = GetAttackedByKings(bitBoards, forWhite);
+
+            var allAttacked = pawnsAttack | knightsAttack | bishopsAttack | rooksAttack | queensAttack | kingsAttack;
+            return allAttacked;
+        }
+
+        public ulong GetAttackedByBishops(BitBoards bitBoards, bool forWhite)
+        {
+            var bishops = forWhite ? bitBoards.WhiteBishops : bitBoards.BlackBishops;
+            return GetAttackedBySlidingPieces(bitBoards, bishops, DiagonalAntidiagonalSlide);
+        }
+
+        public ulong GetAttackedByRooks(BitBoards bitBoards, bool forWhite)
+        {
+            var rooks = forWhite ? bitBoards.WhiteRooks : bitBoards.BlackRooks;
+            return GetAttackedBySlidingPieces(bitBoards, rooks, HorizontalVerticalSlide);
+        }
+
+        public ulong GetAttackedByQueens(BitBoards bitBoards, bool forWhite)
+        {
+            var queens = forWhite ? bitBoards.WhiteQueens : bitBoards.BlackQueens;
+            return GetAttackedBySlidingPieces(bitBoards, queens, AllSlide);
+        }
+
+        private ulong GetAttackedBySlidingPieces(BitBoards bitBoards, ulong slidingPieces, Func<BitBoards, int, ulong> slideResolutionFunc)
+        {
+            var allSlide = 0UL;
+            for (var i = 0; i < 64; i++)
+            {
+                if (slidingPieces.HasBit(i))
+                {
+                    var slide = slideResolutionFunc.Invoke(bitBoards, i);
+                    allSlide |= slide;
+                }
+            }
+            return allSlide;
+        }
+
+        public ulong GetAttackedByKings(BitBoards bitBoards, bool forWhite)
+        {
+            var kings = forWhite ? bitBoards.WhiteKings : bitBoards.BlackKings;
+            return GetAttackedByJumpingPieces(bitBoards, kings, BitBoards.KingSpan, BitBoards.KingSpanPosition);
+        }
+
+        public ulong GetAttackedByKnights(BitBoards bitBoards, bool forWhite)
+        {
+            var knights = forWhite ? bitBoards.WhiteNights : bitBoards.BlackNights;
+            return GetAttackedByJumpingPieces(bitBoards, knights, BitBoards.KnightSpan, BitBoards.KnightSpanPosition);
+        }
+
+        public ulong GetAttackedByPawns(BitBoards bitBoards, bool forWhite)
+        {
+            ulong pawnsLeft;
+            ulong pawnsRight;
+            if (forWhite)
+            {
+                pawnsLeft = (bitBoards.WhitePawns << 7) & ~BitBoards.Files[7];
+                pawnsRight = (bitBoards.WhitePawns << 9) & ~BitBoards.Files[0];
+            }
+            else
+            {
+                pawnsLeft = (bitBoards.BlackPawns >> 7) & ~BitBoards.Files[0];
+                pawnsRight = (bitBoards.BlackPawns >> 9) & ~BitBoards.Files[7];
+            }
+            return pawnsLeft | pawnsRight;
+        }
+
+        private ulong GetAttackedByJumpingPieces(BitBoards bitBoards, ulong jumpingPieces, ulong jumpMask, int jumpMaskCenter)
+        {
+            ulong allJumps = 0;
+            for (var i = 0; i < 64; i++)
+            {
+                if (jumpingPieces.HasBit(i))
+                {
+                    ulong jumps;
+                    if (i > jumpMaskCenter)
+                    {
+                        jumps = jumpMask << (i - jumpMaskCenter);
+                    }
+                    else
+                    {
+                        jumps = jumpMask >> (jumpMaskCenter - i);
+                    }
+
+                    jumps &= ~(i % 8 < 4 ? BitBoards.Files[6] | BitBoards.Files[7] : BitBoards.Files[0] | BitBoards.Files[1]);
+                    allJumps |= jumps;
+                }
+            }
+            return allJumps;
         }
 
         private ulong AllSlide(BitBoards bitboards, int position)
