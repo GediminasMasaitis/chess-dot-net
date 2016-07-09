@@ -6,5 +6,6 @@ namespace ChessDotNet.Protocols
     {
         void Input(string message);
         event Action<string> OnOutput;
+        event Action<int> OnExit;
     }
 }

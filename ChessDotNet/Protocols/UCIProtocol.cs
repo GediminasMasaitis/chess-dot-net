@@ -21,13 +21,18 @@ namespace ChessDotNet.Protocols
         }
 
         public event Action<string> OnOutput;
+        public event Action<int> OnExit;
 
         private void Output(string message)
         {
             OnOutput?.Invoke(message);
         }
 
-
+        private void Exit(int errorCode)
+        {
+            OnExit?.Invoke(errorCode);
+        }
+        
         private void ConfigureUCI()
         {
             Output("id name Chess.NET");

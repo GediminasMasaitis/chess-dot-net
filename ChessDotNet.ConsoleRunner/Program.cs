@@ -11,6 +11,7 @@ namespace ChessDotNet.ConsoleRunner
     {
         static void Main(string[] args)
         {
+            Console.WriteLine("Chess.NET by Gediminas Masaitis");
             IChessProtocol protocol = null;
             while (true)
             {
@@ -19,6 +20,7 @@ namespace ChessDotNet.ConsoleRunner
                 {
                     protocol = new UCIProtocol();
                     protocol.OnOutput += Console.WriteLine;
+                    protocol.OnExit += Environment.Exit;
                 }
                 protocol?.Input(line);
             }
