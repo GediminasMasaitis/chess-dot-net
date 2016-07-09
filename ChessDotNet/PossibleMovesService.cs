@@ -6,12 +6,6 @@ using System.Threading.Tasks;
 
 namespace ChessDotNet
 {
-    public enum PieceColor
-    {
-        White,
-        Black
-    }
-
     public class PossibleMovesService
     {
 
