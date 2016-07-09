@@ -14,7 +14,7 @@ namespace ChessDotNet.ConsoleTests
             var arrayBoard = fact.ParseFENToArrayBoard("rnbqkbnr/pppp1ppp/8/2pPp3/8/8/PPP1PPPP/RNBQKBNR w KQkq - 0 1 ");
             //var arrayBoard = fact.ParseFENToArrayBoard("rnbqkbnr/pppppppp/N7/2Q5/1p3R1B/4K3/PPPPPPPP/RNBQ1BNR w kq - 0 1 ");
             var bitBoards = fact.ArrayBoardToBitBoards(arrayBoard);
-            /bitBoards.EnPassantFile = BitBoards.Files[4];
+            bitBoards.EnPassantFile = BitBoards.Files[4];
             var forWhite = true;
 
             var kings = forWhite ? bitBoards.WhiteKings : bitBoards.BlackKings;
