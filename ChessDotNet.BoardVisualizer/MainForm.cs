@@ -59,7 +59,8 @@ namespace ChessDotNet.BoardVisualizer
                     graphics.FillRectangle(brush, cellY * cellWidth, cellX * cellHeight, cellWidth, cellHeight);
 
                     var text = (char)(65+(cellY)) + (8-cellX).ToString();
-                    graphics.DrawString(text, Font, textBrush, cellY * cellWidth + 28, cellX * cellHeight + 28);
+                    graphics.DrawString(text, Font, textBrush, cellY * cellWidth + 28, cellX * cellHeight + 18);
+                    graphics.DrawString(i.ToString(), Font, textBrush, cellY * cellWidth + 28, cellX * cellHeight + 32);
                 }
 
                 for (var i = 0; i < 8; i++)

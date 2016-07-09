@@ -87,14 +87,24 @@ namespace ChessDotNet
             return board;
         }
 
-        public BitBoards ParseFENToBitBoard(string fen)
+        public ulong PiecesToBitBoard(IEnumerable<byte> pieces)
+        {
+            var board = 0UL;
+            foreach (var piece in pieces)
+            {
+                board |= 1UL << piece;
+            }
+            return board;
+        }
+
+        public BitBoards ParseFENToBitBoards(string fen)
         {
             var arrayBoard = ParseFENToArrayBoard(fen);
-            var bitBoard = ArrayBoardToBitBoard(arrayBoard);
+            var bitBoard = ArrayBoardToBitBoards(arrayBoard);
             return bitBoard;
         }
 
-        public BitBoards ArrayBoardToBitBoard(ArrayBoard arrayBoard)
+        public BitBoards ArrayBoardToBitBoards(ArrayBoard arrayBoard)
         {
             var bitBoard = new BitBoards();
 
