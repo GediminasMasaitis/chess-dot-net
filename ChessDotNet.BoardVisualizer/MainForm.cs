@@ -12,14 +12,10 @@ namespace ChessDotNet.BoardVisualizer
 {
     public partial class MainForm : Form
     {
-        public MainForm()
+        public MainForm(ulong bitBoard = 0)
         {
             InitializeComponent();
-        }
-
-        private void Form1_Load(object sender, EventArgs e)
-        {
-            DisplayBitBoard(0);
+            DisplayBitBoard(bitBoard);
         }
 
         private void ShowBitboardButton_Click(object sender, EventArgs e)

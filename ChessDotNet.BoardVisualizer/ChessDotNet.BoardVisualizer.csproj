@@ -79,12 +79,6 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\ChessDotNet\ChessDotNet.csproj">
-      <Project>{ed5b6575-4dfb-48db-b407-8505b554ec58}</Project>
-      <Name>ChessDotNet</Name>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

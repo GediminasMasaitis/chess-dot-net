@@ -80,7 +80,6 @@
             this.Controls.Add(this.MainPictureBox);
             this.Name = "MainForm";
             this.Text = "Bitboard viewer";
-            this.Load += new System.EventHandler(this.Form1_Load);
             ((System.ComponentModel.ISupportInitialize)(this.MainPictureBox)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
