@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChessDotNet.ConsoleTests", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChessDotNet.BoardVisualizer", "ChessDotNet.BoardVisualizer\ChessDotNet.BoardVisualizer.csproj", "{84B0870A-071A-430A-B6B5-6D26F5AEE8F1}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChessDotNet.ConsoleRunner", "ChessDotNet.ConsoleRunner\ChessDotNet.ConsoleRunner.csproj", "{9B1C5495-301C-4B20-8930-C943D3256F34}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{84B0870A-071A-430A-B6B5-6D26F5AEE8F1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{84B0870A-071A-430A-B6B5-6D26F5AEE8F1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{84B0870A-071A-430A-B6B5-6D26F5AEE8F1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9B1C5495-301C-4B20-8930-C943D3256F34}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9B1C5495-301C-4B20-8930-C943D3256F34}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9B1C5495-301C-4B20-8930-C943D3256F34}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9B1C5495-301C-4B20-8930-C943D3256F34}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
