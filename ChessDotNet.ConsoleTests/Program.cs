@@ -12,7 +12,7 @@ namespace ChessDotNet.ConsoleTests
         {
             var fact = new BoardFactory();
             //var arrayBoard = fact.ParseFENToArrayBoard("rnbqkbnr/ppp2ppp/8/3pp3/4P3/2P5/PP1P1PPP/RNBQKBNR w KQkq - 0 3");
-            var arrayBoard = fact.ParseFENToArrayBoard("rnbqkbnr/pppppppp/8/8/1p3R1p/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 ");
+            var arrayBoard = fact.ParseFENToArrayBoard("rnbqkbnr/pppppppp/8/8/1p3R1B/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 ");
             var bitBoards = fact.ArrayBoardToBitBoards(arrayBoard);
             var forWhite = true;
 
@@ -26,7 +26,7 @@ namespace ChessDotNet.ConsoleTests
             var destBoard = fact.PiecesToBitBoard(dests);
             
 
-            Debugging.ShowBitBoard(rooks, enemies, destBoard);
+            Debugging.ShowBitBoard(BitBoards.Antidiagonals[7]);
             Console.ReadLine();
         }
     }
