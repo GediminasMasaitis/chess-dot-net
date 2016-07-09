@@ -21,11 +21,12 @@ namespace ChessDotNet
         public ulong BlackQueens { get; set; }
         public ulong BlackKings { get; set; }
 
-        public ulong WhitePieces { get; set; }
-        public ulong BlackPieces { get; set; }
-        public ulong EmptySquares { get; set; }
-        public ulong FilledSquares { get; set; }
-       
+        public ulong WhitePieces { get; private set; }
+        public ulong BlackPieces { get; private set; }
+        public ulong EmptySquares { get; private set; }
+        public ulong FilledSquares { get; private set; }
+        public IReadOnlyDictionary<ChessPiece, ulong> PiecesDict { get; private set; }
+
         public ulong EnPassantFile { get; set; }
 
         public static ulong AllBoard { get; }
@@ -126,6 +127,83 @@ namespace ChessDotNet
             BlackPieces = BlackPawns | BlackNights | BlackBishops | BlackRooks | BlackQueens | BlackKings;
             FilledSquares = WhitePieces | BlackPieces;
             EmptySquares = ~FilledSquares;
+
+            PiecesDict = new Dictionary<ChessPiece, ulong>
+            {
+                { ChessPiece.WhitePawn, WhitePawns },
+                { ChessPiece.WhiteKnight, WhiteNights },
+                { ChessPiece.WhiteBishop, WhiteBishops },
+                { ChessPiece.WhiteRook, WhiteRooks},
+                { ChessPiece.WhiteQueen, WhiteQueens },
+                { ChessPiece.WhiteKing, WhiteKings },
+
+                { ChessPiece.BlackPawn, BlackPawns },
+                { ChessPiece.BlackKnight, BlackNights },
+                { ChessPiece.BlackBishop, BlackBishops },
+                { ChessPiece.BlackRook, BlackRooks},
+                { ChessPiece.BlackQueen, BlackQueens },
+                { ChessPiece.BlackKing, BlackKings }
+            };
+        }
+
+        public BitBoards DoMove(Move move)
+        {
+            var newPiecesDict = new Dictionary<ChessPiece, ulong>(PiecesDict.Count);
+            foreach (var pair in PiecesDict)
+            {
+                var bitBoard = pair.Value & ~(1UL << move.From) & ~(1UL << move.To);
+                if (move.Piece == pair.Key)
+                {
+                    bitBoard |= 1UL << move.To;
+                }
+                newPiecesDict.Add(pair.Key, bitBoard);
+            }
+            var newBoards = FromDict(newPiecesDict);
+            return newBoards;
+        }
+
+        private BitBoards FromDict(IReadOnlyDictionary<ChessPiece, ulong> dictionary)
+        {
+            var newBoards = new BitBoards
+            {
+                WhitePawns = dictionary[ChessPiece.WhitePawn],
+                WhiteNights = dictionary[ChessPiece.WhiteKnight],
+                WhiteBishops = dictionary[ChessPiece.WhiteBishop],
+                WhiteRooks = dictionary[ChessPiece.WhiteRook],
+                WhiteQueens = dictionary[ChessPiece.WhiteQueen],
+                WhiteKings = dictionary[ChessPiece.WhiteKing],
+
+                BlackPawns = dictionary[ChessPiece.BlackPawn],
+                BlackNights = dictionary[ChessPiece.BlackKnight],
+                BlackBishops = dictionary[ChessPiece.BlackBishop],
+                BlackRooks = dictionary[ChessPiece.BlackRook],
+                BlackQueens = dictionary[ChessPiece.BlackQueen],
+                BlackKings = dictionary[ChessPiece.BlackKing],
+            };
+            newBoards.Sync();
+            return newBoards;
+        }
+
+        public BitBoards Clone()
+        {
+            var newBoards = new BitBoards
+            {
+                WhitePawns = WhitePawns,
+                WhiteNights = WhiteNights,
+                WhiteBishops = WhiteBishops,
+                WhiteRooks = WhiteRooks,
+                WhiteQueens = WhiteQueens,
+                WhiteKings = WhiteKings,
+
+                BlackPawns = BlackPawns,
+                BlackNights = BlackNights,
+                BlackBishops = BlackBishops,
+                BlackRooks = BlackRooks,
+                BlackQueens = BlackQueens,
+                BlackKings = BlackKings
+            };
+            newBoards.Sync();
+            return newBoards;
         }
     }
 }

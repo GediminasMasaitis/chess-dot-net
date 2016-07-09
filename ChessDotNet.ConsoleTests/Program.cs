@@ -11,7 +11,7 @@ namespace ChessDotNet.ConsoleTests
         static void Main(string[] args)
         {
             var fact = new BoardFactory();
-            var arrayBoard = fact.ParseFENToArrayBoard("rnbqkbnr/pppppppp/8/8/p6P/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 ");
+            var arrayBoard = fact.ParseFENToArrayBoard("rnbqkbnr/pppppppp/8/8/p7/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 ");
             //var arrayBoard = fact.ParseFENToArrayBoard("rnbqkbnr/pppppppp/N7/2Q5/1p3R1B/4K3/PPPPPPPP/RNBQ1BNR w kq - 0 1 ");
             var bitBoards = fact.ArrayBoardToBitBoards(arrayBoard);
             bitBoards.EnPassantFile = BitBoards.Files[3];
@@ -32,9 +32,11 @@ namespace ChessDotNet.ConsoleTests
             var dests = moves.Select(x => x.To);
             var destBoard = fact.PiecesToBitBoard(dests);
             var attackBoard = movesService.GetAttackedByQueens(bitBoards, forWhite);
-            
 
-            Debugging.ShowBitBoard(myPieces, enemyPieces, destBoard);
+            var newBoard = bitBoards.DoMove(new Move(8, 24, ChessPiece.WhitePawn));
+
+            Debugging.ShowBitBoard(bitBoards.WhitePieces, bitBoards.BlackPieces);
+            Debugging.ShowBitBoard(newBoard.WhitePieces, newBoard.BlackPieces);
             Console.ReadLine();
         }
     }
