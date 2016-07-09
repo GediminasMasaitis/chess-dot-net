@@ -109,7 +109,7 @@ namespace ChessDotNet
                         bitBoard.WhitePawns |= (ulong)1 << i;
                         break;
                     case ChessPiece.WhiteKnight:
-                        bitBoard.WhiteKnights |= (ulong)1 << i;
+                        bitBoard.WhiteNights |= (ulong)1 << i;
                         break;
                     case ChessPiece.WhiteBishop:
                         bitBoard.WhiteBishops |= (ulong)1 << i;
@@ -127,7 +127,7 @@ namespace ChessDotNet
                         bitBoard.BlackPawns |= (ulong)1 << i;
                         break;
                     case ChessPiece.BlackKnight:
-                        bitBoard.BlackKnights |= (ulong)1 << i;
+                        bitBoard.BlackNights |= (ulong)1 << i;
                         break;
                     case ChessPiece.BlackBishop:
                         bitBoard.BlackBishops |= (ulong)1 << i;

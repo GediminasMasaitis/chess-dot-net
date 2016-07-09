@@ -7,19 +7,21 @@ namespace ChessDotNet
     public class BitBoards
     {
         public ulong WhitePawns { get; set; }
-        public ulong WhiteKnights { get; set; }
+        public ulong WhiteNights { get; set; }
         public ulong WhiteBishops { get; set; }
         public ulong WhiteRooks { get; set; }
         public ulong WhiteQueens { get; set; }
         public ulong WhiteKings { get; set; }
 
         public ulong BlackPawns { get; set; }
-        public ulong BlackKnights { get; set; }
+        public ulong BlackNights { get; set; }
         public ulong BlackBishops { get; set; }
         public ulong BlackRooks { get; set; }
         public ulong BlackQueens { get; set; }
         public ulong BlackKings { get; set; }
 
+        public ulong WhitePieces { get; set; }
+        public ulong BlackPieces { get; set; }
         public ulong EmptySquares { get; set; }
         public ulong FilledSquares { get; set; }
 
@@ -63,7 +65,9 @@ namespace ChessDotNet
     
         public void Sync()
         {
-            FilledSquares = WhitePawns | WhiteKnights | WhiteBishops | WhiteRooks | WhiteQueens | WhiteKings | BlackPawns | BlackKnights | BlackBishops | BlackRooks | BlackQueens | BlackKings;
+            WhitePieces = WhitePawns | WhiteNights | WhiteBishops | WhiteRooks | WhiteQueens | WhiteKings;
+            BlackPieces = BlackPawns | BlackNights | BlackBishops | BlackRooks | BlackQueens | BlackKings;
+            FilledSquares = WhitePieces | BlackPieces;
             EmptySquares = ~FilledSquares;
         }
     }

@@ -45,7 +45,9 @@
     <Compile Include="ChessPiece.cs" />
     <Compile Include="BoardFactory.cs" />
     <Compile Include="Debugging.cs" />
-    <Compile Include="Moves.cs" />
+    <Compile Include="ExtensionMethods.cs" />
+    <Compile Include="Move.cs" />
+    <Compile Include="PossibleMovesService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Protocols\IChessProtocol.cs" />
     <Compile Include="Protocols\UCIProtocol.cs" />
