@@ -39,8 +39,8 @@ namespace ChessDotNet
 
         private IEnumerable<Move> GetPossibleWhitePawnMoves(BitBoards bitBoards)
         {
-            var takeLeft = (bitBoards.WhitePawns << 7) & bitBoards.BlackPieces & ~BitBoards.Files[7];
-            var takeRight = (bitBoards.WhitePawns << 9) & bitBoards.BlackPieces & ~BitBoards.Files[0];
+            var takeLeft = (bitBoards.WhitePawns << 7) & ~BitBoards.Files[7] & (bitBoards.BlackPieces | (bitBoards.EnPassantFile & bitBoards.BlackPawns << 8));
+            var takeRight = (bitBoards.WhitePawns << 9) & ~BitBoards.Files[0] & (bitBoards.BlackPieces | (bitBoards.EnPassantFile & bitBoards.BlackPawns << 8));
             var moveOne = (bitBoards.WhitePawns << 8) & bitBoards.EmptySquares;
             var moveTwo = (bitBoards.WhitePawns << 16) & bitBoards.EmptySquares & bitBoards.EmptySquares << 8 & BitBoards.Ranks[3];
 

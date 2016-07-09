@@ -11,9 +11,10 @@ namespace ChessDotNet.ConsoleTests
         static void Main(string[] args)
         {
             var fact = new BoardFactory();
-            //var arrayBoard = fact.ParseFENToArrayBoard("rnbqkbnr/ppp2ppp/8/3pp3/4P3/2P5/PP1P1PPP/RNBQKBNR w KQkq - 0 3");
-            var arrayBoard = fact.ParseFENToArrayBoard("rnbqkbnr/pppppppp/N7/2Q5/1p3R1B/4K3/PPPPPPPP/RNBQ1BNR w kq - 0 1 ");
+            var arrayBoard = fact.ParseFENToArrayBoard("rnbqkbnr/pppp1ppp/8/2pPp3/8/8/PPP1PPPP/RNBQKBNR w KQkq - 0 1 ");
+            //var arrayBoard = fact.ParseFENToArrayBoard("rnbqkbnr/pppppppp/N7/2Q5/1p3R1B/4K3/PPPPPPPP/RNBQ1BNR w kq - 0 1 ");
             var bitBoards = fact.ArrayBoardToBitBoards(arrayBoard);
+            /bitBoards.EnPassantFile = BitBoards.Files[4];
             var forWhite = true;
 
             var kings = forWhite ? bitBoards.WhiteKings : bitBoards.BlackKings;
@@ -24,13 +25,13 @@ namespace ChessDotNet.ConsoleTests
             var enemies = forWhite ? bitBoards.BlackPieces : bitBoards.WhitePieces;
             var movesService = new PossibleMovesService();
 
-            var moves = movesService.GetPossibleKingMoves(bitBoards, forWhite).ToList();
+            var moves = movesService.GetPossibleMoves(bitBoards, forWhite).ToList();
 
             var dests = moves.Select(x => x.To);
             var destBoard = fact.PiecesToBitBoard(dests);
             
 
-            Debugging.ShowBitBoard(kings, enemies, destBoard);
+            Debugging.ShowBitBoard(bitBoards.WhitePieces, bitBoards.BlackPieces, destBoard);
             Console.ReadLine();
         }
     }
