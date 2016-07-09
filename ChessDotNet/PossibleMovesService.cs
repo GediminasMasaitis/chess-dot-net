@@ -22,7 +22,8 @@ namespace ChessDotNet
             var bishopMoves = GetPossibleBishopMoves(bitBoards, isWhite);
             var rookMoves = GetPossibleRookMoves(bitBoards, isWhite);
             var queenMoves = GetPossibleQueenMoves(bitBoards, isWhite);
-            var allMoves = pawnMoves.Concat(knightMoves).Concat(bishopMoves).Concat(rookMoves).Concat(queenMoves);
+            var kingMoves = GetPossibleKingMoves(bitBoards, isWhite);
+            var allMoves = pawnMoves.Concat(knightMoves).Concat(bishopMoves).Concat(rookMoves).Concat(queenMoves).Concat(kingMoves);
             return allMoves;
         }
 
@@ -71,22 +72,33 @@ namespace ChessDotNet
             }
         }
 
+        public IEnumerable<Move> GetPossibleKingMoves(BitBoards bitBoards, bool forWhite)
+        {
+            var kings = forWhite ? bitBoards.WhiteKings : bitBoards.BlackKings;
+            return GetPossibleJumpingMoves(bitBoards, kings, BitBoards.KingSpan, BitBoards.KingSpanPosition, forWhite);
+        }
+
         public IEnumerable<Move> GetPossibleKnightMoves(BitBoards bitBoards, bool forWhite)
         {
             var knights = forWhite ? bitBoards.WhiteNights : bitBoards.BlackNights;
+            return GetPossibleJumpingMoves(bitBoards, knights, BitBoards.KnightSpan, BitBoards.KnightSpanPosition, forWhite);
+        }
+
+        private IEnumerable<Move> GetPossibleJumpingMoves(BitBoards bitBoards, ulong jumpingPieces, ulong jumpMask, int jumpMaskCenter, bool forWhite)
+        {
             var ownPieces = forWhite ? bitBoards.WhitePieces : bitBoards.BlackPieces;
             for (var i = 0; i < 64; i++)
             {
-                if (knights.HasBit(i))
+                if (jumpingPieces.HasBit(i))
                 {
                     ulong jumps;
-                    if (i > BitBoards.KnightSpanPosition)
+                    if (i > jumpMaskCenter)
                     {
-                        jumps = BitBoards.KnightSpan << (i - BitBoards.KnightSpanPosition);
+                        jumps = jumpMask << (i - jumpMaskCenter);
                     }
                     else
                     {
-                        jumps = BitBoards.KnightSpan >> (BitBoards.KnightSpanPosition - i);
+                        jumps = jumpMask >> (jumpMaskCenter - i);
                     }
 
                     jumps &= ~(i%8 < 4 ? BitBoards.Files[6] | BitBoards.Files[7] : BitBoards.Files[0] | BitBoards.Files[1]);
