@@ -12,7 +12,7 @@ namespace ChessDotNet.ConsoleTests
         {
             var fact = new BoardFactory();
             //var arrayBoard = fact.ParseFENToArrayBoard("rnbqkbnr/ppp2ppp/8/3pp3/4P3/2P5/PP1P1PPP/RNBQKBNR w KQkq - 0 3");
-            var arrayBoard = fact.ParseFENToArrayBoard("8/8/8/8/5p2/P3P1P1/2P5/8 w - - 0 1 ");
+            var arrayBoard = fact.ParseFENToArrayBoard("8/8/7p/P7/5p1p/P1p1P1P1/2P5/8 w - - 0 1 ");
             var bitBoard = fact.ArrayBoardToBitBoards(arrayBoard);
 
             var movesService = new PossibleMovesService();

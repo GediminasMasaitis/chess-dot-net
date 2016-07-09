@@ -13,7 +13,7 @@ namespace ChessDotNet
             var takeLeft = (bitBoards.WhitePawns << 7) & bitBoards.BlackPieces & ~bitBoards.Files[7];
             var takeRight = (bitBoards.WhitePawns << 9) & bitBoards.BlackPieces & ~bitBoards.Files[0];
             var moveOne = (bitBoards.WhitePawns << 8) & bitBoards.EmptySquares;
-            var moveTwo = (bitBoards.WhitePawns << 16) & bitBoards.EmptySquares & bitBoards.EmptySquares >> 8 & bitBoards.Ranks[3];
+            var moveTwo = (bitBoards.WhitePawns << 16) & bitBoards.EmptySquares & bitBoards.EmptySquares << 8 & bitBoards.Ranks[3];
 
             for (byte i = 0; i < 64; i++)
             {
