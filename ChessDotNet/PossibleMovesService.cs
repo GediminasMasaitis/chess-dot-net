@@ -32,11 +32,6 @@ namespace ChessDotNet
             return isWhite ? GetPossibleWhitePawnMoves(bitBoards) : GetPossibleBlackPawnMoves(bitBoards);
         }
 
-        private IEnumerable<Move> GetPossibleBlackPawnMoves(BitBoards bitBoards)
-        {
-            throw new NotImplementedException();
-        }
-
         private IEnumerable<Move> GetPossibleWhitePawnMoves(BitBoards bitBoards)
         {
             var takeLeft = (bitBoards.WhitePawns << 7) & ~BitBoards.Files[7] & (bitBoards.BlackPieces | (bitBoards.EnPassantFile & bitBoards.BlackPawns << 8));
@@ -48,7 +43,7 @@ namespace ChessDotNet
             {
                 if (takeLeft.HasBit(i))
                 {
-                    var move = new Move(i-7, i);
+                    var move = new Move(i - 7, i);
                     yield return move;
                 }
 
@@ -67,6 +62,41 @@ namespace ChessDotNet
                 if (moveTwo.HasBit(i))
                 {
                     var move = new Move(i - 16, i);
+                    yield return move;
+                }
+            }
+        }
+
+        private IEnumerable<Move> GetPossibleBlackPawnMoves(BitBoards bitBoards)
+        {
+            var takeLeft = (bitBoards.BlackPawns >> 7) & ~BitBoards.Files[0] & (bitBoards.WhitePieces | (bitBoards.EnPassantFile & bitBoards.WhitePawns >> 8));
+            var takeRight = (bitBoards.BlackPawns >> 9) & ~BitBoards.Files[7] & (bitBoards.WhitePieces | (bitBoards.EnPassantFile & bitBoards.WhitePawns >> 8));
+            var moveOne = (bitBoards.BlackPawns >> 8) & bitBoards.EmptySquares;
+            var moveTwo = (bitBoards.BlackPawns >> 16) & bitBoards.EmptySquares & bitBoards.EmptySquares >> 8 & BitBoards.Ranks[4];
+
+            for (byte i = 0; i < 64; i++)
+            {
+                if (takeLeft.HasBit(i))
+                {
+                    var move = new Move(i + 7, i);
+                    yield return move;
+                }
+
+                if (takeRight.HasBit(i))
+                {
+                    var move = new Move(i + 9, i);
+                    yield return move;
+                }
+
+                if (moveOne.HasBit(i))
+                {
+                    var move = new Move(i + 8, i);
+                    yield return move;
+                }
+
+                if (moveTwo.HasBit(i))
+                {
+                    var move = new Move(i + 16, i);
                     yield return move;
                 }
             }
