@@ -44,6 +44,7 @@
     <Compile Include="BitBoard.cs" />
     <Compile Include="ChessPiece.cs" />
     <Compile Include="BoardFactory.cs" />
+    <Compile Include="Debugging.cs" />
     <Compile Include="Moves.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

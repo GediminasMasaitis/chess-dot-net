@@ -52,12 +52,13 @@ namespace ChessDotNet.BoardVisualizer
             {
                 for (var i = 0; i < cells.Count; i++)
                 {
-                    var cellX = (7-i/8);
+                    var cellX = 7-(i/8);
                     var cellY = i%8;
 
                     var brush = cells[i] ? filledBrush : emptyBrush;
                     graphics.FillRectangle(brush, cellY * cellWidth, cellX * cellHeight, cellWidth, cellHeight);
-                    var text = (char)(65+cellY) + (8-cellX).ToString();
+
+                    var text = (char)(65+(cellY)) + (8-cellX).ToString();
                     graphics.DrawString(text, Font, textBrush, cellY * cellWidth + 28, cellX * cellHeight + 28);
                 }
 

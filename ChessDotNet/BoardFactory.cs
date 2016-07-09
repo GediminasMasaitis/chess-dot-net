@@ -15,56 +15,57 @@ namespace ChessDotNet
             var fenPosition = 0;
             for (; fenPosition < fen.Length; fenPosition++)
             {
+                var fixedBoardPosition = (7 - boardPosition/8)*8 + boardPosition%8;
                 var ch = fen[fenPosition];
                 switch (ch)
                 {
                     case 'p':
-                        board[boardPosition] = ChessPiece.BlackPawn;
+                        board[fixedBoardPosition] = ChessPiece.BlackPawn;
                         boardPosition++;
                         continue;
                     case 'r':
-                        board[boardPosition] = ChessPiece.BlackRook;
+                        board[fixedBoardPosition] = ChessPiece.BlackRook;
                         boardPosition++;
                         continue;
                     case 'n':
-                        board[boardPosition] = ChessPiece.BlackKnight;
+                        board[fixedBoardPosition] = ChessPiece.BlackKnight;
                         boardPosition++;
                         continue;
                     case 'b':
-                        board[boardPosition] = ChessPiece.BlackBishop;
+                        board[fixedBoardPosition] = ChessPiece.BlackBishop;
                         boardPosition++;
                         continue;
                     case 'q':
-                        board[boardPosition] = ChessPiece.BlackQueen;
+                        board[fixedBoardPosition] = ChessPiece.BlackQueen;
                         boardPosition++;
                         continue;
                     case 'k':
-                        board[boardPosition] = ChessPiece.BlackKing;
+                        board[fixedBoardPosition] = ChessPiece.BlackKing;
                         boardPosition++;
                         continue;
 
                     case 'P':
-                        board[boardPosition] = ChessPiece.WhitePawn;
+                        board[fixedBoardPosition] = ChessPiece.WhitePawn;
                         boardPosition++;
                         continue;
                     case 'R':
-                        board[boardPosition] = ChessPiece.WhiteRook;
+                        board[fixedBoardPosition] = ChessPiece.WhiteRook;
                         boardPosition++;
                         continue;
                     case 'N':
-                        board[boardPosition] = ChessPiece.WhiteKnight;
+                        board[fixedBoardPosition] = ChessPiece.WhiteKnight;
                         boardPosition++;
                         continue;
                     case 'B':
-                        board[boardPosition] = ChessPiece.WhiteBishop;
+                        board[fixedBoardPosition] = ChessPiece.WhiteBishop;
                         boardPosition++;
                         continue;
                     case 'Q':
-                        board[boardPosition] = ChessPiece.WhiteQueen;
+                        board[fixedBoardPosition] = ChessPiece.WhiteQueen;
                         boardPosition++;
                         continue;
                     case 'K':
-                        board[boardPosition] = ChessPiece.WhiteKing;
+                        board[fixedBoardPosition] = ChessPiece.WhiteKing;
                         boardPosition++;
                         continue;
                 }
