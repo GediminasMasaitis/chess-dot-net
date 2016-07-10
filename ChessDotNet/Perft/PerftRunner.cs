@@ -39,6 +39,7 @@ namespace ChessDotNet.Perft
                 {
                     OutLine("Mismatch detected");
                     FindMismatch(i, engineResults);
+                    return;
                 }
             }
 

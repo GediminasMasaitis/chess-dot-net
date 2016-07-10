@@ -28,9 +28,7 @@ namespace ChessDotNet.Perft
        
         private IEnumerable<string> TestEngineInner(BitBoards bitBoards, bool whiteToMove, int depth, int currentDepth, string currentString)
         {
-            PossibleMovesService.BitBoards = bitBoards;
-            PossibleMovesService.BitBoardsChanged();
-            var moves = PossibleMovesService.GetAllPossibleMoves(whiteToMove);
+            var moves = PossibleMovesService.GetAllPossibleMoves(bitBoards, whiteToMove);
             foreach (var move in moves)
             {
                 var moveString = currentString + (currentString.Length == 0 ? string.Empty : " ") + move.ToPositionString();
