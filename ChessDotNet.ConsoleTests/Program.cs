@@ -65,7 +65,7 @@ namespace ChessDotNet.ConsoleTests
             var fact = new BoardFactory();
             var arrayBoard = fact.ParseFENToArrayBoard("3k4/8/8/K1Pp3r/8/8/8/8 w - d6 0 51 ");
             var bitBoards = fact.ArrayBoardToBitBoards(arrayBoard);
-            bitBoards.EnPassantFile = BitBoards.Files[1];
+            bitBoards.EnPassantFile = BitBoards.Files[3];
             var movesService = new PossibleMovesService();
             var forWhite = true;
             var moves = movesService.GetAllPossibleMoves(bitBoards, forWhite).ToList();

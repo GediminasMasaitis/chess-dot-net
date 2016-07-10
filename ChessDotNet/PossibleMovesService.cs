@@ -330,7 +330,7 @@ namespace ChessDotNet
             var bq = forWhite ? bitBoards.WhiteBishops | bitBoards.WhiteQueens : bitBoards.BlackBishops | bitBoards.BlackQueens;
             var bqAttack = GetAttackedBySlidingPieces(bitBoards, bq, DiagonalAntidiagonalSlide);
 
-            var rq = forWhite ? bitBoards.WhiteRooks | bitBoards.WhiteQueens : bitBoards.WhiteRooks | bitBoards.BlackQueens;
+            var rq = forWhite ? bitBoards.WhiteRooks | bitBoards.WhiteQueens : bitBoards.BlackRooks | bitBoards.BlackQueens;
             var rqAttack = GetAttackedBySlidingPieces(bitBoards, rq, HorizontalVerticalSlide);
 
             var kingsAttack = GetAttackedByKings(bitBoards, forWhite);
