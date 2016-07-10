@@ -326,7 +326,6 @@ namespace ChessDotNet
             var allSlide = 0UL;
             for (var i = 0; i < 64; i++)
             {
-                //if (slidingPieces.HasBit(i))
                 if ((slidingPieces & (1UL << i)) > 0)
                 {
                     var slide = slideResolutionFunc.Invoke(bitBoards, i);

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace ChessDotNet.Perft
@@ -24,12 +25,14 @@ namespace ChessDotNet.Perft
         {
             OutLine($"Running perft testing, up to depth {depth}");
             OutLine(string.Empty);
-
+            var sw = new Stopwatch();
             for (var i = 1; i <= depth; i++)
             {
                 OutLine($"Testing engine with depth {i}");
+                sw.Restart();
                 var engineResults = Perft.GetPossibleMoves(bitBoards, whiteToMove, i);
-                OutLine($"Engine found {engineResults.Count} possible moves");
+                sw.Stop();
+                OutLine($"Engine found {engineResults.Count} possible moves in {sw.Elapsed.TotalMilliseconds} miliseconds");
                 OutLine($"Testing client with depth {i}");
                 var clientMoveCount = Client.GetMoveCount(i);
                 OutLine($"Client found {clientMoveCount} possible moves");
