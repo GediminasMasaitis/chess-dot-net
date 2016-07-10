@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ChessDotNet.Testing;
 
 namespace ChessDotNet.ConsoleTests
 {
@@ -18,12 +19,12 @@ namespace ChessDotNet.ConsoleTests
             var forWhite = true;
 
             var movesService = new PossibleMovesService();
-            var perft = new Perft(movesService);
-            perft.OnOut += Console.Write;
-            perft.MaxDepth = 4;
+            using (var perft = new Perft(movesService))
+            {
+                perft.OnOut += Console.Write;
 
-            perft.Test(bitBoards, true);
-
+                perft.Test(bitBoards, true, 4);
+            }
             var moves = movesService.GetAllPossibleMoves(bitBoards, forWhite).ToList();
 
             //var dests = moves.Select(x => x.To);

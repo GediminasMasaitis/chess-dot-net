@@ -18,13 +18,19 @@
             var rank = position / 8;
             var file = position % 8;
 
-            var str = (char)(65 + file) + (rank + 1).ToString();
+            var str = (char)(97 + file) + (rank + 1).ToString();
             return str;
+        }
+
+        public string ToPositionString()
+        {
+            var text = PositionToText(From) + PositionToText(To);
+            return text;
         }
 
         public override string ToString()
         {
-            var text = PositionToText(From) + PositionToText(To);
+            var text = ToPositionString();
             return $"{text}; From: {From}, To: {To}, Piece: {Piece}";
         }
     }

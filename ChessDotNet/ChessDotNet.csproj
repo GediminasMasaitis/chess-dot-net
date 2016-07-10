@@ -47,7 +47,8 @@
     <Compile Include="Debugging.cs" />
     <Compile Include="ExtensionMethods.cs" />
     <Compile Include="Move.cs" />
-    <Compile Include="Perft.cs" />
+    <Compile Include="Testing\MoveAndNodes.cs" />
+    <Compile Include="Testing\Perft.cs" />
     <Compile Include="PieceColor.cs" />
     <Compile Include="PossibleMovesService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
