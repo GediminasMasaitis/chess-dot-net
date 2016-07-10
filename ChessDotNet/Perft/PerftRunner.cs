@@ -30,18 +30,20 @@ namespace ChessDotNet.Perft
             {
                 OutLine($"Testing engine with depth {i}");
                 sw.Restart();
-                var engineResults = Perft.GetPossibleMoves(bitBoards, whiteToMove, i);
+                var engineMoveCount = Perft.GetPossibleMoveCount(bitBoards, whiteToMove, i);
                 sw.Stop();
-                OutLine($"Engine found {engineResults.Count} possible moves in {sw.Elapsed.TotalMilliseconds} miliseconds");
+                OutLine($"Engine found {engineMoveCount} possible moves in {sw.Elapsed.TotalMilliseconds} miliseconds");
                 OutLine($"Testing client with depth {i}");
                 var clientMoveCount = Client.GetMoveCount(i);
                 OutLine($"Client found {clientMoveCount} possible moves");
                 OutLine("");
 
-                if (engineResults.Count != clientMoveCount)
+                if (engineMoveCount != clientMoveCount)
                 {
                     OutLine("Mismatch detected");
-                    FindMismatch(i, engineResults);
+                    OutLine("Engine finding all possible moves");
+                    var engineMoves = Perft.GetPossibleMoves(bitBoards, whiteToMove, depth);
+                    FindMismatch(i, engineMoves);
                     return;
                 }
             }

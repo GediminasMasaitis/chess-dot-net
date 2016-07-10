@@ -12,8 +12,8 @@ namespace ChessDotNet.ConsoleTests
     {
         static void Main(string[] args)
         {
-            DoTimings();
-            //DoPerft();
+            //DoTimings();
+            DoPerft();
             //TestMove();
 
             Console.ReadLine();

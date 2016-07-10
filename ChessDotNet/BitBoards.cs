@@ -121,14 +121,14 @@ namespace ChessDotNet
         }
 
     
-        public void Sync()
+        public void Sync(IReadOnlyDictionary<ChessPiece, ulong> dictToUse = null)
         {
             WhitePieces = WhitePawns | WhiteNights | WhiteBishops | WhiteRooks | WhiteQueens | WhiteKings;
             BlackPieces = BlackPawns | BlackNights | BlackBishops | BlackRooks | BlackQueens | BlackKings;
             FilledSquares = WhitePieces | BlackPieces;
             EmptySquares = ~FilledSquares;
 
-            PiecesDict = new Dictionary<ChessPiece, ulong>
+            PiecesDict = dictToUse ?? new Dictionary<ChessPiece, ulong>
             {
                 { ChessPiece.WhitePawn, WhitePawns },
                 { ChessPiece.WhiteKnight, WhiteNights },
@@ -196,7 +196,7 @@ namespace ChessDotNet
                 BlackQueens = dictionary[ChessPiece.BlackQueen],
                 BlackKings = dictionary[ChessPiece.BlackKing],
             };
-            newBoards.Sync();
+            newBoards.Sync(dictionary);
             return newBoards;
         }
 
