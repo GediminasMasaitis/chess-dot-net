@@ -2,16 +2,18 @@
 {
     public struct Move
     {
-        public Move(int from, int to, ChessPiece piece)
+        public Move(int from, int to, ChessPiece piece, bool enPassant = false)
         {
             From = from;
             To = to;
             Piece = piece;
+            EnPassant = enPassant;
         }
 
         public int From { get; }
         public int To { get; }
         public ChessPiece Piece { get; }
+        public bool EnPassant { get; }
 
         private string PositionToText(int position)
         {
@@ -31,7 +33,7 @@
         public override string ToString()
         {
             var text = ToPositionString();
-            return $"{text}; From: {From}, To: {To}, Piece: {Piece}";
+            return $"{text}; From: {From}, To: {To}, Piece: {Piece}, EnPassant: {EnPassant}";
         }
     }
 }

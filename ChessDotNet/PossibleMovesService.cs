@@ -27,6 +27,15 @@ namespace ChessDotNet
             var rookMoves = GetPossibleRookMoves(bitBoards, isWhite);
             var queenMoves = GetPossibleQueenMoves(bitBoards, isWhite);
             var kingMoves = GetPossibleKingMoves(bitBoards, isWhite, attackedByEnemy);
+
+            //var allMoves = new List<Move>();
+            //allMoves.AddRange(pawnMoves);
+            //allMoves.AddRange(knightMoves);
+            //allMoves.AddRange(bishopMoves);
+            //allMoves.AddRange(rookMoves);
+            //allMoves.AddRange(queenMoves);
+            //allMoves.AddRange(kingMoves);
+
             var allMoves = pawnMoves.Concat(knightMoves).Concat(bishopMoves).Concat(rookMoves).Concat(queenMoves).Concat(kingMoves);
             return allMoves;
         }
@@ -38,70 +47,137 @@ namespace ChessDotNet
 
         private IEnumerable<Move> GetPossibleWhitePawnMoves(BitBoards bitBoards)
         {
-            var takeLeft = (bitBoards.WhitePawns << 7) & ~BitBoards.Files[7] & (bitBoards.BlackPieces | (bitBoards.EnPassantFile & bitBoards.BlackPawns << 8));
-            var takeRight = (bitBoards.WhitePawns << 9) & ~BitBoards.Files[0] & (bitBoards.BlackPieces | (bitBoards.EnPassantFile & bitBoards.BlackPawns << 8));
+            var takeLeft = (bitBoards.WhitePawns << 7) & ~BitBoards.Files[7] & bitBoards.BlackPieces;
+            var takeRight = (bitBoards.WhitePawns << 9) & ~BitBoards.Files[0] & bitBoards.BlackPieces;
+
+            var enPassantLeft = (bitBoards.WhitePawns << 7) & ~BitBoards.Files[7] & bitBoards.EnPassantFile & bitBoards.BlackPawns << 8;
+            var enPassantRight = (bitBoards.WhitePawns << 9) & ~BitBoards.Files[0] & bitBoards.EnPassantFile & bitBoards.BlackPawns << 8;
             var moveOne = (bitBoards.WhitePawns << 8) & bitBoards.EmptySquares;
             var moveTwo = (bitBoards.WhitePawns << 16) & bitBoards.EmptySquares & bitBoards.EmptySquares << 8 & BitBoards.Ranks[3];
 
             for (byte i = 0; i < 64; i++)
             {
-                if (takeLeft.HasBit(i))
+                if ((takeLeft & (1UL << i)) != 0)
                 {
                     var move = new Move(i - 7, i, ChessPiece.WhitePawn);
-                    yield return move;
+                    if (IsKingSafeAfterMove(bitBoards, move, true))
+                    {
+                        yield return move;
+                    }
                 }
 
-                if (takeRight.HasBit(i))
+                if ((takeRight & (1UL << i)) != 0)
                 {
                     var move = new Move(i - 9, i, ChessPiece.WhitePawn);
-                    yield return move;
+                    if (IsKingSafeAfterMove(bitBoards, move, true))
+                    {
+                        yield return move;
+                    }
                 }
 
-                if (moveOne.HasBit(i))
+                if ((enPassantLeft & (1UL << i)) != 0)
+                {
+                    var move = new Move(i - 7, i, ChessPiece.WhitePawn, true);
+                    if (IsKingSafeAfterMove(bitBoards, move, true))
+                    {
+                        yield return move;
+                    }
+                }
+
+                if ((enPassantRight & (1UL << i)) != 0)
+                {
+                    var move = new Move(i - 9, i, ChessPiece.WhitePawn, true);
+                    if (IsKingSafeAfterMove(bitBoards, move, true))
+                    {
+                        yield return move;
+                    }
+                }
+
+                if ((moveOne & (1UL << i)) != 0)
                 {
                     var move = new Move(i - 8, i, ChessPiece.WhitePawn);
-                    yield return move;
+                    if (IsKingSafeAfterMove(bitBoards, move, true))
+                    {
+                        yield return move;
+                    }
                 }
 
-                if (moveTwo.HasBit(i))
+                if ((moveTwo & (1UL << i)) != 0)
                 {
                     var move = new Move(i - 16, i, ChessPiece.WhitePawn);
-                    yield return move;
+                    if (IsKingSafeAfterMove(bitBoards, move, true))
+                    {
+                        yield return move;
+                    }
                 }
             }
         }
 
         private IEnumerable<Move> GetPossibleBlackPawnMoves(BitBoards bitBoards)
         {
-            var takeLeft = (bitBoards.BlackPawns >> 7) & ~BitBoards.Files[0] & (bitBoards.WhitePieces | (bitBoards.EnPassantFile & bitBoards.WhitePawns >> 8));
-            var takeRight = (bitBoards.BlackPawns >> 9) & ~BitBoards.Files[7] & (bitBoards.WhitePieces | (bitBoards.EnPassantFile & bitBoards.WhitePawns >> 8));
+            var takeLeft = (bitBoards.BlackPawns >> 7) & ~BitBoards.Files[0] & bitBoards.WhitePieces;
+            var takeRight = (bitBoards.BlackPawns >> 9) & ~BitBoards.Files[7] & bitBoards.WhitePieces;
+
+            var enPassantLeft = (bitBoards.BlackPawns >> 7) & ~BitBoards.Files[0] & bitBoards.EnPassantFile & bitBoards.WhitePawns >> 8;
+            var enPassantRight = (bitBoards.BlackPawns >> 9) & ~BitBoards.Files[7] & bitBoards.EnPassantFile & bitBoards.WhitePawns >> 8;
+
             var moveOne = (bitBoards.BlackPawns >> 8) & bitBoards.EmptySquares;
             var moveTwo = (bitBoards.BlackPawns >> 16) & bitBoards.EmptySquares & bitBoards.EmptySquares >> 8 & BitBoards.Ranks[4];
 
             for (byte i = 0; i < 64; i++)
             {
-                if (takeLeft.HasBit(i))
+                if ((takeLeft & (1UL << i)) != 0)
                 {
                     var move = new Move(i + 7, i, ChessPiece.BlackPawn);
-                    yield return move;
+                    if (IsKingSafeAfterMove(bitBoards, move, false))
+                    {
+                        yield return move;
+                    }
                 }
 
-                if (takeRight.HasBit(i))
+                if ((takeRight & (1UL << i)) != 0)
                 {
                     var move = new Move(i + 9, i, ChessPiece.BlackPawn);
-                    yield return move;
+                    if (IsKingSafeAfterMove(bitBoards, move, false))
+                    {
+                        yield return move;
+                    }
                 }
 
-                if (moveOne.HasBit(i))
+                if ((enPassantLeft & (1UL << i)) != 0)
+                {
+                    var move = new Move(i + 7, i, ChessPiece.BlackPawn, true);
+                    if (IsKingSafeAfterMove(bitBoards, move, false))
+                    {
+                        yield return move;
+                    }
+                }
+
+                if ((enPassantRight & (1UL << i)) != 0)
+                {
+                    var move = new Move(i + 9, i, ChessPiece.BlackPawn, true);
+                    if (IsKingSafeAfterMove(bitBoards, move, false))
+                    {
+                        yield return move;
+                    }
+                }
+
+                if ((moveOne & (1UL << i)) != 0)
                 {
                     var move = new Move(i + 8, i, ChessPiece.BlackPawn);
-                    yield return move;
+                    if (IsKingSafeAfterMove(bitBoards, move, false))
+                    {
+                        yield return move;
+                    }
                 }
 
-                if (moveTwo.HasBit(i))
+                if ((moveTwo & (1UL << i)) != 0)
                 {
                     var move = new Move(i + 16, i, ChessPiece.BlackPawn);
-                    yield return move;
+                    if (IsKingSafeAfterMove(bitBoards, move, false))
+                    {
+                        yield return move;
+                    }
                 }
             }
         }
@@ -127,7 +203,7 @@ namespace ChessDotNet
             var ownPieces = forWhite ? bitBoards.WhitePieces : bitBoards.BlackPieces;
             for (var i = 0; i < 64; i++)
             {
-                if (jumpingPieces.HasBit(i))
+                if ((jumpingPieces & (1UL << i)) != 0)
                 {
                     ulong jumps;
                     if (i > jumpMaskCenter)
@@ -145,7 +221,11 @@ namespace ChessDotNet
 
                     foreach (var move in BitmaskToMoves(jumps, i, piece))
                     {
-                        yield return move;
+                        if (IsKingSafeAfterMove(bitBoards, move, forWhite))
+                        {
+                            yield return move;
+                        }
+                        //yield return move;
                     }
                 }
             }
@@ -177,23 +257,37 @@ namespace ChessDotNet
             var ownPieces = forWhite ? bitBoards.WhitePieces : bitBoards.BlackPieces;
             for (var i = 0; i < 64; i++)
             {
-                if (slidingPieces.HasBit(i))
+                if ((slidingPieces & (1UL << i)) != 0)
+                //if ((slidingPieces & (1UL << i)) > 0)
                 {
                     var slide = slideResolutionFunc.Invoke(bitBoards, i);
                     slide &= ~ownPieces;
                     foreach (var move in BitmaskToMoves(slide, i, piece))
                     {
-                        yield return move;
+                        if (IsKingSafeAfterMove(bitBoards, move, forWhite))
+                        {
+                            yield return move;
+                        }
                     }
                 }
             }
+        }
+
+        private bool IsKingSafeAfterMove(BitBoards bitBoards, Move move, bool forWhite)
+        {
+            //return true;
+            var afterMoveBitBoards = bitBoards.DoMove(move);
+            var enemyAttackedAfterMove = GetAllAttacked(afterMoveBitBoards, !forWhite);
+            var myKings = forWhite ? bitBoards.WhiteKings : bitBoards.BlackKings;
+            var isSafe = (enemyAttackedAfterMove & myKings) == 0;
+            return isSafe;
         }
 
         private static IEnumerable<Move> BitmaskToMoves(ulong bitmask, int positionFrom, ChessPiece piece)
         {
             for (var j = 0; j < 64; j++)
             {
-                if (bitmask.HasBit(j))
+                if ((bitmask & (1UL << j)) != 0)
                 {
                     var move = new Move(positionFrom, j, piece);
                     yield return move;
@@ -237,7 +331,8 @@ namespace ChessDotNet
             var allSlide = 0UL;
             for (var i = 0; i < 64; i++)
             {
-                if (slidingPieces.HasBit(i))
+                //if (slidingPieces.HasBit(i))
+                if ((slidingPieces & (1UL << i)) > 0)
                 {
                     var slide = slideResolutionFunc.Invoke(bitBoards, i);
                     allSlide |= slide;
@@ -280,7 +375,7 @@ namespace ChessDotNet
             ulong allJumps = 0;
             for (var i = 0; i < 64; i++)
             {
-                if (jumpingPieces.HasBit(i))
+                if ((jumpingPieces & (1UL << i)) != 0)
                 {
                     ulong jumps;
                     if (i > jumpMaskCenter)

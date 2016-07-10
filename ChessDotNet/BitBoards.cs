@@ -156,9 +156,25 @@ namespace ChessDotNet
                 {
                     bitBoard |= 1UL << move.To;
                 }
+                if (move.EnPassant && move.Piece == ChessPiece.WhitePawn && pair.Key == ChessPiece.BlackPawn)
+                {
+                    bitBoard &= ~(1UL << (move.To - 8));
+                }
+                if (move.EnPassant && move.Piece == ChessPiece.BlackPawn && pair.Key == ChessPiece.WhitePawn)
+                {
+                    bitBoard &= ~(1UL << (move.To + 8));
+                }
                 newPiecesDict.Add(pair.Key, bitBoard);
             }
             var newBoards = FromDict(newPiecesDict);
+            if ((move.Piece == ChessPiece.WhitePawn && move.From + 16 == move.To) || (move.Piece == ChessPiece.BlackPawn && move.From - 16 == move.To))
+            {
+                newBoards.EnPassantFile = Files[move.From%8];
+            }
+            else
+            {
+                newBoards.EnPassantFile = 0;
+            }
             return newBoards;
         }
 
