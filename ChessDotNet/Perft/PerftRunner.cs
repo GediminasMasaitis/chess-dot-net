@@ -22,16 +22,20 @@ namespace ChessDotNet.Perft
 
         public void Test(BitBoards bitBoards, bool whiteToMove, int depth)
         {
+            OutLine($"Running perft testing, up to depth {depth}");
+            OutLine(string.Empty);
+
             for (var i = 1; i <= depth; i++)
             {
-                OutLine("Testing with depth " + i);
+                OutLine($"Testing engine with depth {i}");
                 var engineResults = Perft.GetPossibleMoves(bitBoards, whiteToMove, i);
-                OutLine($"Chess.NET found {engineResults.Count} possible moves");
-                var clientResults = Client.GetMoveCount(i);
-                OutLine($"Client found {clientResults} possible moves");
+                OutLine($"Engine found {engineResults.Count} possible moves");
+                OutLine($"Testing client with depth {i}");
+                var clientMoveCount = Client.GetMoveCount(i);
+                OutLine($"Client found {clientMoveCount} possible moves");
                 OutLine("");
 
-                if (engineResults.Count != clientResults)
+                if (engineResults.Count != clientMoveCount)
                 {
                     OutLine("Mismatch detected");
                     FindMismatch(i, engineResults);
