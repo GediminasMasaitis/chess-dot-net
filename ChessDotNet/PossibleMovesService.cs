@@ -8,12 +8,10 @@ namespace ChessDotNet
 {
     public class PossibleMovesService
     {
-        private BitBoards BitBoards { get; }
         public bool MultiThreadKingSafety { get; set; }
 
-        public PossibleMovesService(BitBoards bitBoards)
+        public PossibleMovesService()
         {
-            BitBoards = bitBoards;
             MultiThreadKingSafety = false;
         }
 

@@ -9,20 +9,23 @@ namespace ChessDotNet.Perft
     {
         public Perft Perft { get; set; }
         public IPerftClient Client { get; set; }
+        public BoardFactory BoardFactory { get; set; }
 
 
         public event Action<string> OnOut;
         private void Out(string msg) => OnOut?.Invoke(msg);
         private void OutLine(string msg) => OnOut?.Invoke(msg + Environment.NewLine);
 
-        public PerftRunner(Perft perft, IPerftClient client)
+        public PerftRunner(Perft perft, IPerftClient client, BoardFactory boardFactory)
         {
             Perft = perft;
             Client = client;
+            BoardFactory = boardFactory;
         }
 
-        public void Test(BitBoards bitBoards, bool whiteToMove, int depth)
+        public void Test(string fen, bool whiteToMove, int depth)
         {
+            var bitBoards = BoardFactory.ParseFENToBitBoards(fen);
             OutLine($"Running perft testing, up to depth {depth}");
             OutLine(string.Empty);
             var sw = new Stopwatch();
