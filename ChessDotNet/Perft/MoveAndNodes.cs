@@ -1,6 +1,6 @@
-namespace ChessDotNet.Testing
+namespace ChessDotNet.Perft
 {
-    internal struct MoveAndNodes
+    public struct MoveAndNodes
     {
         public MoveAndNodes(string move, int nodes)
         {

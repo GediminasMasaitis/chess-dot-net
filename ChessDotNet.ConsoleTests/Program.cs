@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using ChessDotNet.Testing;
+using ChessDotNet.Perft;
 
 namespace ChessDotNet.ConsoleTests
 {
@@ -19,13 +19,14 @@ namespace ChessDotNet.ConsoleTests
             var forWhite = true;
 
             var movesService = new PossibleMovesService();
-            using (var perft = new Perft(movesService))
+            var perft = new Perft.Perft(movesService);
+            using (var sharperClient = new SharperPerftClient(@"C:\sharper\Sharper.exe"))
             {
-                perft.OnOut += Console.Write;
-
-                perft.Test(bitBoards, true, 4);
+                var perftRunner = new PerftRunner(perft, sharperClient);
+                perftRunner.OnOut += Console.Write;
+                perftRunner.Test(bitBoards, true, 4);
             }
-            var moves = movesService.GetAllPossibleMoves(bitBoards, forWhite).ToList();
+            //var moves = movesService.GetAllPossibleMoves(bitBoards, forWhite).ToList();
 
             //var dests = moves.Select(x => x.To);
             //var destBoard = fact.PiecesToBitBoard(dests);

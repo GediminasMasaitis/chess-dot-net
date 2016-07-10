@@ -47,8 +47,11 @@
     <Compile Include="Debugging.cs" />
     <Compile Include="ExtensionMethods.cs" />
     <Compile Include="Move.cs" />
-    <Compile Include="Testing\MoveAndNodes.cs" />
-    <Compile Include="Testing\Perft.cs" />
+    <Compile Include="Perft\IPerftClient.cs" />
+    <Compile Include="Perft\MoveAndNodes.cs" />
+    <Compile Include="Perft\Perft.cs" />
+    <Compile Include="Perft\PerftRunner.cs" />
+    <Compile Include="Perft\SharperPerftClient.cs" />
     <Compile Include="PieceColor.cs" />
     <Compile Include="PossibleMovesService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
