@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.Versioning;
 using System.Text;
 using System.Threading.Tasks;
 using ChessDotNet.Perft;
@@ -13,8 +14,8 @@ namespace ChessDotNet.ConsoleTests
         static void Main(string[] args)
         {
             //DoTimings();
-            DoPerft();
-            //TestMove();
+            //DoPerft();
+            TestMove();
 
             Console.ReadLine();
         }
@@ -47,21 +48,22 @@ namespace ChessDotNet.ConsoleTests
         private static void DoPerft()
         {
             var fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 ";
+            fen = "3k4/3p4/8/K1P4r/8/8/8/8 b - - 0 50";
             var fact = new BoardFactory();
             var movesService = new PossibleMovesService();
             var perft = new Perft.Perft(movesService);
-            using (var sharperClient = new SharperPerftClient(@"C:\sharper\Sharper.exe"))
+            using (var sharperClient = new SharperPerftClient(@"C:\sharper\Sharper.exe", fen))
             {
                 var perftRunner = new PerftRunner(perft, sharperClient, fact);
                 perftRunner.OnOut += Console.Write;
-                perftRunner.Test(fen, true, 5);
+                perftRunner.Test(fen, false, 5);
             }
         }
 
         private static void TestMove()
         {
             var fact = new BoardFactory();
-            var arrayBoard = fact.ParseFENToArrayBoard("rnbqkbnr/p1pp1p1p/1p4p1/3Np3/8/5P1N/PPPPP1PP/R1BQKB1R b KQkq - 1 4 ");
+            var arrayBoard = fact.ParseFENToArrayBoard("3k4/8/8/K1Pp3r/8/8/8/8 w - d6 0 51 ");
             var bitBoards = fact.ArrayBoardToBitBoards(arrayBoard);
             bitBoards.EnPassantFile = BitBoards.Files[1];
             var movesService = new PossibleMovesService();
@@ -70,7 +72,7 @@ namespace ChessDotNet.ConsoleTests
             var dests = moves.Select(x => x.To);
             var toMoveBoard = fact.PiecesToBitBoard(dests);
             var attacked = movesService.GetAllAttacked(bitBoards, forWhite);
-            Debugging.ShowBitBoard(attacked, toMoveBoard);
+            Debugging.ShowBitBoard(bitBoards.WhitePieces, bitBoards.BlackPieces, toMoveBoard);
         }
     }
 }

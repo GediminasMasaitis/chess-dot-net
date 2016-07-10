@@ -45,7 +45,7 @@ namespace ChessDotNet.Perft
                 {
                     OutLine("Mismatch detected");
                     OutLine("Engine finding all possible moves");
-                    var engineMoves = Perft.GetPossibleMoves(bitBoards, whiteToMove, depth);
+                    var engineMoves = Perft.GetPossibleMoves(bitBoards, whiteToMove, i);
                     FindMismatch(i, engineMoves);
                     return;
                 }
@@ -61,8 +61,21 @@ namespace ChessDotNet.Perft
             var engineMan = Perft.FindMoveAndNodesFromEngineResults(engineResults);
             var clientMan = Client.GetMovesAndNodes(mismatchDepth, previousBadMoves);
 
-            for (var i = 0; i < engineMan.Count; i++)
+            var biggerCount = Math.Max(engineMan.Count, clientMan.Count);
+
+            for (var i = 0; i < biggerCount; i++)
             {
+                if (i >= engineMan.Count)
+                {
+                    OutLine($"Engine didn't find result {allBadMoves} {clientMan[i].Move} (index out)");
+                    return;
+                }
+                if (i >= clientMan.Count)
+                {
+                    OutLine($"Engine found result {allBadMoves} {engineMan[i].Move} that it shouldn't have found (index out)");
+                    return;
+                }
+
                 if (engineMan[i].Move != clientMan[i].Move)
                 {
                     if (engineMan.All(x => x.Move != clientMan[i].Move))

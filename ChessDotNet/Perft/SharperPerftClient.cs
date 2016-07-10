@@ -9,9 +9,11 @@ namespace ChessDotNet.Perft
     public class SharperPerftClient : IPerftClient
     {
         private Process Sharper { get; }
+        public string FEN { get; set; }
 
-        public SharperPerftClient(string path)
+        public SharperPerftClient(string path, string fen)
         {
+            FEN = fen;
             var startInfo = new ProcessStartInfo(path);
             startInfo.RedirectStandardInput = true;
             startInfo.RedirectStandardOutput = true;
@@ -38,7 +40,7 @@ namespace ChessDotNet.Perft
         {
             var lines = new List<string>();
 
-            Sharper.StandardInput.WriteLine("new");
+            Sharper.StandardInput.WriteLine("setboard " + FEN);
             Sharper.StandardInput.WriteLine("force");
 
             if (commands != null)
