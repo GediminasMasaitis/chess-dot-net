@@ -19,14 +19,12 @@ namespace ChessDotNet
 
         public IEnumerable<Move> GetAllPossibleMoves(BitBoards bitBoards, bool isWhite)
         {
-            var attackedByEnemy = GetAllAttacked(bitBoards, !isWhite);
-
             var pawnMoves = GetPossiblePawnMoves(bitBoards, isWhite);
             var knightMoves = GetPossibleKnightMoves(bitBoards, isWhite);
             var bishopMoves = GetPossibleBishopMoves(bitBoards, isWhite);
             var rookMoves = GetPossibleRookMoves(bitBoards, isWhite);
             var queenMoves = GetPossibleQueenMoves(bitBoards, isWhite);
-            var kingMoves = GetPossibleKingMoves(bitBoards, isWhite, attackedByEnemy);
+            var kingMoves = GetPossibleKingMoves(bitBoards, isWhite);
 
             //var allMoves = new List<Move>();
             //allMoves.AddRange(pawnMoves);
@@ -182,23 +180,21 @@ namespace ChessDotNet
             }
         }
 
-        public IEnumerable<Move> GetPossibleKingMoves(BitBoards bitBoards, bool forWhite, ulong? attackedByEnemy)
+        public IEnumerable<Move> GetPossibleKingMoves(BitBoards bitBoards, bool forWhite)
         {
-            attackedByEnemy = attackedByEnemy ?? GetAllAttacked(bitBoards, !forWhite);
             var kings = forWhite ? bitBoards.WhiteKings : bitBoards.BlackKings;
             var chessPiece = forWhite ? ChessPiece.WhiteKing : ChessPiece.BlackKing;
-            var safeSquares = ~attackedByEnemy.Value;
-            return GetPossibleJumpingMoves(bitBoards, kings, BitBoards.KingSpan, BitBoards.KingSpanPosition, forWhite, chessPiece, safeSquares);
+            return GetPossibleJumpingMoves(bitBoards, kings, BitBoards.KingSpan, BitBoards.KingSpanPosition, forWhite, chessPiece);
         }
 
         public IEnumerable<Move> GetPossibleKnightMoves(BitBoards bitBoards, bool forWhite)
         {
             var knights = forWhite ? bitBoards.WhiteNights : bitBoards.BlackNights;
             var chessPiece = forWhite ? ChessPiece.WhiteKnight : ChessPiece.BlackKnight;
-            return GetPossibleJumpingMoves(bitBoards, knights, BitBoards.KnightSpan, BitBoards.KnightSpanPosition, forWhite, chessPiece, ~0UL);
+            return GetPossibleJumpingMoves(bitBoards, knights, BitBoards.KnightSpan, BitBoards.KnightSpanPosition, forWhite, chessPiece);
         }
 
-        private IEnumerable<Move> GetPossibleJumpingMoves(BitBoards bitBoards, ulong jumpingPieces, ulong jumpMask, int jumpMaskCenter, bool forWhite, ChessPiece piece, ulong safeJumpMask)
+        private IEnumerable<Move> GetPossibleJumpingMoves(BitBoards bitBoards, ulong jumpingPieces, ulong jumpMask, int jumpMaskCenter, bool forWhite, ChessPiece piece)
         {
             var ownPieces = forWhite ? bitBoards.WhitePieces : bitBoards.BlackPieces;
             for (var i = 0; i < 64; i++)
@@ -217,7 +213,6 @@ namespace ChessDotNet
 
                     jumps &= ~(i%8 < 4 ? BitBoards.Files[6] | BitBoards.Files[7] : BitBoards.Files[0] | BitBoards.Files[1]);
                     jumps &= ~ownPieces;
-                    jumps &= safeJumpMask;
 
                     foreach (var move in BitmaskToMoves(jumps, i, piece))
                     {
@@ -278,7 +273,7 @@ namespace ChessDotNet
             //return true;
             var afterMoveBitBoards = bitBoards.DoMove(move);
             var enemyAttackedAfterMove = GetAllAttacked(afterMoveBitBoards, !forWhite);
-            var myKings = forWhite ? bitBoards.WhiteKings : bitBoards.BlackKings;
+            var myKings = forWhite ? afterMoveBitBoards.WhiteKings : afterMoveBitBoards.BlackKings;
             var isSafe = (enemyAttackedAfterMove & myKings) == 0;
             return isSafe;
         }
