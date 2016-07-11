@@ -3,7 +3,7 @@ using ChessDotNet.Data;
 
 namespace ChessDotNet.Evaluation
 {
-    class EvaluationService
+    public class EvaluationService
     {
         private static int[] Weights = {100,340,350,500,950,50000};
 

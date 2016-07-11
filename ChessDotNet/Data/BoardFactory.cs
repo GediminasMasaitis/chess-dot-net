@@ -81,6 +81,11 @@ namespace ChessDotNet.Data
 
             }
 
+            if (fen.Contains("w"))
+            {
+                board.WhiteToMove = true;
+            }
+
             return board;
         }
 
@@ -152,6 +157,7 @@ namespace ChessDotNet.Data
                         throw new ArgumentOutOfRangeException(nameof(piece), piece, null);
                 }
             }
+            bitBoard.WhiteToMove = arrayBoard.WhiteToMove;
             bitBoard.Sync();
             return bitBoard;
         }

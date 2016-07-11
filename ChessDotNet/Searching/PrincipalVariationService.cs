@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -23,7 +24,7 @@ namespace ChessDotNet.Searching
 
         public int Search(int maxDepth)
         {
-            
+            throw new NotImplementedException();
         }
 
         public int PrincipalVariationSearch(int alpha, int beta, BitBoards bitBoards, bool forWhite, int depth)
@@ -82,7 +83,7 @@ namespace ChessDotNet.Searching
         {
             var alpha = beta - 1;
             var score = int.MinValue;
-            if (currentDepth >= MaxDepth)
+            //if (currentDepth >= MaxDepth)
             {
                 score = EvaluationService.Evaluate(bitBoards, forWhite);
                 return score;

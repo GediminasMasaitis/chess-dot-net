@@ -8,7 +8,7 @@ namespace ChessDotNet.Perft
 {
     public class PerftRunner
     {
-        public Perft Perft { get; set; }
+        public PerftService PerftService { get; set; }
         public IPerftClient Client { get; set; }
         public BoardFactory BoardFactory { get; set; }
 
@@ -17,9 +17,9 @@ namespace ChessDotNet.Perft
         private void Out(string msg) => OnOut?.Invoke(msg);
         private void OutLine(string msg) => OnOut?.Invoke(msg + Environment.NewLine);
 
-        public PerftRunner(Perft perft, IPerftClient client, BoardFactory boardFactory)
+        public PerftRunner(PerftService perftService, IPerftClient client, BoardFactory boardFactory)
         {
-            Perft = perft;
+            PerftService = perftService;
             Client = client;
             BoardFactory = boardFactory;
         }
@@ -34,7 +34,7 @@ namespace ChessDotNet.Perft
             {
                 OutLine($"Testing engine with depth {i}");
                 sw.Restart();
-                var engineMoveCount = Perft.GetPossibleMoveCount(bitBoards, whiteToMove, i);
+                var engineMoveCount = PerftService.GetPossibleMoveCount(bitBoards, whiteToMove, i);
                 sw.Stop();
                 OutLine($"Engine found {engineMoveCount} possible moves in {sw.Elapsed.TotalMilliseconds} miliseconds");
                 OutLine($"Testing client with depth {i}");
@@ -46,7 +46,7 @@ namespace ChessDotNet.Perft
                 {
                     OutLine("Mismatch detected");
                     OutLine("Engine finding all possible moves");
-                    var engineMoves = Perft.GetPossibleMoves(bitBoards, whiteToMove, i);
+                    var engineMoves = PerftService.GetPossibleMoves(bitBoards, whiteToMove, i);
                     FindMismatch(i, engineMoves);
                     return;
                 }
@@ -59,7 +59,7 @@ namespace ChessDotNet.Perft
         {
             previousBadMoves = previousBadMoves ?? new List<string>();
             var allBadMoves = previousBadMoves.Aggregate("", (c, n) => c + " " + n);
-            var engineMan = Perft.FindMoveAndNodesFromEngineResults(engineResults);
+            var engineMan = PerftService.FindMoveAndNodesFromEngineResults(engineResults);
             var clientMan = Client.GetMovesAndNodes(mismatchDepth, previousBadMoves);
 
             var biggerCount = Math.Max(engineMan.Count, clientMan.Count);

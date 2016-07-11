@@ -12,7 +12,14 @@ namespace ChessDotNet
             // TODO: Clean this hack up
             var dll = Assembly.GetExecutingAssembly().Location;
             var dllPath = Path.GetDirectoryName(dll);
-            var exePath = dllPath + @"\..\..\..\ChessDotNet.BoardVisualizer\bin\Debug\ChessDotNet.BoardVisualizer.exe";
+
+#if DEBUG
+            var debugPath = "Debug";
+#else
+            var debugPath = "Release";
+#endif
+
+            var exePath = dllPath + @"\..\..\..\ChessDotNet.BoardVisualizer\bin\" + debugPath + @"\ChessDotNet.BoardVisualizer.exe";
 
             var argsStr = bitBoard.Select(x => x.ToString()).Aggregate((c, n) => c + " " + n);
 

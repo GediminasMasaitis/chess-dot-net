@@ -60,6 +60,7 @@
   <ItemGroup>
     <Compile Include="Data\ArrayBoard.cs" />
     <Compile Include="Data\BitBoards.cs" />
+    <Compile Include="Data\BoardBase.cs" />
     <Compile Include="Data\ChessPiece.cs" />
     <Compile Include="Data\BoardFactory.cs" />
     <Compile Include="Debugging.cs" />
@@ -69,7 +70,7 @@
     <Compile Include="MoveGeneration\HyperbolaQuintessence.cs" />
     <Compile Include="Perft\IPerftClient.cs" />
     <Compile Include="Perft\MoveAndNodes.cs" />
-    <Compile Include="Perft\Perft.cs" />
+    <Compile Include="Perft\PerftService.cs" />
     <Compile Include="Perft\PerftRunner.cs" />
     <Compile Include="Perft\SharperPerftClient.cs" />
     <Compile Include="Data\PieceColor.cs" />

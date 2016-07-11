@@ -2,7 +2,7 @@
 
 namespace ChessDotNet.Data
 {
-    public class BitBoards
+    public class BitBoards : BoardBase
     {
         public ulong WhitePawns { get; set; }
         public ulong WhiteNights { get; set; }
@@ -35,6 +35,8 @@ namespace ChessDotNet.Data
         public static IReadOnlyList<ulong> Ranks { get; private set; }
         public static IReadOnlyList<ulong> Diagonals { get; private set; }
         public static IReadOnlyList<ulong> Antidiagonals { get; private set; }
+        public static ulong KingSide { get; set; }
+        public static ulong QueenSide { get; set; }
 
         public BitBoards()
         {
@@ -65,6 +67,9 @@ namespace ChessDotNet.Data
                 files.Add(file);
             }
             Files = files;
+
+            QueenSide = Files[0] | Files[1] | Files[2] | Files[3];
+            KingSide = ~QueenSide;
 
             var ranks = new List<ulong>(8);
             for (var i = 0; i < 8; i++)

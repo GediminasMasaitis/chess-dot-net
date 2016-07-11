@@ -1,6 +1,6 @@
 ﻿namespace ChessDotNet.Data
 {
-    public class ArrayBoard
+    public class ArrayBoard : BoardBase
     {
         public ArrayBoard()
         {
