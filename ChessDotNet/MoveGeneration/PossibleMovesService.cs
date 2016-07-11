@@ -1,17 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using ChessDotNet.Data;
 
-namespace ChessDotNet
+namespace ChessDotNet.MoveGeneration
 {
     public class PossibleMovesService
     {
+        public AttacksService AttacksService { get; set; }
+        public HyperbolaQuintessence HyperbolaQuintessence { get; set; }
         public bool MultiThreadKingSafety { get; set; }
 
-        public PossibleMovesService()
+        public PossibleMovesService(AttacksService attacksService, HyperbolaQuintessence hyperbolaQuintessence)
         {
+            AttacksService = attacksService;
+            HyperbolaQuintessence = hyperbolaQuintessence;
             MultiThreadKingSafety = false;
         }
 
@@ -254,28 +257,28 @@ namespace ChessDotNet
         {
             var ownPieces = forWhite ? bitBoards.WhitePieces : bitBoards.BlackPieces;
             var moves = new List<Move>();
-            for (var i = 0; i < 64; i++)
+            while (jumpingPieces != 0)
             {
-                if ((jumpingPieces & (1UL << i)) != 0)
+                var i = jumpingPieces.BitScanForward();
+                ulong jumps;
+                if (i > jumpMaskCenter)
                 {
-                    ulong jumps;
-                    if (i > jumpMaskCenter)
-                    {
-                        jumps = jumpMask << (i - jumpMaskCenter);
-                    }
-                    else
-                    {
-                        jumps = jumpMask >> (jumpMaskCenter - i);
-                    }
-
-                    jumps &= ~(i%8 < 4 ? BitBoards.Files[6] | BitBoards.Files[7] : BitBoards.Files[0] | BitBoards.Files[1]);
-                    jumps &= ~ownPieces;
-
-                    foreach (var move in BitmaskToMoves(jumps, i, piece))
-                    {
-                        moves.Add(move);
-                    }
+                    jumps = jumpMask << (i - jumpMaskCenter);
                 }
+                else
+                {
+                    jumps = jumpMask >> (jumpMaskCenter - i);
+                }
+
+                jumps &= ~(i%8 < 4 ? BitBoards.Files[6] | BitBoards.Files[7] : BitBoards.Files[0] | BitBoards.Files[1]);
+                jumps &= ~ownPieces;
+
+                foreach (var move in BitmaskToMoves(jumps, i, piece))
+                {
+                    moves.Add(move);
+                }
+
+                jumpingPieces &= ~(1UL << i);
             }
             return moves;
         }
@@ -291,7 +294,7 @@ namespace ChessDotNet
         {
             var rooks = forWhite ? bitBoards.WhiteRooks : bitBoards.BlackRooks;
             var chessPiece = forWhite ? ChessPiece.WhiteRook : ChessPiece.BlackRook;
-            return GetPotentialSlidingPieceMoves(bitBoards, rooks, HorizontalVerticalSlide, forWhite, chessPiece);
+            return GetPotentialSlidingPieceMoves(bitBoards, rooks, HyperbolaQuintessence.HorizontalVerticalSlide, forWhite, chessPiece);
         }
 
         public IList<Move> GetPossibleBishopMoves(BitBoards bitBoards, bool forWhite)
@@ -305,7 +308,7 @@ namespace ChessDotNet
         {
             var bishops = forWhite ? bitBoards.WhiteBishops : bitBoards.BlackBishops;
             var chessPiece = forWhite ? ChessPiece.WhiteBishop : ChessPiece.BlackBishop;
-            return GetPotentialSlidingPieceMoves(bitBoards, bishops, DiagonalAntidiagonalSlide, forWhite, chessPiece);
+            return GetPotentialSlidingPieceMoves(bitBoards, bishops, HyperbolaQuintessence.DiagonalAntidiagonalSlide, forWhite, chessPiece);
         }
 
         public IList<Move> GetPossibleQueenMoves(BitBoards bitBoards, bool forWhite)
@@ -319,25 +322,23 @@ namespace ChessDotNet
         {
             var bishops = forWhite ? bitBoards.WhiteQueens : bitBoards.BlackQueens;
             var chessPiece = forWhite ? ChessPiece.WhiteQueen : ChessPiece.BlackQueen;
-            return GetPotentialSlidingPieceMoves(bitBoards, bishops, AllSlide, forWhite, chessPiece);
+            return GetPotentialSlidingPieceMoves(bitBoards, bishops, HyperbolaQuintessence.AllSlide, forWhite, chessPiece);
         }
 
         private IList<Move> GetPotentialSlidingPieceMoves(BitBoards bitBoards, ulong slidingPieces, Func<BitBoards, int, ulong> slideResolutionFunc, bool forWhite, ChessPiece piece)
         {
             var ownPieces = forWhite ? bitBoards.WhitePieces : bitBoards.BlackPieces;
             var moves = new List<Move>();
-            for (var i = 0; i < 64; i++)
+            while (slidingPieces != 0)
             {
-                if ((slidingPieces & (1UL << i)) != 0)
-                //if ((slidingPieces & (1UL << i)) > 0)
+                var i = slidingPieces.BitScanForward();
+                var slide = slideResolutionFunc.Invoke(bitBoards, i);
+                slide &= ~ownPieces;
+                foreach (var move in BitmaskToMoves(slide, i, piece))
                 {
-                    var slide = slideResolutionFunc.Invoke(bitBoards, i);
-                    slide &= ~ownPieces;
-                    foreach (var move in BitmaskToMoves(slide, i, piece))
-                    {
-                        moves.Add(move);
-                    }
+                    moves.Add(move);
                 }
+                slidingPieces &= ~(1UL << i);
             }
             return moves;
         }
@@ -358,7 +359,7 @@ namespace ChessDotNet
         {
             //return true;
             var afterMoveBitBoards = bitBoards.DoMove(move);
-            var enemyAttackedAfterMove = GetAllAttacked(afterMoveBitBoards, !forWhite);
+            var enemyAttackedAfterMove = AttacksService.GetAllAttacked(afterMoveBitBoards, !forWhite);
             var myKings = forWhite ? afterMoveBitBoards.WhiteKings : afterMoveBitBoards.BlackKings;
             var isSafe = (enemyAttackedAfterMove & myKings) == 0;
             return isSafe;
@@ -376,182 +377,6 @@ namespace ChessDotNet
                 }
             }
             return moves;
-        }
-
-        public ulong GetAllAttacked(BitBoards bitBoards, bool forWhite)
-        {
-            var pawnsAttack = GetAttackedByPawns(bitBoards, forWhite);
-            var knightsAttack = GetAttackedByKnights(bitBoards, forWhite);
-
-            //var bishopsAttack = GetAttackedByBishops(bitBoards, forWhite);
-            //var rooksAttack = GetAttackedByRooks(bitBoards, forWhite);
-            //var queensAttack = GetAttackedByQueens(bitBoards, forWhite);
-
-            var bq = forWhite ? bitBoards.WhiteBishops | bitBoards.WhiteQueens : bitBoards.BlackBishops | bitBoards.BlackQueens;
-            var bqAttack = GetAttackedBySlidingPieces(bitBoards, bq, DiagonalAntidiagonalSlide);
-
-            var rq = forWhite ? bitBoards.WhiteRooks | bitBoards.WhiteQueens : bitBoards.BlackRooks | bitBoards.BlackQueens;
-            var rqAttack = GetAttackedBySlidingPieces(bitBoards, rq, HorizontalVerticalSlide);
-
-            var kingsAttack = GetAttackedByKings(bitBoards, forWhite);
-
-            var allAttacked = pawnsAttack | knightsAttack | bqAttack | rqAttack | kingsAttack;
-            return allAttacked;
-        }
-
-        public ulong GetAttackedByBishops(BitBoards bitBoards, bool forWhite)
-        {
-            var bishops = forWhite ? bitBoards.WhiteBishops : bitBoards.BlackBishops;
-            return GetAttackedBySlidingPieces(bitBoards, bishops, DiagonalAntidiagonalSlide);
-        }
-
-        public ulong GetAttackedByRooks(BitBoards bitBoards, bool forWhite)
-        {
-            var rooks = forWhite ? bitBoards.WhiteRooks : bitBoards.BlackRooks;
-            return GetAttackedBySlidingPieces(bitBoards, rooks, HorizontalVerticalSlide);
-        }
-
-        public ulong GetAttackedByQueens(BitBoards bitBoards, bool forWhite)
-        {
-            var queens = forWhite ? bitBoards.WhiteQueens : bitBoards.BlackQueens;
-            return GetAttackedBySlidingPieces(bitBoards, queens, AllSlide);
-        }
-
-        private ulong GetAttackedBySlidingPieces(BitBoards bitBoards, ulong slidingPieces, Func<BitBoards, int, ulong> slideResolutionFunc)
-        {
-            var allSlide = 0UL;
-            while(slidingPieces != 0)
-            {
-                var i = slidingPieces.BitScanForward();
-                var slide = slideResolutionFunc.Invoke(bitBoards, i);
-                allSlide |= slide;
-                slidingPieces &= ~(1UL << i);
-            }
-            return allSlide;
-        }
-
-        [Obsolete]
-        private ulong GetAttackedBySlidingPiecesOld(BitBoards bitBoards, ulong slidingPieces, Func<BitBoards, int, ulong> slideResolutionFunc)
-        {
-            var allSlide = 0UL;
-            for (var i = 0; i < 64; i++)
-            {
-                if ((slidingPieces & (1UL << i)) > 0)
-                {
-                    var slide = slideResolutionFunc.Invoke(bitBoards, i);
-                    allSlide |= slide;
-                }
-            }
-            return allSlide;
-        }
-
-        public ulong GetAttackedByKings(BitBoards bitBoards, bool forWhite)
-        {
-            var kings = forWhite ? bitBoards.WhiteKings : bitBoards.BlackKings;
-            return GetAttackedByJumpingPieces(bitBoards, kings, BitBoards.KingSpan, BitBoards.KingSpanPosition);
-        }
-
-        public ulong GetAttackedByKnights(BitBoards bitBoards, bool forWhite)
-        {
-            var knights = forWhite ? bitBoards.WhiteNights : bitBoards.BlackNights;
-            return GetAttackedByJumpingPieces(bitBoards, knights, BitBoards.KnightSpan, BitBoards.KnightSpanPosition);
-        }
-
-        public ulong GetAttackedByPawns(BitBoards bitBoards, bool forWhite)
-        {
-            ulong pawnsLeft;
-            ulong pawnsRight;
-            if (forWhite)
-            {
-                pawnsLeft = (bitBoards.WhitePawns << 7) & ~BitBoards.Files[7];
-                pawnsRight = (bitBoards.WhitePawns << 9) & ~BitBoards.Files[0];
-            }
-            else
-            {
-                pawnsLeft = (bitBoards.BlackPawns >> 7) & ~BitBoards.Files[0];
-                pawnsRight = (bitBoards.BlackPawns >> 9) & ~BitBoards.Files[7];
-            }
-            return pawnsLeft | pawnsRight;
-        }
-
-        private ulong GetAttackedByJumpingPieces(BitBoards bitBoards, ulong jumpingPieces, ulong jumpMask, int jumpMaskCenter)
-        {
-            ulong allJumps = 0;
-            while(jumpingPieces != 0)
-            {
-                var i = jumpingPieces.BitScanForward();
-                ulong jumps;
-                if (i > jumpMaskCenter)
-                {
-                    jumps = jumpMask << (i - jumpMaskCenter);
-                }
-                else
-                {
-                    jumps = jumpMask >> (jumpMaskCenter - i);
-                }
-
-                jumps &= ~(i % 8 < 4 ? BitBoards.Files[6] | BitBoards.Files[7] : BitBoards.Files[0] | BitBoards.Files[1]);
-                allJumps |= jumps;
-                jumpingPieces &= ~(1UL << i);
-            }
-            return allJumps;
-        }
-
-        [Obsolete]
-        private ulong GetAttackedByJumpingPiecesOld(BitBoards bitBoards, ulong jumpingPieces, ulong jumpMask, int jumpMaskCenter)
-        {
-            ulong allJumps = 0;
-            for (var i = 0; i < 64; i++)
-            {
-                if ((jumpingPieces & (1UL << i)) != 0)
-                {
-                    ulong jumps;
-                    if (i > jumpMaskCenter)
-                    {
-                        jumps = jumpMask << (i - jumpMaskCenter);
-                    }
-                    else
-                    {
-                        jumps = jumpMask >> (jumpMaskCenter - i);
-                    }
-
-                    jumps &= ~(i % 8 < 4 ? BitBoards.Files[6] | BitBoards.Files[7] : BitBoards.Files[0] | BitBoards.Files[1]);
-                    allJumps |= jumps;
-                }
-            }
-            return allJumps;
-        }
-
-        private ulong AllSlide(BitBoards bitboards, int position)
-        {
-            var hv = HorizontalVerticalSlide(bitboards, position);
-            var dad = DiagonalAntidiagonalSlide(bitboards, position);
-            return hv | dad;
-        }
-
-        private ulong HorizontalVerticalSlide(BitBoards bitboards, int position)
-        {
-            var pieceBitboard = 1UL << position;
-            var horizontal = MaskedSlide(bitboards, pieceBitboard, BitBoards.Ranks[position/8]);
-            var vertical = MaskedSlide(bitboards, pieceBitboard, BitBoards.Files[position%8]);
-            return horizontal | vertical;
-        }
-
-        private ulong DiagonalAntidiagonalSlide(BitBoards bitboards, int position)
-        {
-            var pieceBitboard = 1UL << position;
-            var horizontal = MaskedSlide(bitboards, pieceBitboard, BitBoards.Diagonals[position/8 + position%8]);
-            var vertical = MaskedSlide(bitboards, pieceBitboard, BitBoards.Antidiagonals[position/8 + 7 - position%8]);
-            return horizontal | vertical;
-        }
-
-        private ulong MaskedSlide(BitBoards bitboards, ulong pieceBitboard, ulong mask)
-        {
-            var left = ((bitboards.FilledSquares & mask) - 2 * pieceBitboard);
-            var right = ((bitboards.FilledSquares & mask).Reverse() - 2 * pieceBitboard.Reverse()).Reverse();
-            var both = left ^ right;
-            var slide = both & mask;
-            return slide;
         }
     }
 }

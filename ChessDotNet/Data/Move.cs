@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ChessDotNet
+namespace ChessDotNet.Data
 {
     public struct Move
     {

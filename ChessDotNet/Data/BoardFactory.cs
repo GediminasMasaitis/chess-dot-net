@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace ChessDotNet
+namespace ChessDotNet.Data
 {
     public class BoardFactory
     {

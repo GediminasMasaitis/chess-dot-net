@@ -1,4 +1,4 @@
-﻿namespace ChessDotNet
+﻿namespace ChessDotNet.Data
 {
     public enum PieceColor
     {

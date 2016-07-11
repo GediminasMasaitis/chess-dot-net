@@ -2,6 +2,8 @@
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using ChessDotNet.Data;
+using ChessDotNet.MoveGeneration;
 
 namespace ChessDotNet.Perft
 {

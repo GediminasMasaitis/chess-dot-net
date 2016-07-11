@@ -5,6 +5,8 @@ using System.Linq;
 using System.Runtime.Versioning;
 using System.Text;
 using System.Threading.Tasks;
+using ChessDotNet.Data;
+using ChessDotNet.MoveGeneration;
 using ChessDotNet.Perft;
 
 namespace ChessDotNet.ConsoleTests
@@ -51,7 +53,9 @@ namespace ChessDotNet.ConsoleTests
             //fen = "3k4/3p4/8/K1P4r/8/8/8/8 b - - 0 50";
             //fen = "8/1kP5/8/K2p3r/8/8/8/8 w - - 1 53 ";
             var fact = new BoardFactory();
-            var movesService = new PossibleMovesService();
+            var hyperbola = new HyperbolaQuintessence();
+            var attacksService = new AttacksService(hyperbola);
+            var movesService = new PossibleMovesService(attacksService, hyperbola);
             var perft = new Perft.Perft(movesService);
             var results = perft.GetPossibleMoves(fact.ParseFENToBitBoards(fen), true, 1);
             using (var sharperClient = new SharperPerftClient(@"C:\sharper\Sharper.exe", fen))
@@ -68,12 +72,14 @@ namespace ChessDotNet.ConsoleTests
             var arrayBoard = fact.ParseFENToArrayBoard("3k4/3p4/8/K1P4r/8/8/8/8 b - d6 0 51 ");
             var bitBoards = fact.ArrayBoardToBitBoards(arrayBoard);
             bitBoards.EnPassantFile = BitBoards.Files[3];
-            var movesService = new PossibleMovesService();
+            var hyperbola = new HyperbolaQuintessence();
+            var attacksService = new AttacksService(hyperbola);
+            var movesService = new PossibleMovesService(attacksService, hyperbola);
             var forWhite = true;
             var moves = movesService.GetAllPossibleMoves(bitBoards, forWhite).ToList();
             var dests = moves.Select(x => x.To);
             var toMoveBoard = fact.PiecesToBitBoard(dests);
-            var attacked = movesService.GetAllAttacked(bitBoards, forWhite);
+            var attacked = attacksService.GetAllAttacked(bitBoards, forWhite);
             Debugging.ShowBitBoard(bitBoards.WhitePieces, bitBoards.BlackPieces, toMoveBoard);
         }
     }
