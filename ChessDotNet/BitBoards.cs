@@ -152,7 +152,8 @@ namespace ChessDotNet
             foreach (var pair in PiecesDict)
             {
                 var bitBoard = pair.Value & ~(1UL << move.From) & ~(1UL << move.To);
-                if (move.Piece == pair.Key)
+                var pieceToAdd = move.PawnPromoteTo ?? move.Piece;
+                if (pair.Key == pieceToAdd)
                 {
                     bitBoard |= 1UL << move.To;
                 }
