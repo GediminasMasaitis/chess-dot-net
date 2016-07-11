@@ -219,5 +219,59 @@ namespace ChessDotNet.Data
             newBoards.Sync();
             return newBoards;
         }
+
+        public int CountPieces(ulong pieceBitBoard)
+        {
+            var count = 0;
+            while (pieceBitBoard != 0)
+            {
+                count++;
+                pieceBitBoard &= pieceBitBoard - 1;
+            }
+            return count;
+        }
+
+        public PieceCounts CountPieces(bool forWhite)
+        {
+            return forWhite ? CountPiecesForWhite() : CountPiecesForBlack();
+        }
+
+        public PieceCounts CountPiecesForWhite()
+        {
+            var pawns = CountPieces(WhitePawns);
+            var knights = CountPieces(WhiteNights);
+            var bishops = CountPieces(WhiteBishops);
+            var rooks = CountPieces(WhiteRooks);
+            var queens = CountPieces(WhiteQueens);
+            return new PieceCounts(pawns, knights, bishops, rooks, queens);
+        }
+
+        public PieceCounts CountPiecesForBlack()
+        {
+            var pawns = CountPieces(BlackPawns);
+            var knights = CountPieces(BlackNights);
+            var bishops = CountPieces(BlackBishops);
+            var rooks = CountPieces(BlackRooks);
+            var queens = CountPieces(BlackQueens);
+            return new PieceCounts(pawns, knights, bishops, rooks, queens);
+        }
+    }
+
+    public struct PieceCounts
+    {
+        public PieceCounts(int pawns, int knights, int bishops, int rooks, int queens)
+        {
+            Pawns = pawns;
+            Knights = knights;
+            Bishops = bishops;
+            Rooks = rooks;
+            Queens = queens;
+        }
+
+        public int Pawns { get; }
+        public int Knights { get; }
+        public int Bishops { get; }
+        public int Rooks { get; }
+        public int Queens { get; }
     }
 }

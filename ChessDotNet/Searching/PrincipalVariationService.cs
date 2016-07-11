@@ -1,36 +1,37 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using ChessDotNet.Data;
+using ChessDotNet.Evaluation;
 using ChessDotNet.MoveGeneration;
-using ChessDotNet.Rating;
 
 namespace ChessDotNet.Searching
 {
     class PrincipalVariationService
     {
         public PossibleMovesService PossibleMovesService { get; set; }
-        public RatingService RatingService { get; set; }
-        public int MaxDepth { get; }
+        public EvaluationService EvaluationService { get; set; }
 
         public const int MateScore = int.MaxValue/2;
 
-        public PrincipalVariationService(PossibleMovesService possibleMovesService, RatingService ratingService)
+        public PrincipalVariationService(PossibleMovesService possibleMovesService, EvaluationService evaluationService)
         {
             PossibleMovesService = possibleMovesService;
-            RatingService = ratingService;
-            MaxDepth = 3;
+            EvaluationService = evaluationService;
         }
 
-        public int PrincipalVariationSearch(int alpha, int beta, BitBoards bitBoards, bool forWhite, int currentDepth)
+        public int Search(int maxDepth)
+        {
+            
+        }
+
+        public int PrincipalVariationSearch(int alpha, int beta, BitBoards bitBoards, bool forWhite, int depth)
         {
             int score;
-            Move bestMove;
-            if (currentDepth == MaxDepth)
+            if (depth == 0)
             {
-                score = RatingService.Evaluate(bitBoards, forWhite);
+                score = EvaluationService.Evaluate(bitBoards, forWhite);
                 return score;
             }
 
@@ -38,34 +39,43 @@ namespace ChessDotNet.Searching
             
             var potentialMoves = PossibleMovesService.GetAllPotentialMoves(bitBoards, forWhite);
             var i = 0;
+            var doPV = true;
             for (; i < potentialMoves.Count; i++)
             {
                 var potentialMove = potentialMoves[i];
                 var bbAfter = PossibleMovesService.DoMoveIfKingSafe(bitBoards, potentialMove, forWhite);
-                if (bbAfter != null)
+                if (bbAfter == null)
                 {
-                    score = -PrincipalVariationSearch(-alpha, -beta, bbAfter, !forWhite, currentDepth + 1);
-                    if (score == MateScore)
-                    {
-                        return score;
-                    }
+                    continue;
+                }
+
+                if (doPV)
+                {
+                    score = -PrincipalVariationSearch(-alpha, -beta, bbAfter, !forWhite, depth - 1);
+                }
+                else
+                {
+                    score = -ZeroWindowSearch(-alpha, bbAfter, !forWhite, depth - 1);
                     if (score > alpha)
                     {
-                        if (score >= beta)
-                        {
-                            return score;
-                        }
-                        alpha = score;
+                        score = -PrincipalVariationSearch(-alpha, -beta, bbAfter, !forWhite, depth - 1);
                     }
-                    bestMove = potentialMove;
-                    break;
+                }
+                if (score == MateScore)
+                {
+                    return score;
+                }
+                if (score >= beta)
+                {
+                    return score;
+                }
+                if (score > alpha)
+                {
+                    alpha = score;
+                    doPV = false;
                 }
             }
-
-            for (; i < potentialMoves.Count; i++)
-            {
-                var tempScore = -ZeroWindowSearch(-alpha, )
-            }
+            return alpha;
         }
 
         public int ZeroWindowSearch(int beta, BitBoards bitBoards, bool forWhite, int currentDepth)
@@ -74,7 +84,7 @@ namespace ChessDotNet.Searching
             var score = int.MinValue;
             if (currentDepth >= MaxDepth)
             {
-                score = RatingService.Evaluate(bitBoards, forWhite);
+                score = EvaluationService.Evaluate(bitBoards, forWhite);
                 return score;
             }
 

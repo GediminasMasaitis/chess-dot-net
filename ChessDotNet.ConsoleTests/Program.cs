@@ -6,6 +6,7 @@ using System.Runtime.Versioning;
 using System.Text;
 using System.Threading.Tasks;
 using ChessDotNet.Data;
+using ChessDotNet.Evaluation;
 using ChessDotNet.MoveGeneration;
 using ChessDotNet.Perft;
 
@@ -16,8 +17,8 @@ namespace ChessDotNet.ConsoleTests
         static void Main(string[] args)
         {
             //DoTimings();
-            DoPerft();
-            //TestMove();
+            //DoPerft();
+            TestMove();
 
             Console.ReadLine();
         }
@@ -73,6 +74,8 @@ namespace ChessDotNet.ConsoleTests
             var bitBoards = fact.ArrayBoardToBitBoards(arrayBoard);
             bitBoards.EnPassantFile = BitBoards.Files[3];
             var hyperbola = new HyperbolaQuintessence();
+            var evaluationService = new EvaluationService();
+            Console.WriteLine(evaluationService.Evaluate(bitBoards, true));
             var attacksService = new AttacksService(hyperbola);
             var movesService = new PossibleMovesService(attacksService, hyperbola);
             var forWhite = true;

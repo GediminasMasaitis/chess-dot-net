@@ -77,8 +77,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Protocols\IChessProtocol.cs" />
     <Compile Include="Protocols\UCIProtocol.cs" />
-    <Compile Include="Rating\RatingService.cs" />
+    <Compile Include="Evaluation\EvaluationService.cs" />
     <Compile Include="Searching\PrincipalVariationService.cs" />
+    <Compile Include="Hashing\ZobristKeys.cs" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
