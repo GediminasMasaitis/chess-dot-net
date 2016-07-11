@@ -24,7 +24,7 @@ namespace ChessDotNet.Perft
             BoardFactory = boardFactory;
         }
 
-        public void Test(string fen, bool whiteToMove, int depth)
+        public void Test(string fen, int depth)
         {
             var bitBoards = BoardFactory.ParseFENToBitBoards(fen);
             OutLine($"Running perft testing, up to depth {depth}");
@@ -34,7 +34,7 @@ namespace ChessDotNet.Perft
             {
                 OutLine($"Testing engine with depth {i}");
                 sw.Restart();
-                var engineMoveCount = PerftService.GetPossibleMoveCount(bitBoards, whiteToMove, i);
+                var engineMoveCount = PerftService.GetPossibleMoveCount(bitBoards, i);
                 sw.Stop();
                 OutLine($"Engine found {engineMoveCount} possible moves in {sw.Elapsed.TotalMilliseconds} miliseconds");
                 OutLine($"Testing client with depth {i}");
@@ -46,7 +46,7 @@ namespace ChessDotNet.Perft
                 {
                     OutLine("Mismatch detected");
                     OutLine("Engine finding all possible moves");
-                    var engineMoves = PerftService.GetPossibleMoves(bitBoards, whiteToMove, i);
+                    var engineMoves = PerftService.GetPossibleMoves(bitBoards, i);
                     FindMismatch(i, engineMoves);
                     return;
                 }

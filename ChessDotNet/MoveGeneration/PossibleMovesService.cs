@@ -18,21 +18,21 @@ namespace ChessDotNet.MoveGeneration
             MultiThreadKingSafety = false;
         }
 
-        public IList<Move> GetAllPossibleMoves(BitBoards bitBoards, bool forWhite)
+        public IList<Move> GetAllPossibleMoves(BitBoards bitBoards)
         {
-            var potentialMoves = GetAllPotentialMoves(bitBoards, forWhite);
-            var validMoves = FilterMovesByKingSafety(bitBoards, potentialMoves, forWhite);
+            var potentialMoves = GetAllPotentialMoves(bitBoards);
+            var validMoves = FilterMovesByKingSafety(bitBoards, potentialMoves);
             return validMoves;
         }
 
-        public IList<Move> GetAllPotentialMoves(BitBoards bitBoards, bool forWhite)
+        public IList<Move> GetAllPotentialMoves(BitBoards bitBoards)
         {
-            var pawnMoves = GetPotentialPawnMoves(bitBoards, forWhite);
-            var knightMoves = GetPotentialKnightMoves(bitBoards, forWhite);
-            var bishopMoves = GetPotentialBishopMoves(bitBoards, forWhite);
-            var rookMoves = GetPotentialRookMoves(bitBoards, forWhite);
-            var queenMoves = GetPotentialQueenMoves(bitBoards, forWhite);
-            var kingMoves = GetPotentialKingMoves(bitBoards, forWhite);
+            var pawnMoves = GetPotentialPawnMoves(bitBoards);
+            var knightMoves = GetPotentialKnightMoves(bitBoards);
+            var bishopMoves = GetPotentialBishopMoves(bitBoards);
+            var rookMoves = GetPotentialRookMoves(bitBoards);
+            var queenMoves = GetPotentialQueenMoves(bitBoards);
+            var kingMoves = GetPotentialKingMoves(bitBoards);
 
             var allMoves = new List<Move>(pawnMoves.Count + kingMoves.Count + bishopMoves.Count + rookMoves.Count + queenMoves.Count + kingMoves.Count);
             allMoves.AddRange(pawnMoves);
@@ -46,16 +46,16 @@ namespace ChessDotNet.MoveGeneration
             return allMoves;
         }
 
-        public IList<Move> GetPossiblePawnMoves(BitBoards bitBoards, bool forWhite)
+        public IList<Move> GetPossiblePawnMoves(BitBoards bitBoards)
         {
-            var potentialMoves = GetPotentialPawnMoves(bitBoards, forWhite);
-            var validMoves = FilterMovesByKingSafety(bitBoards, potentialMoves, forWhite);
+            var potentialMoves = GetPotentialPawnMoves(bitBoards);
+            var validMoves = FilterMovesByKingSafety(bitBoards, potentialMoves);
             return validMoves;
         }
 
-        public IList<Move> GetPotentialPawnMoves(BitBoards bitBoards, bool forWhite)
+        public IList<Move> GetPotentialPawnMoves(BitBoards bitBoards)
         {
-            return forWhite ? GetPotentialWhitePawnMoves(bitBoards) : GetPotentialBlackPawnMoves(bitBoards);
+            return bitBoards.WhiteToMove ? GetPotentialWhitePawnMoves(bitBoards) : GetPotentialBlackPawnMoves(bitBoards);
         }
 
         private IList<Move> GetPotentialWhitePawnMoves(BitBoards bitBoards)
@@ -225,37 +225,37 @@ namespace ChessDotNet.MoveGeneration
             return moves;
         }
 
-        public IList<Move> GetPossibleKingMoves(BitBoards bitBoards, bool forWhite)
+        public IList<Move> GetPossibleKingMoves(BitBoards bitBoards)
         {
-            var potentialMoves = GetPotentialKingMoves(bitBoards, forWhite);
-            var validMoves = FilterMovesByKingSafety(bitBoards, potentialMoves, forWhite);
+            var potentialMoves = GetPotentialKingMoves(bitBoards);
+            var validMoves = FilterMovesByKingSafety(bitBoards, potentialMoves);
             return validMoves;
         }
 
-        public IList<Move> GetPotentialKingMoves(BitBoards bitBoards, bool forWhite)
+        public IList<Move> GetPotentialKingMoves(BitBoards bitBoards)
         {
-            var kings = forWhite ? bitBoards.WhiteKings : bitBoards.BlackKings;
-            var chessPiece = forWhite ? ChessPiece.WhiteKing : ChessPiece.BlackKing;
-            return GetPotentialJumpingMoves(bitBoards, kings, BitBoards.KingSpan, BitBoards.KingSpanPosition, forWhite, chessPiece);
+            var kings = bitBoards.WhiteToMove ? bitBoards.WhiteKings : bitBoards.BlackKings;
+            var chessPiece = bitBoards.WhiteToMove ? ChessPiece.WhiteKing : ChessPiece.BlackKing;
+            return GetPotentialJumpingMoves(bitBoards, kings, BitBoards.KingSpan, BitBoards.KingSpanPosition, chessPiece);
         }
 
-        public IList<Move> GetPossibleKnightMoves(BitBoards bitBoards, bool forWhite)
+        public IList<Move> GetPossibleKnightMoves(BitBoards bitBoards)
         {
-            var potentialMoves = GetPotentialKnightMoves(bitBoards, forWhite);
-            var validMoves = FilterMovesByKingSafety(bitBoards, potentialMoves, forWhite);
+            var potentialMoves = GetPotentialKnightMoves(bitBoards);
+            var validMoves = FilterMovesByKingSafety(bitBoards, potentialMoves);
             return validMoves;
         }
 
-        public IList<Move> GetPotentialKnightMoves(BitBoards bitBoards, bool forWhite)
+        public IList<Move> GetPotentialKnightMoves(BitBoards bitBoards)
         {
-            var knights = forWhite ? bitBoards.WhiteNights : bitBoards.BlackNights;
-            var chessPiece = forWhite ? ChessPiece.WhiteKnight : ChessPiece.BlackKnight;
-            return GetPotentialJumpingMoves(bitBoards, knights, BitBoards.KnightSpan, BitBoards.KnightSpanPosition, forWhite, chessPiece);
+            var knights = bitBoards.WhiteToMove ? bitBoards.WhiteNights : bitBoards.BlackNights;
+            var chessPiece = bitBoards.WhiteToMove ? ChessPiece.WhiteKnight : ChessPiece.BlackKnight;
+            return GetPotentialJumpingMoves(bitBoards, knights, BitBoards.KnightSpan, BitBoards.KnightSpanPosition, chessPiece);
         }
 
-        private IList<Move> GetPotentialJumpingMoves(BitBoards bitBoards, ulong jumpingPieces, ulong jumpMask, int jumpMaskCenter, bool forWhite, ChessPiece piece)
+        private IList<Move> GetPotentialJumpingMoves(BitBoards bitBoards, ulong jumpingPieces, ulong jumpMask, int jumpMaskCenter, ChessPiece piece)
         {
-            var ownPieces = forWhite ? bitBoards.WhitePieces : bitBoards.BlackPieces;
+            var ownPieces = bitBoards.WhiteToMove ? bitBoards.WhitePieces : bitBoards.BlackPieces;
             var moves = new List<Move>();
             while (jumpingPieces != 0)
             {
@@ -283,51 +283,51 @@ namespace ChessDotNet.MoveGeneration
             return moves;
         }
 
-        public IList<Move> GetPossibleRookMoves(BitBoards bitBoards, bool forWhite)
+        public IList<Move> GetPossibleRookMoves(BitBoards bitBoards)
         {
-            var potentialMoves = GetPotentialRookMoves(bitBoards, forWhite);
-            var validMoves = FilterMovesByKingSafety(bitBoards, potentialMoves, forWhite);
+            var potentialMoves = GetPotentialRookMoves(bitBoards);
+            var validMoves = FilterMovesByKingSafety(bitBoards, potentialMoves);
             return validMoves;
         }
 
-        public IList<Move> GetPotentialRookMoves(BitBoards bitBoards, bool forWhite)
+        public IList<Move> GetPotentialRookMoves(BitBoards bitBoards)
         {
-            var rooks = forWhite ? bitBoards.WhiteRooks : bitBoards.BlackRooks;
-            var chessPiece = forWhite ? ChessPiece.WhiteRook : ChessPiece.BlackRook;
-            return GetPotentialSlidingPieceMoves(bitBoards, rooks, HyperbolaQuintessence.HorizontalVerticalSlide, forWhite, chessPiece);
+            var rooks = bitBoards.WhiteToMove ? bitBoards.WhiteRooks : bitBoards.BlackRooks;
+            var chessPiece = bitBoards.WhiteToMove ? ChessPiece.WhiteRook : ChessPiece.BlackRook;
+            return GetPotentialSlidingPieceMoves(bitBoards, rooks, HyperbolaQuintessence.HorizontalVerticalSlide, chessPiece);
         }
 
-        public IList<Move> GetPossibleBishopMoves(BitBoards bitBoards, bool forWhite)
+        public IList<Move> GetPossibleBishopMoves(BitBoards bitBoards)
         {
-            var potentialMoves = GetPotentialBishopMoves(bitBoards, forWhite);
-            var validMoves = FilterMovesByKingSafety(bitBoards, potentialMoves, forWhite);
+            var potentialMoves = GetPotentialBishopMoves(bitBoards);
+            var validMoves = FilterMovesByKingSafety(bitBoards, potentialMoves);
             return validMoves;
         }
 
-        public IList<Move> GetPotentialBishopMoves(BitBoards bitBoards, bool forWhite)
+        public IList<Move> GetPotentialBishopMoves(BitBoards bitBoards)
         {
-            var bishops = forWhite ? bitBoards.WhiteBishops : bitBoards.BlackBishops;
-            var chessPiece = forWhite ? ChessPiece.WhiteBishop : ChessPiece.BlackBishop;
-            return GetPotentialSlidingPieceMoves(bitBoards, bishops, HyperbolaQuintessence.DiagonalAntidiagonalSlide, forWhite, chessPiece);
+            var bishops = bitBoards.WhiteToMove ? bitBoards.WhiteBishops : bitBoards.BlackBishops;
+            var chessPiece = bitBoards.WhiteToMove ? ChessPiece.WhiteBishop : ChessPiece.BlackBishop;
+            return GetPotentialSlidingPieceMoves(bitBoards, bishops, HyperbolaQuintessence.DiagonalAntidiagonalSlide, chessPiece);
         }
 
-        public IList<Move> GetPossibleQueenMoves(BitBoards bitBoards, bool forWhite)
+        public IList<Move> GetPossibleQueenMoves(BitBoards bitBoards)
         {
-            var potentialMoves = GetPotentialQueenMoves(bitBoards, forWhite);
-            var validMoves = FilterMovesByKingSafety(bitBoards, potentialMoves, forWhite);
+            var potentialMoves = GetPotentialQueenMoves(bitBoards);
+            var validMoves = FilterMovesByKingSafety(bitBoards, potentialMoves);
             return validMoves;
         }
 
-        public IList<Move> GetPotentialQueenMoves(BitBoards bitBoards, bool forWhite)
+        public IList<Move> GetPotentialQueenMoves(BitBoards bitBoards)
         {
-            var bishops = forWhite ? bitBoards.WhiteQueens : bitBoards.BlackQueens;
-            var chessPiece = forWhite ? ChessPiece.WhiteQueen : ChessPiece.BlackQueen;
-            return GetPotentialSlidingPieceMoves(bitBoards, bishops, HyperbolaQuintessence.AllSlide, forWhite, chessPiece);
+            var bishops = bitBoards.WhiteToMove ? bitBoards.WhiteQueens : bitBoards.BlackQueens;
+            var chessPiece = bitBoards.WhiteToMove ? ChessPiece.WhiteQueen : ChessPiece.BlackQueen;
+            return GetPotentialSlidingPieceMoves(bitBoards, bishops, HyperbolaQuintessence.AllSlide, chessPiece);
         }
 
-        private IList<Move> GetPotentialSlidingPieceMoves(BitBoards bitBoards, ulong slidingPieces, Func<BitBoards, int, ulong> slideResolutionFunc, bool forWhite, ChessPiece piece)
+        private IList<Move> GetPotentialSlidingPieceMoves(BitBoards bitBoards, ulong slidingPieces, Func<BitBoards, int, ulong> slideResolutionFunc, ChessPiece piece)
         {
-            var ownPieces = forWhite ? bitBoards.WhitePieces : bitBoards.BlackPieces;
+            var ownPieces = bitBoards.WhiteToMove ? bitBoards.WhitePieces : bitBoards.BlackPieces;
             var moves = new List<Move>();
             while (slidingPieces != 0)
             {
@@ -343,30 +343,30 @@ namespace ChessDotNet.MoveGeneration
             return moves;
         }
 
-        private IList<Move> FilterMovesByKingSafety(BitBoards bitBoards, IEnumerable<Move> moves, bool forWhite)
+        private IList<Move> FilterMovesByKingSafety(BitBoards bitBoards, IEnumerable<Move> moves)
         {
             if (MultiThreadKingSafety)
             {
-                return moves.AsParallel().Where(x => IsKingSafeAfterMove(bitBoards, x, forWhite)).ToList();
+                return moves.AsParallel().Where(x => IsKingSafeAfterMove(bitBoards, x)).ToList();
             }
             else
             {
-                return moves.Where(x => IsKingSafeAfterMove(bitBoards, x, forWhite)).ToList();
+                return moves.Where(x => IsKingSafeAfterMove(bitBoards, x)).ToList();
             }
         }
 
-        public BitBoards DoMoveIfKingSafe(BitBoards bitBoards, Move move, bool forWhite)
+        public BitBoards DoMoveIfKingSafe(BitBoards bitBoards, Move move)
         {
             var afterMoveBitBoards = bitBoards.DoMove(move);
-            var enemyAttackedAfterMove = AttacksService.GetAllAttacked(afterMoveBitBoards, !forWhite);
-            var myKings = forWhite ? afterMoveBitBoards.WhiteKings : afterMoveBitBoards.BlackKings;
+            var enemyAttackedAfterMove = AttacksService.GetAllAttacked(afterMoveBitBoards);
+            var myKings = bitBoards.WhiteToMove ? afterMoveBitBoards.WhiteKings : afterMoveBitBoards.BlackKings;
             var isSafe = (enemyAttackedAfterMove & myKings) == 0;
             return isSafe ? afterMoveBitBoards : null;
         }
 
-        public bool IsKingSafeAfterMove(BitBoards bitBoards, Move move, bool forWhite)
+        public bool IsKingSafeAfterMove(BitBoards bitBoards, Move move)
         {
-            var afterMove = DoMoveIfKingSafe(bitBoards, move, forWhite);
+            var afterMove = DoMoveIfKingSafe(bitBoards, move);
             return afterMove != null;
         }
 

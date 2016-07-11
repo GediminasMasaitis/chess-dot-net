@@ -16,9 +16,9 @@ namespace ChessDotNet.Perft
             PossibleMovesService = possibleMovesService;
         }
 
-        public IList<string> GetPossibleMoves(BitBoards bitBoards, bool whiteToMove, int depth)
+        public IList<string> GetPossibleMoves(BitBoards bitBoards, int depth)
         {
-            return GetPossibleMovesInner(bitBoards, whiteToMove, depth, 1, "").ToList();
+            return GetPossibleMovesInner(bitBoards, depth, 1, "").ToList();
         }
 
         public IList<MoveAndNodes> FindMoveAndNodesFromEngineResults(IEnumerable<string> engineResults)
@@ -28,15 +28,15 @@ namespace ChessDotNet.Perft
             return man.OrderBy(x => x.Move).ToList();
         }
 
-        public int GetPossibleMoveCount(BitBoards bitBoards, bool whiteToMove, int depth)
+        public int GetPossibleMoveCount(BitBoards bitBoards, int depth)
         {
-            return GetPossibleMoveCountInner(bitBoards, whiteToMove, depth, 1);
+            return GetPossibleMoveCountInner(bitBoards, depth, 1);
         }
 
-        public int GetPossibleMoveCountInner(BitBoards bitBoards, bool whiteToMove, int depth, int currentDepth)
+        public int GetPossibleMoveCountInner(BitBoards bitBoards, int depth, int currentDepth)
         {
             var currentNum = 0;
-            var moves = PossibleMovesService.GetAllPossibleMoves(bitBoards, whiteToMove);
+            var moves = PossibleMovesService.GetAllPossibleMoves(bitBoards);
             if (currentDepth >= depth)
             {
                 currentNum = moves.Count;
@@ -49,7 +49,7 @@ namespace ChessDotNet.Perft
                     Parallel.ForEach(moves, m =>
                     {
                         var movedBoard = bitBoards.DoMove(m);
-                        var possibleMoveCountInner = GetPossibleMoveCountInner(movedBoard, !whiteToMove, depth, currentDepth + 1);
+                        var possibleMoveCountInner = GetPossibleMoveCountInner(movedBoard, depth, currentDepth + 1);
                         lock (sync)
                         {
                             currentNum += possibleMoveCountInner;
@@ -61,7 +61,7 @@ namespace ChessDotNet.Perft
                     foreach (var move in moves)
                     {
                         var movedBoard = bitBoards.DoMove(move);
-                        var possibleMoveCountInner = GetPossibleMoveCountInner(movedBoard, !whiteToMove, depth, currentDepth + 1);
+                        var possibleMoveCountInner = GetPossibleMoveCountInner(movedBoard, depth, currentDepth + 1);
                         currentNum += possibleMoveCountInner;
                     }
                 }
@@ -69,9 +69,9 @@ namespace ChessDotNet.Perft
             return currentNum;
         }
 
-        private IEnumerable<string> GetPossibleMovesInner(BitBoards bitBoards, bool whiteToMove, int depth, int currentDepth, string currentString)
+        private IEnumerable<string> GetPossibleMovesInner(BitBoards bitBoards, int depth, int currentDepth, string currentString)
         {
-            var moves = PossibleMovesService.GetAllPossibleMoves(bitBoards, whiteToMove);
+            var moves = PossibleMovesService.GetAllPossibleMoves(bitBoards);
             foreach (var move in moves)
             {
                 var moveString = currentString + (currentString.Length == 0 ? string.Empty : " ") + move.ToPositionString();
@@ -82,7 +82,7 @@ namespace ChessDotNet.Perft
                 else
                 {
                     var movedBoard = bitBoards.DoMove(move);
-                    foreach (var otherBoards in GetPossibleMovesInner(movedBoard, !whiteToMove, depth, currentDepth + 1, moveString))
+                    foreach (var otherBoards in GetPossibleMovesInner(movedBoard, depth, currentDepth + 1, moveString))
                     {
                         yield return otherBoards;
                     }

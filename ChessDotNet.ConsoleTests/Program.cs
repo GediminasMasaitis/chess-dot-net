@@ -17,8 +17,8 @@ namespace ChessDotNet.ConsoleTests
         static void Main(string[] args)
         {
             //DoTimings();
-            //DoPerft();
-            TestMove();
+            DoPerft();
+            //TestMove();
 
             Console.ReadLine();
         }
@@ -58,12 +58,12 @@ namespace ChessDotNet.ConsoleTests
             var attacksService = new AttacksService(hyperbola);
             var movesService = new PossibleMovesService(attacksService, hyperbola);
             var perft = new PerftService(movesService);
-            var results = perft.GetPossibleMoves(fact.ParseFENToBitBoards(fen), true, 1);
+            var results = perft.GetPossibleMoves(fact.ParseFENToBitBoards(fen), 1);
             using (var sharperClient = new SharperPerftClient(@"C:\sharper\Sharper.exe", fen))
             {
                 var perftRunner = new PerftRunner(perft, sharperClient, fact);
                 perftRunner.OnOut += Console.Write;
-                perftRunner.Test(fen, true, 6);
+                perftRunner.Test(fen, 6);
             }
         }
 
@@ -79,10 +79,10 @@ namespace ChessDotNet.ConsoleTests
             var attacksService = new AttacksService(hyperbola);
             var movesService = new PossibleMovesService(attacksService, hyperbola);
             var forWhite = true;
-            var moves = movesService.GetAllPossibleMoves(bitBoards, forWhite).ToList();
+            var moves = movesService.GetAllPossibleMoves(bitBoards).ToList();
             var dests = moves.Select(x => x.To);
             var toMoveBoard = fact.PiecesToBitBoard(dests);
-            var attacked = attacksService.GetAllAttacked(bitBoards, forWhite);
+            var attacked = attacksService.GetAllAttacked(bitBoards);
             Debugging.ShowBitBoard(bitBoards.WhitePieces, bitBoards.BlackPieces, toMoveBoard);
         }
     }

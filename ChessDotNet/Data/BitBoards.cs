@@ -178,6 +178,7 @@ namespace ChessDotNet.Data
             {
                 newBoards.EnPassantFile = 0;
             }
+            newBoards.WhiteToMove = !WhiteToMove;
             return newBoards;
         }
 

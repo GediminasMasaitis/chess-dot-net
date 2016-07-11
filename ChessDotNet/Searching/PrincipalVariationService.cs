@@ -38,13 +38,13 @@ namespace ChessDotNet.Searching
 
             // sort moves
             
-            var potentialMoves = PossibleMovesService.GetAllPotentialMoves(bitBoards, forWhite);
+            var potentialMoves = PossibleMovesService.GetAllPotentialMoves(bitBoards);
             var i = 0;
             var doPV = true;
             for (; i < potentialMoves.Count; i++)
             {
                 var potentialMove = potentialMoves[i];
-                var bbAfter = PossibleMovesService.DoMoveIfKingSafe(bitBoards, potentialMove, forWhite);
+                var bbAfter = PossibleMovesService.DoMoveIfKingSafe(bitBoards, potentialMove);
                 if (bbAfter == null)
                 {
                     continue;
@@ -89,10 +89,10 @@ namespace ChessDotNet.Searching
                 return score;
             }
 
-            var potentialMoves = PossibleMovesService.GetAllPotentialMoves(bitBoards, forWhite);
+            var potentialMoves = PossibleMovesService.GetAllPotentialMoves(bitBoards);
             foreach (var potentialMove in potentialMoves)
             {
-                var bbAfter = PossibleMovesService.DoMoveIfKingSafe(bitBoards, potentialMove, forWhite);
+                var bbAfter = PossibleMovesService.DoMoveIfKingSafe(bitBoards, potentialMove);
                 if (bbAfter != null)
                 {
                     score = -ZeroWindowSearch(-alpha, bbAfter, !forWhite, currentDepth + 1);

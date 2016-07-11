@@ -12,62 +12,62 @@ namespace ChessDotNet.MoveGeneration
             HyperbolaQuintessence = hyperbolaQuintessence;
         }
 
-        public ulong GetAllAttacked(BitBoards bitBoards, bool forWhite)
+        public ulong GetAllAttacked(BitBoards bitBoards)
         {
-            var pawnsAttack = GetAttackedByPawns(bitBoards, forWhite);
-            var knightsAttack = GetAttackedByKnights(bitBoards, forWhite);
+            var pawnsAttack = GetAttackedByPawns(bitBoards);
+            var knightsAttack = GetAttackedByKnights(bitBoards);
 
             //var bishopsAttack = GetAttackedByBishops(bitBoards, forWhite);
             //var rooksAttack = GetAttackedByRooks(bitBoards, forWhite);
             //var queensAttack = GetAttackedByQueens(bitBoards, forWhite);
 
-            var bq = forWhite ? bitBoards.WhiteBishops | bitBoards.WhiteQueens : bitBoards.BlackBishops | bitBoards.BlackQueens;
+            var bq = bitBoards.WhiteToMove ? bitBoards.WhiteBishops | bitBoards.WhiteQueens : bitBoards.BlackBishops | bitBoards.BlackQueens;
             var bqAttack = GetAttackedBySlidingPieces(bitBoards, bq, HyperbolaQuintessence.DiagonalAntidiagonalSlide);
 
-            var rq = forWhite ? bitBoards.WhiteRooks | bitBoards.WhiteQueens : bitBoards.BlackRooks | bitBoards.BlackQueens;
+            var rq = bitBoards.WhiteToMove ? bitBoards.WhiteRooks | bitBoards.WhiteQueens : bitBoards.BlackRooks | bitBoards.BlackQueens;
             var rqAttack = GetAttackedBySlidingPieces(bitBoards, rq, HyperbolaQuintessence.HorizontalVerticalSlide);
 
-            var kingsAttack = GetAttackedByKings(bitBoards, forWhite);
+            var kingsAttack = GetAttackedByKings(bitBoards);
 
             var allAttacked = pawnsAttack | knightsAttack | bqAttack | rqAttack | kingsAttack;
             return allAttacked;
         }
 
-        public ulong GetAttackedByBishops(BitBoards bitBoards, bool forWhite)
+        public ulong GetAttackedByBishops(BitBoards bitBoards)
         {
-            var bishops = forWhite ? bitBoards.WhiteBishops : bitBoards.BlackBishops;
+            var bishops = bitBoards.WhiteToMove ? bitBoards.WhiteBishops : bitBoards.BlackBishops;
             return GetAttackedBySlidingPieces(bitBoards, bishops, HyperbolaQuintessence.DiagonalAntidiagonalSlide);
         }
 
-        public ulong GetAttackedByRooks(BitBoards bitBoards, bool forWhite)
+        public ulong GetAttackedByRooks(BitBoards bitBoards)
         {
-            var rooks = forWhite ? bitBoards.WhiteRooks : bitBoards.BlackRooks;
+            var rooks = bitBoards.WhiteToMove ? bitBoards.WhiteRooks : bitBoards.BlackRooks;
             return GetAttackedBySlidingPieces(bitBoards, rooks, HyperbolaQuintessence.HorizontalVerticalSlide);
         }
 
-        public ulong GetAttackedByQueens(BitBoards bitBoards, bool forWhite)
+        public ulong GetAttackedByQueens(BitBoards bitBoards)
         {
-            var queens = forWhite ? bitBoards.WhiteQueens : bitBoards.BlackQueens;
+            var queens = bitBoards.WhiteToMove ? bitBoards.WhiteQueens : bitBoards.BlackQueens;
             return GetAttackedBySlidingPieces(bitBoards, queens, HyperbolaQuintessence.AllSlide);
         }
 
-        public ulong GetAttackedByKings(BitBoards bitBoards, bool forWhite)
+        public ulong GetAttackedByKings(BitBoards bitBoards)
         {
-            var kings = forWhite ? bitBoards.WhiteKings : bitBoards.BlackKings;
+            var kings = bitBoards.WhiteToMove ? bitBoards.WhiteKings : bitBoards.BlackKings;
             return GetAttackedByJumpingPieces(bitBoards, kings, BitBoards.KingSpan, BitBoards.KingSpanPosition);
         }
 
-        public ulong GetAttackedByKnights(BitBoards bitBoards, bool forWhite)
+        public ulong GetAttackedByKnights(BitBoards bitBoards)
         {
-            var knights = forWhite ? bitBoards.WhiteNights : bitBoards.BlackNights;
+            var knights = bitBoards.WhiteToMove ? bitBoards.WhiteNights : bitBoards.BlackNights;
             return GetAttackedByJumpingPieces(bitBoards, knights, BitBoards.KnightSpan, BitBoards.KnightSpanPosition);
         }
 
-        public ulong GetAttackedByPawns(BitBoards bitBoards, bool forWhite)
+        public ulong GetAttackedByPawns(BitBoards bitBoards)
         {
             ulong pawnsLeft;
             ulong pawnsRight;
-            if (forWhite)
+            if (bitBoards.WhiteToMove)
             {
                 pawnsLeft = (bitBoards.WhitePawns << 7) & ~BitBoards.Files[7];
                 pawnsRight = (bitBoards.WhitePawns << 9) & ~BitBoards.Files[0];
