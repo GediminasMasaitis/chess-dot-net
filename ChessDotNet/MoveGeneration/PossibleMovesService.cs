@@ -355,14 +355,19 @@ namespace ChessDotNet.MoveGeneration
             }
         }
 
-        private bool IsKingSafeAfterMove(BitBoards bitBoards, Move move, bool forWhite)
+        public BitBoards DoMoveIfKingSafe(BitBoards bitBoards, Move move, bool forWhite)
         {
-            //return true;
             var afterMoveBitBoards = bitBoards.DoMove(move);
             var enemyAttackedAfterMove = AttacksService.GetAllAttacked(afterMoveBitBoards, !forWhite);
             var myKings = forWhite ? afterMoveBitBoards.WhiteKings : afterMoveBitBoards.BlackKings;
             var isSafe = (enemyAttackedAfterMove & myKings) == 0;
-            return isSafe;
+            return isSafe ? afterMoveBitBoards : null;
+        }
+
+        public bool IsKingSafeAfterMove(BitBoards bitBoards, Move move, bool forWhite)
+        {
+            var afterMove = DoMoveIfKingSafe(bitBoards, move, forWhite);
+            return afterMove != null;
         }
 
         private static IList<Move> BitmaskToMoves(ulong bitmask, int positionFrom, ChessPiece piece)
