@@ -35,7 +35,7 @@ namespace ChessDotNet.Perft
                 OutLine($"Testing engine with depth {i}");
                 sw.Restart();
                 var engineDivision = PerftService.Divide(bitBoards, i);
-                var engineMoveCount = engineDivision.Sum(x => x.Value);
+                var engineMoveCount = engineDivision.Sum(x => x.Nodes);
                 sw.Stop();
                 OutLine($"Engine found {engineMoveCount} possible moves in {sw.Elapsed.TotalMilliseconds} miliseconds");
                 OutLine($"Testing client with depth {i}");
@@ -46,9 +46,7 @@ namespace ChessDotNet.Perft
                 if (engineMoveCount != clientMoveCount)
                 {
                     OutLine("Mismatch detected");
-                    OutLine("Engine finding all possible moves");
-                    var engineMoves = PerftService.GetPossibleMoves(bitBoards, i);
-                    FindMismatch(i, engineMoves);
+                    FindMismatch(bitBoards, i, engineDivision);
                     return;
                 }
             }
@@ -56,53 +54,53 @@ namespace ChessDotNet.Perft
             OutLine("Tests completed!");
         }
 
-        private void FindMismatch(int mismatchDepth, IList<string> engineResults, IList<string> previousBadMoves = null)
+        private void FindMismatch(BitBoards bitBoards, int mismatchDepth, IList<MoveAndNodes> engineResults, IList<string> previousBadMoves = null)
         {
             previousBadMoves = previousBadMoves ?? new List<string>();
             var allBadMoves = previousBadMoves.Aggregate("", (c, n) => c + " " + n);
-            var engineMan = PerftService.FindMoveAndNodesFromEngineResults(engineResults);
             var clientMan = Client.GetMovesAndNodes(mismatchDepth, previousBadMoves);
 
-            var biggerCount = Math.Max(engineMan.Count, clientMan.Count);
+            var biggerCount = Math.Max(engineResults.Count, clientMan.Count);
 
             for (var i = 0; i < biggerCount; i++)
             {
-                if (i >= engineMan.Count)
+                if (i >= engineResults.Count)
                 {
                     OutLine($"Engine didn't find result {allBadMoves} {clientMan[i].Move} (index out)");
                     return;
                 }
                 if (i >= clientMan.Count)
                 {
-                    OutLine($"Engine found result {allBadMoves} {engineMan[i].Move} that it shouldn't have found (index out)");
+                    OutLine($"Engine found result {allBadMoves} {engineResults[i].Move} that it shouldn't have found (index out)");
                     return;
                 }
 
-                if (engineMan[i].Move != clientMan[i].Move)
+                if (engineResults[i].Move != clientMan[i].Move)
                 {
-                    if (engineMan.All(x => x.Move != clientMan[i].Move))
+                    if (engineResults.All(x => x.Move != clientMan[i].Move))
                     {
                         OutLine($"Engine didn't find result {allBadMoves} {clientMan[i].Move}");
                     }
                     else
                     {
-                        OutLine($"Engine found result {allBadMoves} {engineMan[i].Move} that it shouldn't have found");
+                        OutLine($"Engine found result {allBadMoves} {engineResults[i].Move} that it shouldn't have found");
                     }
                     OutLine("Mismatch found!");
                     return;
                 }
-                var ok = engineMan[i].Nodes == clientMan[i].Nodes;
+                var ok = engineResults[i].Nodes == clientMan[i].Nodes;
                 var okWord = ok ? "OK" : "WRONG";
-                OutLine($"{allBadMoves} {engineMan[i].Move}; Engine: {engineMan[i].Nodes}, client: {clientMan[i].Nodes}; {okWord}");
+                OutLine($"{allBadMoves} {engineResults[i].Move}; Engine: {engineResults[i].Nodes}, client: {clientMan[i].Nodes}; {okWord}");
 
                 if (!ok)
                 {
-                    var badmove = engineMan[i].Move;
+                    var badmove = engineResults[i].Move;
                     previousBadMoves.Add(badmove);
 
-                    var badEngineResults = engineResults.Where(x => x.StartsWith(badmove)).Select(x => x.Substring(badmove.Length + 1)).ToList();
+                    var boardAfterBadMove = bitBoards.DoMove(engineResults[i].EngineMove.Value);
+                    var newResults = PerftService.Divide(boardAfterBadMove, mismatchDepth - 1);
 
-                    FindMismatch(mismatchDepth - 1, badEngineResults, previousBadMoves);
+                    FindMismatch(boardAfterBadMove, mismatchDepth - 1, newResults, previousBadMoves);
                     return;
                 }
             }

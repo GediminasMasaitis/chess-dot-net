@@ -21,32 +21,26 @@ namespace ChessDotNet.Perft
             return GetPossibleMovesInner(bitBoards, depth, 1, "").ToList();
         }
 
-        public IList<MoveAndNodes> FindMoveAndNodesFromEngineResults(IEnumerable<string> engineResults)
-        {
-            var grouped = engineResults.GroupBy(x => x.Split(' ')[0]);
-            var man = grouped.Select(x => new MoveAndNodes(x.Key, x.Count()));
-            return man.OrderBy(x => x.Move).ToList();
-        }
-
-        public IDictionary<string, int> Divide(BitBoards bitBoards, int depth)
+        public IList<MoveAndNodes> Divide(BitBoards bitBoards, int depth)
         {
             var moves = PossibleMovesService.GetAllPossibleMoves(bitBoards);
             if (depth == 1)
             {
-                return moves.ToDictionary(x => x.ToPositionString(), x => 1);
+                return moves.Select(x => new MoveAndNodes(x.ToPositionString(), 1)).ToList();
             }
-            var results = new Dictionary<string, int>();
+            var results = new List<MoveAndNodes>();
             Parallel.ForEach(moves, m =>
             {
                 var moved = bitBoards.DoMove(m);
                 var count = GetPossibleMoveCountInner(moved, depth, 2);
                 var posStr = m.ToPositionString();
+                var man = new MoveAndNodes(posStr, count, m);
                 lock (results)
                 {
-                    results.Add(posStr, count);
+                    results.Add(man);
                 }
             });
-            return results.OrderBy(x => x.Key).ToDictionary(x => x.Key, x => x.Value);
+            return results.OrderBy(x => x.Move).ToList();
         }
 
         public int GetPossibleMoveCount(BitBoards bitBoards, int depth)
