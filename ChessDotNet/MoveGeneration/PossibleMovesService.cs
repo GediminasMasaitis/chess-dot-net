@@ -63,8 +63,9 @@ namespace ChessDotNet.MoveGeneration
             var takeLeft = (bitBoards.WhitePawns << 7) & ~BitBoards.Files[7] & bitBoards.BlackPieces;
             var takeRight = (bitBoards.WhitePawns << 9) & ~BitBoards.Files[0] & bitBoards.BlackPieces;
 
-            var enPassantLeft = (bitBoards.WhitePawns << 7) & ~BitBoards.Files[7] & bitBoards.EnPassantFile & bitBoards.BlackPawns << 8;
-            var enPassantRight = (bitBoards.WhitePawns << 9) & ~BitBoards.Files[0] & bitBoards.EnPassantFile & bitBoards.BlackPawns << 8;
+            var enPassantLeft = (bitBoards.WhitePawns << 7) & ~BitBoards.Files[7] & bitBoards.EnPassantFile & BitBoards.Ranks[5] & bitBoards.BlackPawns << 8;
+            var enPassantRight = (bitBoards.WhitePawns << 9) & ~BitBoards.Files[0] & bitBoards.EnPassantFile & BitBoards.Ranks[5] & bitBoards.BlackPawns << 8;
+
             var moveOne = (bitBoards.WhitePawns << 8) & bitBoards.EmptySquares;
             var moveTwo = (bitBoards.WhitePawns << 16) & bitBoards.EmptySquares & bitBoards.EmptySquares << 8 & BitBoards.Ranks[3];
 
@@ -140,8 +141,8 @@ namespace ChessDotNet.MoveGeneration
             var takeLeft = (bitBoards.BlackPawns >> 7) & ~BitBoards.Files[0] & bitBoards.WhitePieces;
             var takeRight = (bitBoards.BlackPawns >> 9) & ~BitBoards.Files[7] & bitBoards.WhitePieces;
 
-            var enPassantLeft = (bitBoards.BlackPawns >> 7) & ~BitBoards.Files[0] & bitBoards.EnPassantFile & bitBoards.WhitePawns >> 8;
-            var enPassantRight = (bitBoards.BlackPawns >> 9) & ~BitBoards.Files[7] & bitBoards.EnPassantFile & bitBoards.WhitePawns >> 8;
+            var enPassantLeft = (bitBoards.BlackPawns >> 7) & ~BitBoards.Files[0] & bitBoards.EnPassantFile & BitBoards.Ranks[2] & bitBoards.WhitePawns >> 8;
+            var enPassantRight = (bitBoards.BlackPawns >> 9) & ~BitBoards.Files[7] & bitBoards.EnPassantFile & BitBoards.Ranks[2] & bitBoards.WhitePawns >> 8;
 
             var moveOne = (bitBoards.BlackPawns >> 8) & bitBoards.EmptySquares;
             var moveTwo = (bitBoards.BlackPawns >> 16) & bitBoards.EmptySquares & bitBoards.EmptySquares >> 8 & BitBoards.Ranks[4];

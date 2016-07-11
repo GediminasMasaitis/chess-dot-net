@@ -50,7 +50,7 @@ namespace ChessDotNet.ConsoleTests
 
         private static void DoPerft()
         {
-            var fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 ";
+            var fen = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -";
             //fen = "3k4/3p4/8/K1P4r/8/8/8/8 b - - 0 50";
             //fen = "8/1kP5/8/K2p3r/8/8/8/8 w - - 1 53 ";
             var fact = new BoardFactory();
@@ -63,7 +63,7 @@ namespace ChessDotNet.ConsoleTests
             {
                 var perftRunner = new PerftRunner(perft, sharperClient, fact);
                 perftRunner.OnOut += Console.Write;
-                perftRunner.Test(fen, 6);
+                perftRunner.Test(fen, 5);
             }
         }
 

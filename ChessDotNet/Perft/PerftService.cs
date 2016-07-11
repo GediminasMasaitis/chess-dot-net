@@ -26,7 +26,7 @@ namespace ChessDotNet.Perft
             var moves = PossibleMovesService.GetAllPossibleMoves(bitBoards);
             if (depth == 1)
             {
-                return moves.Select(x => new MoveAndNodes(x.ToPositionString(), 1)).ToList();
+                return moves.Select(x => new MoveAndNodes(x.ToPositionString(), 1)).OrderBy(x => x.Move).ToList();
             }
             var results = new List<MoveAndNodes>();
             Parallel.ForEach(moves, m =>
@@ -40,7 +40,8 @@ namespace ChessDotNet.Perft
                     results.Add(man);
                 }
             });
-            return results.OrderBy(x => x.Move).ToList();
+            var ordered = results.OrderBy(x => x.Move).ToList();
+            return ordered;
         }
 
         public int GetPossibleMoveCount(BitBoards bitBoards, int depth)
