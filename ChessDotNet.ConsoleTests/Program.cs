@@ -48,8 +48,8 @@ namespace ChessDotNet.ConsoleTests
         private static void DoPerft()
         {
             var fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 ";
-            fen = "3k4/3p4/8/K1P4r/8/8/8/8 b - - 0 50";
-            fen = "8/1kP5/8/K2p3r/8/8/8/8 w - - 1 53 ";
+            //fen = "3k4/3p4/8/K1P4r/8/8/8/8 b - - 0 50";
+            //fen = "8/1kP5/8/K2p3r/8/8/8/8 w - - 1 53 ";
             var fact = new BoardFactory();
             var movesService = new PossibleMovesService();
             var perft = new Perft.Perft(movesService);

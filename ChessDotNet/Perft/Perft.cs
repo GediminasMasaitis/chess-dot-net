@@ -1,13 +1,13 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace ChessDotNet.Perft
 {
     public class Perft
     {
         public PossibleMovesService PossibleMovesService { get; set; }
-
 
         public Perft(PossibleMovesService possibleMovesService)
         {
@@ -35,16 +35,33 @@ namespace ChessDotNet.Perft
         {
             var currentNum = 0;
             var moves = PossibleMovesService.GetAllPossibleMoves(bitBoards, whiteToMove);
-            foreach (var move in moves)
+            if (currentDepth >= depth)
             {
-                if (currentDepth >= depth)
+                currentNum = moves.Count;
+            }
+            else
+            {
+                if (currentDepth == 1)
                 {
-                    currentNum++;
+                    var sync = new object();
+                    Parallel.ForEach(moves, m =>
+                    {
+                        var movedBoard = bitBoards.DoMove(m);
+                        var possibleMoveCountInner = GetPossibleMoveCountInner(movedBoard, !whiteToMove, depth, currentDepth + 1);
+                        lock (sync)
+                        {
+                            currentNum += possibleMoveCountInner;
+                        }
+                    });
                 }
                 else
                 {
-                    var movedBoard = bitBoards.DoMove(move);
-                    currentNum += GetPossibleMoveCountInner(movedBoard, !whiteToMove, depth, currentDepth + 1);
+                    foreach (var move in moves)
+                    {
+                        var movedBoard = bitBoards.DoMove(move);
+                        var possibleMoveCountInner = GetPossibleMoveCountInner(movedBoard, !whiteToMove, depth, currentDepth + 1);
+                        currentNum += possibleMoveCountInner;
+                    }
                 }
             }
             return currentNum;
