@@ -34,7 +34,8 @@ namespace ChessDotNet.Perft
             {
                 OutLine($"Testing engine with depth {i}");
                 sw.Restart();
-                var engineMoveCount = PerftService.GetPossibleMoveCount(bitBoards, i);
+                var engineDivision = PerftService.Divide(bitBoards, i);
+                var engineMoveCount = engineDivision.Sum(x => x.Value);
                 sw.Stop();
                 OutLine($"Engine found {engineMoveCount} possible moves in {sw.Elapsed.TotalMilliseconds} miliseconds");
                 OutLine($"Testing client with depth {i}");

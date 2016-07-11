@@ -28,6 +28,27 @@ namespace ChessDotNet.Perft
             return man.OrderBy(x => x.Move).ToList();
         }
 
+        public IDictionary<string, int> Divide(BitBoards bitBoards, int depth)
+        {
+            var moves = PossibleMovesService.GetAllPossibleMoves(bitBoards);
+            if (depth == 1)
+            {
+                return moves.ToDictionary(x => x.ToPositionString(), x => 1);
+            }
+            var results = new Dictionary<string, int>();
+            Parallel.ForEach(moves, m =>
+            {
+                var moved = bitBoards.DoMove(m);
+                var count = GetPossibleMoveCountInner(moved, depth, 2);
+                var posStr = m.ToPositionString();
+                lock (results)
+                {
+                    results.Add(posStr, count);
+                }
+            });
+            return results.OrderBy(x => x.Key).ToDictionary(x => x.Key, x => x.Value);
+        }
+
         public int GetPossibleMoveCount(BitBoards bitBoards, int depth)
         {
             return GetPossibleMoveCountInner(bitBoards, depth, 1);
