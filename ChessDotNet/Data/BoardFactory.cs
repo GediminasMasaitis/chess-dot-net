@@ -7,6 +7,7 @@ namespace ChessDotNet.Data
     {
         public ArrayBoard ParseFENToArrayBoard(string fen)
         {
+            fen = fen.Trim();
             var board = new ArrayBoard();
             var boardPosition = 0;
             var fenPosition = 0;
@@ -81,9 +82,34 @@ namespace ChessDotNet.Data
 
             }
 
-            if (fen.Contains("w"))
+            fenPosition++;
+            if (fen[fenPosition] == 'w')
             {
                 board.WhiteToMove = true;
+            }
+
+            fenPosition += 2;
+
+            for (var i = 0; i < 4; i++)
+            {
+                if (fenPosition >= fen.Length)
+                    break;
+                switch (fen[fenPosition])
+                {
+                    case 'K':
+                        board.WhiteCanCastleKingSide = true;
+                        break;
+                    case 'Q':
+                        board.WhiteCanCastleQueenSide = true;
+                        break;
+                    case 'k':
+                        board.BlackCanCastleKingSide = true;
+                        break;
+                    case 'q':
+                        board.BlackCanCastleQueenSide = true;
+                        break;
+                }
+                fenPosition++;
             }
 
             return board;
@@ -158,6 +184,10 @@ namespace ChessDotNet.Data
                 }
             }
             bitBoard.WhiteToMove = arrayBoard.WhiteToMove;
+            bitBoard.WhiteCanCastleKingSide = arrayBoard.WhiteCanCastleKingSide;
+            bitBoard.WhiteCanCastleQueenSide = arrayBoard.WhiteCanCastleQueenSide;
+            bitBoard.BlackCanCastleKingSide = arrayBoard.BlackCanCastleKingSide;
+            bitBoard.BlackCanCastleQueenSide = arrayBoard.BlackCanCastleQueenSide;
             bitBoard.Sync();
             return bitBoard;
         }

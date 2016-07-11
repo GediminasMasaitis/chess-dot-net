@@ -179,6 +179,22 @@ namespace ChessDotNet.Data
                 newBoards.EnPassantFile = 0;
             }
             newBoards.WhiteToMove = !WhiteToMove;
+
+            if (move.Piece == ChessPiece.WhiteKing)
+            {
+                newBoards.WhiteCanCastleKingSide = false;
+                newBoards.WhiteCanCastleQueenSide = false;
+            }
+            else if (move.Piece == ChessPiece.WhiteRook)
+            {
+                newBoards.WhiteCanCastleKingSide = WhiteCanCastleKingSide && move.From%8 > 3;
+                newBoards.WhiteCanCastleQueenSide = WhiteCanCastleQueenSide && move.From % 8 < 3;
+            }
+            else
+            {
+                newBoards.WhiteCanCastleKingSide = WhiteCanCastleKingSide;
+                newBoards.WhiteCanCastleQueenSide = WhiteCanCastleQueenSide;
+            }
             return newBoards;
         }
 
