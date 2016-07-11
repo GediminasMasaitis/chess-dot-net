@@ -71,14 +71,30 @@ namespace ChessDotNet
             {
                 if ((takeLeft & (1UL << i)) != 0)
                 {
-                    var move = new Move(i - 7, i, ChessPiece.WhitePawn);
-                    moves.Add(move);
+                    if (i > 55)
+                    {
+                        var promotionMoves = GeneratePromotionMoves(i - 7, i, false, true);
+                        moves.AddRange(promotionMoves);
+                    }
+                    else
+                    {
+                        var move = new Move(i - 7, i, ChessPiece.WhitePawn);
+                        moves.Add(move);
+                    }
                 }
 
                 if ((takeRight & (1UL << i)) != 0)
                 {
-                    var move = new Move(i - 9, i, ChessPiece.WhitePawn);
-                    moves.Add(move);
+                    if (i > 55)
+                    {
+                        var promotionMoves = GeneratePromotionMoves(i - 9, i, false, true);
+                        moves.AddRange(promotionMoves);
+                    }
+                    else
+                    {
+                        var move = new Move(i - 9, i, ChessPiece.WhitePawn);
+                        moves.Add(move);
+                    }
                 }
 
                 if ((enPassantLeft & (1UL << i)) != 0)
@@ -95,8 +111,16 @@ namespace ChessDotNet
 
                 if ((moveOne & (1UL << i)) != 0)
                 {
-                    var move = new Move(i - 8, i, ChessPiece.WhitePawn);
-                    moves.Add(move);
+                    if (i > 55)
+                    {
+                        var promotionMoves = GeneratePromotionMoves(i - 8, i, false, true);
+                        moves.AddRange(promotionMoves);
+                    }
+                    else
+                    {
+                        var move = new Move(i - 8, i, ChessPiece.WhitePawn);
+                        moves.Add(move);
+                    }
                 }
 
                 if ((moveTwo & (1UL << i)) != 0)
@@ -125,14 +149,30 @@ namespace ChessDotNet
             {
                 if ((takeLeft & (1UL << i)) != 0)
                 {
-                    var move = new Move(i + 7, i, ChessPiece.BlackPawn);
-                    moves.Add(move);
+                    if (i < 8)
+                    {
+                        var promotionMoves = GeneratePromotionMoves(i + 7, i, false, false);
+                        moves.AddRange(promotionMoves);
+                    }
+                    else
+                    {
+                        var move = new Move(i + 7, i, ChessPiece.BlackPawn);
+                        moves.Add(move);
+                    }
                 }
 
                 if ((takeRight & (1UL << i)) != 0)
                 {
-                    var move = new Move(i + 9, i, ChessPiece.BlackPawn);
-                    moves.Add(move);
+                    if (i < 8)
+                    {
+                        var promotionMoves = GeneratePromotionMoves(i + 9, i, false, false);
+                        moves.AddRange(promotionMoves);
+                    }
+                    else
+                    {
+                        var move = new Move(i + 9, i, ChessPiece.BlackPawn);
+                        moves.Add(move);
+                    }
                 }
 
                 if ((enPassantLeft & (1UL << i)) != 0)
@@ -149,8 +189,16 @@ namespace ChessDotNet
 
                 if ((moveOne & (1UL << i)) != 0)
                 {
-                    var move = new Move(i + 8, i, ChessPiece.BlackPawn);
-                    moves.Add(move);
+                    if (i < 8)
+                    {
+                        var promotionMoves = GeneratePromotionMoves(i + 8, i, false, false);
+                        moves.AddRange(promotionMoves);
+                    }
+                    else
+                    {
+                        var move = new Move(i + 8, i, ChessPiece.BlackPawn);
+                        moves.Add(move);
+                    }
                 }
 
                 if ((moveTwo & (1UL << i)) != 0)
@@ -159,6 +207,18 @@ namespace ChessDotNet
                     moves.Add(move);
                 }
             }
+            return moves;
+        }
+
+        private IList<Move> GeneratePromotionMoves(int from, int to, bool enPassant, bool forWhite)
+        {
+            var moves = new List<Move>
+            {
+                new Move(from, to, forWhite ? ChessPiece.WhitePawn : ChessPiece.BlackPawn, enPassant, forWhite ? ChessPiece.WhiteKnight : ChessPiece.BlackKnight),
+                new Move(from, to, forWhite ? ChessPiece.WhitePawn : ChessPiece.BlackPawn, enPassant, forWhite ? ChessPiece.WhiteBishop : ChessPiece.BlackBishop),
+                new Move(from, to, forWhite ? ChessPiece.WhitePawn : ChessPiece.BlackPawn, enPassant, forWhite ? ChessPiece.WhiteRook : ChessPiece.BlackRook),
+                new Move(from, to, forWhite ? ChessPiece.WhitePawn : ChessPiece.BlackPawn, enPassant, forWhite ? ChessPiece.WhiteQueen : ChessPiece.BlackQueen),
+            };
             return moves;
         }
 

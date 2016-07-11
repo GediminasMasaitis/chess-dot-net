@@ -98,7 +98,7 @@ namespace ChessDotNet.Perft
                     var badmove = engineMan[i].Move;
                     previousBadMoves.Add(badmove);
 
-                    var badEngineResults = engineResults.Where(x => x.StartsWith(badmove)).Select(x => x.Substring(5)).ToList();
+                    var badEngineResults = engineResults.Where(x => x.StartsWith(badmove)).Select(x => x.Substring(badmove.Length + 1)).ToList();
 
                     FindMismatch(mismatchDepth - 1, badEngineResults, previousBadMoves);
                     return;

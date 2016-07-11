@@ -14,8 +14,8 @@ namespace ChessDotNet.ConsoleTests
         static void Main(string[] args)
         {
             //DoTimings();
-            //DoPerft();
-            TestMove();
+            DoPerft();
+            //TestMove();
 
             Console.ReadLine();
         }
@@ -49,21 +49,23 @@ namespace ChessDotNet.ConsoleTests
         {
             var fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 ";
             fen = "3k4/3p4/8/K1P4r/8/8/8/8 b - - 0 50";
+            fen = "8/1kP5/8/K2p3r/8/8/8/8 w - - 1 53 ";
             var fact = new BoardFactory();
             var movesService = new PossibleMovesService();
             var perft = new Perft.Perft(movesService);
+            var results = perft.GetPossibleMoves(fact.ParseFENToBitBoards(fen), true, 1);
             using (var sharperClient = new SharperPerftClient(@"C:\sharper\Sharper.exe", fen))
             {
                 var perftRunner = new PerftRunner(perft, sharperClient, fact);
                 perftRunner.OnOut += Console.Write;
-                perftRunner.Test(fen, false, 5);
+                perftRunner.Test(fen, true, 6);
             }
         }
 
         private static void TestMove()
         {
             var fact = new BoardFactory();
-            var arrayBoard = fact.ParseFENToArrayBoard("3k4/8/8/K1Pp3r/8/8/8/8 w - d6 0 51 ");
+            var arrayBoard = fact.ParseFENToArrayBoard("3k4/3p4/8/K1P4r/8/8/8/8 b - d6 0 51 ");
             var bitBoards = fact.ArrayBoardToBitBoards(arrayBoard);
             bitBoards.EnPassantFile = BitBoards.Files[3];
             var movesService = new PossibleMovesService();
