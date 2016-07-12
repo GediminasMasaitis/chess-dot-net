@@ -14,6 +14,7 @@ namespace ChessDotNet.BoardVisualizer
     {
         private IList<TextBox> BitboardsTextBoxes { get; }
         private IList<SolidBrush> Brushes { get;}
+        private SolidBrush EmptyBrush { get; }
 
         public MainForm() : this(new ulong[0])
         {
@@ -24,6 +25,23 @@ namespace ChessDotNet.BoardVisualizer
             InitializeComponent();
             var allBitboards = bitboards.ToList();
 
+
+            var colors = new[]
+            {
+                Color.FromArgb(100, 0, 0),
+                Color.FromArgb(0, 100, 0),
+                Color.FromArgb(40, 70, 170),
+                Color.FromArgb(100, 100, 0),
+                Color.FromArgb(100, 0, 100),
+                Color.FromArgb(0, 100, 100),
+                Color.FromArgb(170, 70, 0),
+                Color.FromArgb(0, 170, 100),
+                Color.FromArgb(70, 30, 0),
+                Color.FromArgb(0, 0, 100),
+            };
+
+            Brushes = colors.Select(x => new SolidBrush(x)).ToList();
+            EmptyBrush = new SolidBrush(Color.FromArgb(80,80,80));
             BitboardsTextBoxes = new []
             {
                 Bitboard1TextBox,
@@ -44,23 +62,10 @@ namespace ChessDotNet.BoardVisualizer
                 {
                     allBitboards.Add(0UL);
                 }
+                //BitboardsTextBoxes[i].BackColor = EmptyBrush.Color;
+                BitboardsTextBoxes[i].ForeColor = Brushes[i].Color;
+                BitboardsTextBoxes[i].Font = new Font(FontFamily.GenericMonospace, 10, FontStyle.Bold);
             }
-
-            var colors = new[]
-            {
-                Color.FromArgb(100, 0, 0),
-                Color.FromArgb(0, 100, 0),
-                Color.FromArgb(40, 70, 170),
-                Color.FromArgb(100, 100, 0),
-                Color.FromArgb(100, 0, 100),
-                Color.FromArgb(0, 100, 100),
-                Color.FromArgb(170, 70, 0),
-                Color.FromArgb(0, 170, 100),
-                Color.FromArgb(70, 30, 0),
-                Color.FromArgb(0, 0, 100),
-            };
-
-            Brushes = colors.Select(x => new SolidBrush(x)).ToList();
 
             DisplayBitBoards(allBitboards.ToArray());
         }
@@ -94,11 +99,13 @@ namespace ChessDotNet.BoardVisualizer
             var cells = bitboards.Select(x => BitboardToCells(x).ToList()).ToList();
 
             var bmp = new Bitmap(MainPictureBox.Width, MainPictureBox.Height);
-            var emptyBrush = new SolidBrush(Color.FromArgb(50,50,50));
 
             var textBrush = new SolidBrush(Color.FromArgb(255,255,255));
             var cellWidth = bmp.Width/8;
             var cellHeight = bmp.Height/8;
+
+            var font = new Font(Font, FontStyle.Bold);
+
             using (var graphics = Graphics.FromImage(bmp))
             {
                 for (var i = 0; i < 64; i++)
@@ -106,24 +113,24 @@ namespace ChessDotNet.BoardVisualizer
                     var cellX = 7-(i/8);
                     var cellY = i%8;
 
-                    var brush = emptyBrush;
+                    graphics.FillRectangle(EmptyBrush, cellY * cellWidth, cellX * cellHeight, cellWidth, cellHeight);
 
+                    var borderWidth = 0;
                     for (var j = 0; j < cells.Count; j++)
                     {
                         if (cells[j][i])
                         {
-                            brush = Brushes[j];
+                            graphics.FillRectangle(Brushes[j], cellY * cellWidth + borderWidth + 1, cellX * cellHeight + borderWidth + 1, cellWidth - 2*borderWidth - 1, cellHeight - 2*borderWidth - 1);
+                            borderWidth += 3;
                         }
                     }
 
-                    graphics.FillRectangle(brush, cellY * cellWidth, cellX * cellHeight, cellWidth, cellHeight);
-
                     var text = (char)(65+(cellY)) + (8-cellX).ToString();
-                    graphics.DrawString(text, Font, textBrush, cellY * cellWidth + 28, cellX * cellHeight + 18);
-                    graphics.DrawString(i.ToString(), Font, textBrush, cellY * cellWidth + 28, cellX * cellHeight + 32);
+                    graphics.DrawString(text, font, textBrush, cellY * cellWidth + 24, cellX * cellHeight + 20);
+                    graphics.DrawString(i.ToString().PadLeft(2, '0'), font, textBrush, cellY * cellWidth + 24, cellX * cellHeight + 34);
                 }
 
-                for (var i = 0; i < 8; i++)
+                for (var i = 0; i < 9; i++)
                 {
                     graphics.DrawLine(Pens.Black, cellWidth*i, 0, cellWidth*i, bmp.Height);
                     graphics.DrawLine(Pens.Black, 0, cellHeight*i, bmp.Width, cellHeight*i);
