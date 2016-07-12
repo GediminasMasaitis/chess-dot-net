@@ -211,8 +211,6 @@ namespace ChessDotNet.Data
                 }
             }
 
-            newBoards.Sync();
-
             if ((move.Piece == ChessPiece.WhitePawn && move.From + 16 == move.To) || (move.Piece == ChessPiece.BlackPawn && move.From - 16 == move.To))
             {
                 newBoards.EnPassantFile = Files[move.From%8];
@@ -230,8 +228,8 @@ namespace ChessDotNet.Data
             }
             else if (move.Piece == ChessPiece.WhiteRook)
             {
-                newBoards.WhiteCanCastleQueenSide = WhiteCanCastleQueenSide && move.From % 8 > 3;
-                newBoards.WhiteCanCastleKingSide = WhiteCanCastleKingSide && move.From%8 < 3;
+                newBoards.WhiteCanCastleQueenSide = WhiteCanCastleQueenSide && move.From != 0;
+                newBoards.WhiteCanCastleKingSide = WhiteCanCastleKingSide && move.From != 7;
             }
             else
             {
@@ -246,14 +244,32 @@ namespace ChessDotNet.Data
             }
             else if (move.Piece == ChessPiece.BlackRook)
             {
-                newBoards.BlackCanCastleQueenSide = BlackCanCastleQueenSide && move.From % 8 > 3;
-                newBoards.BlackCanCastleKingSide = BlackCanCastleKingSide && move.From % 8 < 3;
+                newBoards.BlackCanCastleQueenSide = BlackCanCastleQueenSide && move.From != 56;
+                newBoards.BlackCanCastleKingSide = BlackCanCastleKingSide && move.From != 63;
             }
             else
             {
                 newBoards.BlackCanCastleQueenSide = BlackCanCastleQueenSide;
                 newBoards.BlackCanCastleKingSide = BlackCanCastleKingSide;
             }
+
+            switch (move.To)
+            {
+                case 0:
+                    newBoards.WhiteCanCastleQueenSide = false;
+                    break;
+                case 7:
+                    newBoards.WhiteCanCastleKingSide = false;
+                    break;
+                case 56:
+                    newBoards.BlackCanCastleQueenSide = false;
+                    break;
+                case 63:
+                    newBoards.BlackCanCastleKingSide = false;
+                    break;
+            }
+
+            newBoards.Sync();
             return newBoards;
         }
 
