@@ -83,7 +83,7 @@ namespace ChessDotNet.Perft
             foreach (var result in sharperResults)
             {
                 var split = result.Split(' ');
-                if (split.Length != 2 || split[0].Length != 4)
+                if (split.Length != 2 || (split[0].Length != 4 && split[0].Length != 5))
                 {
                     continue;
                 }
