@@ -12,6 +12,9 @@ namespace ChessDotNet.BoardVisualizer
 {
     public partial class MainForm : Form
     {
+        private IList<TextBox> BitboardsTextBoxes { get; }
+        private IList<SolidBrush> Brushes { get;}
+
         public MainForm() : this(new ulong[0])
         {
         }
@@ -20,39 +23,61 @@ namespace ChessDotNet.BoardVisualizer
         {
             InitializeComponent();
             var allBitboards = bitboards.ToList();
-            while (allBitboards.Count < 3)
+
+            BitboardsTextBoxes = new []
             {
-                allBitboards.Add(0UL);
+                Bitboard1TextBox,
+                Bitboard2TextBox,
+                Bitboard3TextBox,
+                Bitboard4TextBox,
+                Bitboard5TextBox,
+                Bitboard6TextBox,
+                Bitboard7TextBox,
+                Bitboard8TextBox,
+                Bitboard9TextBox,
+                Bitboard10TextBox
+            };
+
+            for (var i = 0; i < BitboardsTextBoxes.Count; i++)
+            {
+                if (allBitboards.Count <= i)
+                {
+                    allBitboards.Add(0UL);
+                }
             }
-            Bitboard1TextBox.Text = allBitboards[0].ToString();
-            Bitboard2TextBox.Text = allBitboards[1].ToString();
-            Bitboard3TextBox.Text = allBitboards[2].ToString();
+
+            var colors = new[]
+            {
+                Color.FromArgb(100, 0, 0),
+                Color.FromArgb(0, 100, 0),
+                Color.FromArgb(40, 70, 170),
+                Color.FromArgb(100, 100, 0),
+                Color.FromArgb(100, 0, 100),
+                Color.FromArgb(0, 100, 100),
+                Color.FromArgb(170, 70, 0),
+                Color.FromArgb(0, 170, 100),
+                Color.FromArgb(70, 30, 0),
+                Color.FromArgb(0, 0, 100),
+            };
+
+            Brushes = colors.Select(x => new SolidBrush(x)).ToList();
+
             DisplayBitBoards(allBitboards.ToArray());
         }
 
         private void ShowBitboardButton_Click(object sender, EventArgs e)
         {
-            ulong bitboard1;
-            if (!ulong.TryParse(Bitboard1TextBox.Text, out bitboard1))
+            var bitboards = new ulong[BitboardsTextBoxes.Count];
+            for (var i = 0; i < BitboardsTextBoxes.Count; i++)
             {
-                MessageBox.Show("Invalid bitboard 1");
-                return;
+                if (!ulong.TryParse(BitboardsTextBoxes[i].Text, out bitboards[i]))
+                {
+                    MessageBox.Show($"Invalid bitboard {i}");
+                    return;
+                }
             }
 
-            ulong bitboard2;
-            if (!ulong.TryParse(Bitboard2TextBox.Text, out bitboard2))
-            {
-                MessageBox.Show("Invalid bitboard 2");
-                return;
-            }
-
-            ulong bitboard3;
-            if (!ulong.TryParse(Bitboard3TextBox.Text, out bitboard3))
-            {
-                MessageBox.Show("Invalid bitboard 3");
-                return;
-            }
-            DisplayBitBoards(bitboard1, bitboard2, bitboard3);
+            DisplayBitBoards(bitboards);
         }
 
         private IEnumerable<bool> BitboardToCells(ulong bitboard)
@@ -71,13 +96,6 @@ namespace ChessDotNet.BoardVisualizer
             var bmp = new Bitmap(MainPictureBox.Width, MainPictureBox.Height);
             var emptyBrush = new SolidBrush(Color.FromArgb(50,50,50));
 
-            var color1 = Color.FromArgb(10, 100, 10);
-            var color2 = Color.FromArgb(120, 100, 00);
-            var color3 = Color.FromArgb(50, 70, 150);
-
-            var filledBrush1 = new SolidBrush(color1);
-            var filledBrush2 = new SolidBrush(color2);
-            var filledBrush3 = new SolidBrush(color3);
             var textBrush = new SolidBrush(Color.FromArgb(255,255,255));
             var cellWidth = bmp.Width/8;
             var cellHeight = bmp.Height/8;
@@ -89,18 +107,15 @@ namespace ChessDotNet.BoardVisualizer
                     var cellY = i%8;
 
                     var brush = emptyBrush;
-                    if (cells[0][i])
+
+                    for (var j = 0; j < cells.Count; j++)
                     {
-                        brush = filledBrush1;
+                        if (cells[j][i])
+                        {
+                            brush = Brushes[j];
+                        }
                     }
-                    if (cells[1][i])
-                    {
-                        brush = filledBrush2;
-                    }
-                    if (cells[2][i])
-                    {
-                        brush = filledBrush3;
-                    }
+
                     graphics.FillRectangle(brush, cellY * cellWidth, cellX * cellHeight, cellWidth, cellHeight);
 
                     var text = (char)(65+(cellY)) + (8-cellX).ToString();
