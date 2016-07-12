@@ -237,7 +237,65 @@ namespace ChessDotNet.MoveGeneration
         {
             var kings = bitBoards.WhiteToMove ? bitBoards.WhiteKings : bitBoards.BlackKings;
             var chessPiece = bitBoards.WhiteToMove ? ChessPiece.WhiteKing : ChessPiece.BlackKing;
-            return GetPotentialJumpingMoves(bitBoards, kings, BitBoards.KingSpan, BitBoards.KingSpanPosition, chessPiece);
+            var normalMoves = GetPotentialJumpingMoves(bitBoards, kings, BitBoards.KingSpan, BitBoards.KingSpanPosition, chessPiece);
+            var castlingMoves = GetPotentialCastlingMoves(bitBoards);
+            var allMoves = normalMoves.Union(castlingMoves).ToList();
+            return allMoves;
+        }
+
+        public IList<Move> GetPotentialCastlingMoves(BitBoards bitBoards)
+        {
+            var castlingMoves = new List<Move>();
+            var isWhite = bitBoards.WhiteToMove;
+            int kingPos;
+            ulong queenSideCastleMask;
+            ulong kingSideCastleMask;
+            ulong queenSideCastleAttackMask;
+            ulong kingSideCastleAttackMask;
+            ChessPiece piece;
+            bool castlingPermissionQueenSide;
+            bool castlingPermissionKingSide;
+
+            if (isWhite)
+            {
+                castlingPermissionQueenSide = bitBoards.WhiteCanCastleQueenSide;
+                castlingPermissionKingSide = bitBoards.WhiteCanCastleKingSide;
+                kingPos = bitBoards.WhiteKings.BitScanForward();
+                queenSideCastleMask = BitBoards.WhiteQueenSideCastleMask;
+                kingSideCastleMask = BitBoards.WhiteKingSideCastleMask;
+                queenSideCastleAttackMask = BitBoards.WhiteQueenSideCastleAttackMask;
+                kingSideCastleAttackMask = BitBoards.WhiteKingSideCastleAttackMask;
+                piece = ChessPiece.WhiteKing;
+            }
+            else
+            {
+                castlingPermissionQueenSide = bitBoards.BlackCanCastleQueenSide;
+                castlingPermissionKingSide = bitBoards.BlackCanCastleKingSide;
+                kingPos = bitBoards.BlackKings.BitScanForward();
+                queenSideCastleMask = BitBoards.BlackQueenSideCastleMask;
+                kingSideCastleMask = BitBoards.BlackKingSideCastleMask;
+                queenSideCastleAttackMask = BitBoards.BlackQueenSideCastleAttackMask;
+                kingSideCastleAttackMask = BitBoards.BlackKingSideCastleAttackMask;
+                piece = ChessPiece.BlackKing;
+            }
+
+            var canMaybeCastleQueenSide = castlingPermissionQueenSide && ((bitBoards.AllPieces & queenSideCastleMask) == 0);
+            var canMaybeCastleKingSide = castlingPermissionKingSide && (bitBoards.AllPieces & kingSideCastleMask) == 0;
+
+            if (canMaybeCastleQueenSide | canMaybeCastleKingSide)
+            {
+                var attackedByEnemy = AttacksService.GetAllAttacked(bitBoards, !bitBoards.WhiteToMove);
+                if (canMaybeCastleQueenSide && ((attackedByEnemy & queenSideCastleAttackMask) == 0))
+                {
+                    castlingMoves.Add(new Move(kingPos, kingPos - 2, piece));
+                }
+                if (canMaybeCastleKingSide && ((attackedByEnemy & kingSideCastleAttackMask) == 0))
+                {
+                    castlingMoves.Add(new Move(kingPos, kingPos + 2, piece));
+                }
+            }
+
+            return castlingMoves;
         }
 
         public IList<Move> GetPossibleKnightMoves(BitBoards bitBoards)

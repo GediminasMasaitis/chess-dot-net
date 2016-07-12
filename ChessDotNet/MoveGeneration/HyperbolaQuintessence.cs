@@ -29,8 +29,8 @@ namespace ChessDotNet.MoveGeneration
 
         public ulong MaskedSlide(BitBoards bitboards, ulong pieceBitboard, ulong mask)
         {
-            var left = ((bitboards.FilledSquares & mask) - 2 * pieceBitboard);
-            var right = ((bitboards.FilledSquares & mask).Reverse() - 2 * pieceBitboard.Reverse()).Reverse();
+            var left = ((bitboards.AllPieces & mask) - 2 * pieceBitboard);
+            var right = ((bitboards.AllPieces & mask).Reverse() - 2 * pieceBitboard.Reverse()).Reverse();
             var both = left ^ right;
             var slide = both & mask;
             return slide;

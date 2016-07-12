@@ -21,22 +21,34 @@ namespace ChessDotNet.Data
         public ulong WhitePieces { get; private set; }
         public ulong BlackPieces { get; private set; }
         public ulong EmptySquares { get; private set; }
-        public ulong FilledSquares { get; private set; }
+        public ulong AllPieces { get; private set; }
         public IReadOnlyDictionary<ChessPiece, ulong> PiecesDict { get; private set; }
 
         public ulong EnPassantFile { get; set; }
+
 
         public static ulong AllBoard { get; }
         public static ulong KnightSpan { get; private set; }
         public static int KnightSpanPosition { get; private set; }
         public static ulong KingSpan { get; private set; }
         public static int KingSpanPosition { get; private set; }
-        public static IReadOnlyList<ulong> Files { get; private set; }
-        public static IReadOnlyList<ulong> Ranks { get; private set; }
+        public static IReadOnlyList<ulong> Files { get; }
+        public static IReadOnlyList<ulong> Ranks { get; }
         public static IReadOnlyList<ulong> Diagonals { get; private set; }
         public static IReadOnlyList<ulong> Antidiagonals { get; private set; }
         public static ulong KingSide { get; set; }
         public static ulong QueenSide { get; set; }
+
+        public static ulong WhiteQueenSideCastleMask { get; }
+        public static ulong WhiteKingSideCastleMask { get; }
+        public static ulong BlackQueenSideCastleMask { get; }
+        public static ulong BlackKingSideCastleMask { get; }
+
+        public static ulong WhiteQueenSideCastleAttackMask { get; }
+        public static ulong WhiteKingSideCastleAttackMask { get; }
+        public static ulong BlackKingSideCastleAttackMask { get; }
+        public static ulong BlackQueenSideCastleAttackMask { get; }
+
 
         public BitBoards()
         {
@@ -44,11 +56,6 @@ namespace ChessDotNet.Data
         }
 
         static BitBoards()
-        {
-            Initialize();
-        }
-
-        public static void Initialize()
         {
             KnightSpan = 43234889994UL;
             KnightSpanPosition = 18;
@@ -120,15 +127,29 @@ namespace ChessDotNet.Data
                 0x201000000000000UL,
                 0x100000000000000UL
             };
+
+            var queenSideCastleMask = Files[1] | Files[2] | Files[3];
+            var kingSideCastleMask = Files[5] | Files[6];
+            WhiteQueenSideCastleMask = queenSideCastleMask & Ranks[0];
+            WhiteKingSideCastleMask = kingSideCastleMask & Ranks[0];
+            BlackQueenSideCastleMask = queenSideCastleMask & Ranks[7];
+            BlackKingSideCastleMask = kingSideCastleMask & Ranks[7];
+
+            var queenSideCastleAttackMask = Files[2] | Files[3] | Files[4];
+            var kingSideCastleAttackMask = Files[4] | Files[5] | Files[6];
+            WhiteQueenSideCastleAttackMask = queenSideCastleAttackMask & Ranks[0];
+            WhiteKingSideCastleAttackMask = kingSideCastleAttackMask & Ranks[0];
+            BlackQueenSideCastleAttackMask = queenSideCastleAttackMask & Ranks[7];
+            BlackKingSideCastleAttackMask = kingSideCastleAttackMask & Ranks[7];
         }
 
-    
+
         public void Sync(IReadOnlyDictionary<ChessPiece, ulong> dictToUse = null)
         {
             WhitePieces = WhitePawns | WhiteNights | WhiteBishops | WhiteRooks | WhiteQueens | WhiteKings;
             BlackPieces = BlackPawns | BlackNights | BlackBishops | BlackRooks | BlackQueens | BlackKings;
-            FilledSquares = WhitePieces | BlackPieces;
-            EmptySquares = ~FilledSquares;
+            AllPieces = WhitePieces | BlackPieces;
+            EmptySquares = ~AllPieces;
 
             PiecesDict = dictToUse ?? new Dictionary<ChessPiece, ulong>
             {
@@ -190,6 +211,8 @@ namespace ChessDotNet.Data
                 }
             }
 
+            newBoards.Sync();
+
             if ((move.Piece == ChessPiece.WhitePawn && move.From + 16 == move.To) || (move.Piece == ChessPiece.BlackPawn && move.From - 16 == move.To))
             {
                 newBoards.EnPassantFile = Files[move.From%8];
@@ -202,34 +225,34 @@ namespace ChessDotNet.Data
 
             if (move.Piece == ChessPiece.WhiteKing)
             {
-                newBoards.WhiteCanCastleKingSide = false;
                 newBoards.WhiteCanCastleQueenSide = false;
+                newBoards.WhiteCanCastleKingSide = false;
             }
             else if (move.Piece == ChessPiece.WhiteRook)
             {
-                newBoards.WhiteCanCastleKingSide = WhiteCanCastleKingSide && move.From%8 > 3;
-                newBoards.WhiteCanCastleQueenSide = WhiteCanCastleQueenSide && move.From%8 < 3;
+                newBoards.WhiteCanCastleQueenSide = WhiteCanCastleQueenSide && move.From % 8 > 3;
+                newBoards.WhiteCanCastleKingSide = WhiteCanCastleKingSide && move.From%8 < 3;
             }
             else
             {
-                newBoards.WhiteCanCastleKingSide = WhiteCanCastleKingSide;
                 newBoards.WhiteCanCastleQueenSide = WhiteCanCastleQueenSide;
+                newBoards.WhiteCanCastleKingSide = WhiteCanCastleKingSide;
             }
 
             if (move.Piece == ChessPiece.BlackKing)
             {
-                newBoards.BlackCanCastleKingSide = false;
                 newBoards.BlackCanCastleQueenSide = false;
+                newBoards.BlackCanCastleKingSide = false;
             }
             else if (move.Piece == ChessPiece.BlackRook)
             {
-                newBoards.BlackCanCastleKingSide = BlackCanCastleKingSide && move.From % 8 > 3;
-                newBoards.BlackCanCastleQueenSide = BlackCanCastleQueenSide && move.From % 8 < 3;
+                newBoards.BlackCanCastleQueenSide = BlackCanCastleQueenSide && move.From % 8 > 3;
+                newBoards.BlackCanCastleKingSide = BlackCanCastleKingSide && move.From % 8 < 3;
             }
             else
             {
-                newBoards.BlackCanCastleKingSide = BlackCanCastleKingSide;
                 newBoards.BlackCanCastleQueenSide = BlackCanCastleQueenSide;
+                newBoards.BlackCanCastleKingSide = BlackCanCastleKingSide;
             }
             return newBoards;
         }
@@ -252,7 +275,6 @@ namespace ChessDotNet.Data
                 BlackQueens = dictionary[ChessPiece.BlackQueen],
                 BlackKings = dictionary[ChessPiece.BlackKing],
             };
-            newBoards.Sync(dictionary);
             return newBoards;
         }
 
