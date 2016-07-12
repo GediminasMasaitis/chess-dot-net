@@ -9,7 +9,7 @@ namespace ChessDotNet
 {
     public static class ExtensionMethods
     {
-        private static int[] BitScanTable = {
+        private static readonly int[] BitScanTable = {
             0, 47,  1, 56, 48, 27,  2, 60,
             57, 49, 41, 37, 28, 16,  3, 61,
             54, 58, 35, 52, 50, 42, 21, 44,
@@ -20,7 +20,7 @@ namespace ChessDotNet
             13, 18,  8, 12,  7,  6,  5, 63
         };
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int BitScanForward(this ulong bb)
         {
             const ulong debruijn64 = 0x03f79d71b4cb0a89UL;

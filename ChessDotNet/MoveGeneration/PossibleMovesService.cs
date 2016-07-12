@@ -425,6 +425,7 @@ namespace ChessDotNet.MoveGeneration
 
         public bool IsKingSafeAfterMove(BitBoards bitBoards, Move move)
         {
+            //return true;
             var afterMove = DoMoveIfKingSafe(bitBoards, move);
             return afterMove != null;
         }
