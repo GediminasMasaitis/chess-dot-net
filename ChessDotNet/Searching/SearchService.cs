@@ -18,7 +18,8 @@ namespace ChessDotNet.Searching
         private const int MaxDepth = 64;
         private PVSResult[] PVTable { get; set; }
 
-        public const int MateScore = int.MaxValue/2;
+        public const int MateScore = 50000;
+        public const int MateThereshold = 49000;
 
         public SearchService(PossibleMovesService possibleMovesService, EvaluationService evaluationService)
         {
@@ -34,7 +35,10 @@ namespace ChessDotNet.Searching
 
         public PVSResult Search(BitBoards bitBoards, int maxDepth)
         {
-            PrincipalVariationSearch(int.MinValue+1, int.MaxValue, bitBoards, maxDepth, 0);
+            for (var i = 1; i <= maxDepth; i++)
+            {
+                var score = PrincipalVariationSearch(int.MinValue + 1, int.MaxValue, bitBoards, i, 0);
+            }
             return PVTable[0];
         }
 
@@ -87,24 +91,40 @@ namespace ChessDotNet.Searching
                         score = -PrincipalVariationSearch(-beta, -alpha, bbAfter, depth, currentDepth + 1);
                     }
                 }
-                if (score == MateScore)
+                /*if (score > MateThereshold)
                 {
-                    return score;
-                }
+                    break;
+                }*/
                 if (score > alpha)
                 {
                     if (score >= beta)
                     {
+                        Console.WriteLine("Beta cutoff, score " + score + ", beta: " + beta);
                         return beta;
                     }
                     alpha = score;
                     bestMove = i;
-                    //doPV = false;
+                    doPV = false;
                 }
             }
 
-            if (alpha > oldAlpha)
+            if (validMoves == 0)
             {
+                var enemyAttacks = PossibleMovesService.AttacksService.GetAllAttacked(bitBoards, !bitBoards.WhiteToMove);
+                var myKing = bitBoards.WhiteToMove ? bitBoards.WhiteKings : bitBoards.BlackKings;
+                if ((enemyAttacks & myKing) != 0)
+                {
+                    return -MateScore + currentDepth;
+                }
+                else
+                {
+                    return 0;
+                }
+            }
+
+            if (alpha != oldAlpha)
+            {
+                Console.WriteLine("Alpha changed from " + oldAlpha + " to " + alpha + " at depth " + currentDepth);
                 PVTable[currentDepth] = new PVSResult(alpha, potentialMoves[bestMove]);
             }
 
