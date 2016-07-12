@@ -9,6 +9,7 @@ using ChessDotNet.Data;
 using ChessDotNet.Evaluation;
 using ChessDotNet.MoveGeneration;
 using ChessDotNet.Perft;
+using ChessDotNet.Searching;
 
 namespace ChessDotNet.ConsoleTests
 {
@@ -17,8 +18,9 @@ namespace ChessDotNet.ConsoleTests
         static void Main(string[] args)
         {
             //DoTimings();
-            DoPerft();
+            //DoPerft();
             //TestMove();
+            DoSearch();
 
             Console.ReadLine();
         }
@@ -75,7 +77,7 @@ namespace ChessDotNet.ConsoleTests
             board.EnPassantFile = BitBoards.Files[3];
             var hyperbola = new HyperbolaQuintessence();
             var evaluationService = new EvaluationService();
-            Console.WriteLine(evaluationService.Evaluate(board, true));
+            Console.WriteLine(evaluationService.Evaluate(board));
             var attacksService = new AttacksService(hyperbola);
             var movesService = new PossibleMovesService(attacksService, hyperbola);
             var forWhite = true;
@@ -88,6 +90,23 @@ namespace ChessDotNet.ConsoleTests
             var movedBoard = board.DoMove(newMove);
 
             Debugging.ShowBitBoard(movedBoard.WhiteKings, movedBoard.WhiteRooks);
+        }
+
+        private static void DoSearch()
+        {
+            var fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+            var fact = new BoardFactory();
+            var board = fact.ParseFENToBitBoards(fen);
+
+            var hyperbola = new HyperbolaQuintessence();
+            var evaluationService = new EvaluationService();
+            var attacksService = new AttacksService(hyperbola);
+            var movesService = new PossibleMovesService(attacksService, hyperbola);
+            var searchService = new SearchService(movesService, evaluationService);
+
+            var move = searchService.Search(board, 5);
+
+            Console.WriteLine(move.ToString());
         }
     }
 }

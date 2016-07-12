@@ -24,6 +24,7 @@ namespace ChessDotNet.Data
         public ulong AllPieces { get; private set; }
         public IReadOnlyDictionary<ChessPiece, ulong> PiecesDict { get; private set; }
 
+        public int EnPassantFileIndex { get; set; }
         public ulong EnPassantFile { get; set; }
 
 
@@ -213,11 +214,14 @@ namespace ChessDotNet.Data
 
             if ((move.Piece == ChessPiece.WhitePawn && move.From + 16 == move.To) || (move.Piece == ChessPiece.BlackPawn && move.From - 16 == move.To))
             {
-                newBoards.EnPassantFile = Files[move.From%8];
+                var fileIndex = move.From%8;
+                newBoards.EnPassantFile = Files[fileIndex];
+                newBoards.EnPassantFileIndex = fileIndex;
             }
             else
             {
                 newBoards.EnPassantFile = 0;
+                newBoards.EnPassantFileIndex = -1;
             }
             newBoards.WhiteToMove = !WhiteToMove;
 

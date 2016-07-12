@@ -7,10 +7,102 @@ namespace ChessDotNet.Evaluation
     {
         private static int[] Weights = {100,340,350,500,950,50000};
 
-        public int Evaluate(BitBoards bitBoards, bool forWhite)
+        private static int[] PawnTable { get; } = {
+            0, 0, 0, 0, 0, 0, 0, 0,
+            10, 10, 0, -10, -10, 0, 10, 10,
+            5, 0, 0, 5, 5, 0, 0, 5,
+            0, 0, 10, 20, 20, 10, 0, 0,
+            5, 5, 5, 10, 10, 5, 5, 5,
+            10, 10, 10, 20, 20, 10, 10, 10,
+            20, 20, 20, 30, 30, 20, 20, 20,
+            0, 0, 0, 0, 0, 0, 0, 0
+        };
+
+        private static int[] KnightTable { get; } =
+        {
+            0, -10, 0, 0, 0, 0, -10, 0,
+            0, 0, 0, 5, 5, 0, 0, 0,
+            0, 0, 10, 10, 10, 10, 0, 0,
+            0, 0, 10, 20, 20, 10, 5, 0,
+            5, 10, 15, 20, 20, 15, 10, 5,
+            5, 10, 10, 20, 20, 10, 10, 5,
+            0, 0, 5, 10, 10, 5, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0
+        };
+
+        private static int[] BishopTable { get; } =
+        {
+            0, 0, -10, 0, 0, -10, 0, 0,
+            0, 0, 0, 10, 10, 0, 0, 0,
+            0, 0, 10, 15, 15, 10, 0, 0,
+            0, 10, 15, 20, 20, 15, 10, 0,
+            0, 10, 15, 20, 20, 15, 10, 0,
+            0, 0, 10, 15, 15, 10, 0, 0,
+            0, 0, 0, 10, 10, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0
+        };
+
+        private static int[] RookTable { get; } =
+        {
+            0, 0, 5, 10, 10, 5, 0, 0,
+            0, 0, 5, 10, 10, 5, 0, 0,
+            0, 0, 5, 10, 10, 5, 0, 0,
+            0, 0, 5, 10, 10, 5, 0, 0,
+            0, 0, 5, 10, 10, 5, 0, 0,
+            0, 0, 5, 10, 10, 5, 0, 0,
+            25, 25, 25, 25, 25, 25, 25, 25,
+            0, 0, 5, 10, 10, 5, 0, 0
+        };
+
+        public int Evaluate(BitBoards bitBoards)
         {
             var score = 0;
             score += EvaluateWeights(bitBoards);
+            score += EvaluatePositions(bitBoards);
+            return score;
+        }
+
+        public int EvaluatePositions(BitBoards bitBoards)
+        {
+            var score = 0;
+
+            for (var i = 0; i < 64; i++)
+            {
+                if ((bitBoards.WhitePawns & (1UL << i)) != 0)
+                {
+                    score += PawnTable[i];
+                }
+                else if ((bitBoards.WhiteNights & (1UL << i)) != 0)
+                {
+                    score += KnightTable[i];
+                }
+                else if ((bitBoards.WhiteBishops & (1UL << i)) != 0)
+                {
+                    score += BishopTable[i];
+                }
+                else if ((bitBoards.WhiteRooks & (1UL << i)) != 0)
+                {
+                    score += RookTable[i];
+                }
+
+                else if ((bitBoards.BlackPawns & (1UL << i)) != 0)
+                {
+                    score -= PawnTable[63-i];
+                }
+                else if ((bitBoards.BlackNights & (1UL << i)) != 0)
+                {
+                    score -= KnightTable[63-i];
+                }
+                else if ((bitBoards.BlackBishops & (1UL << i)) != 0)
+                {
+                    score -= BishopTable[63-i];
+                }
+                else if ((bitBoards.BlackRooks & (1UL << i)) != 0)
+                {
+                    score -= RookTable[63-i];
+                }
+            }
+
             return score;
         }
 

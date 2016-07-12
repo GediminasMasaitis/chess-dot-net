@@ -84,6 +84,8 @@
     <Compile Include="Debugging.cs" />
     <Compile Include="ExtensionMethods.cs" />
     <Compile Include="Data\Move.cs" />
+    <Compile Include="Hashing\BoardData.cs" />
+    <Compile Include="Hashing\TranspositionTable.cs" />
     <Compile Include="MoveGeneration\AttacksService.cs" />
     <Compile Include="MoveGeneration\HyperbolaQuintessence.cs" />
     <Compile Include="Perft\IPerftClient.cs" />
@@ -97,7 +99,7 @@
     <Compile Include="Protocols\IChessProtocol.cs" />
     <Compile Include="Protocols\UCIProtocol.cs" />
     <Compile Include="Evaluation\EvaluationService.cs" />
-    <Compile Include="Searching\PrincipalVariationService.cs" />
+    <Compile Include="Searching\SearchService.cs" />
     <Compile Include="Hashing\ZobristKeys.cs" />
   </ItemGroup>
   <ItemGroup />

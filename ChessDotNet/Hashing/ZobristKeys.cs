@@ -118,6 +118,30 @@ namespace ChessDotNet.Hashing
                 }
             }
 
+            if (bitBoards.EnPassantFileIndex >= 0)
+            {
+                key ^= ZEnPassant[bitBoards.EnPassantFileIndex];
+            }
+
+            if (bitBoards.WhiteCanCastleQueenSide)
+            {
+                key ^= ZCastle[0];
+            }
+            if (bitBoards.WhiteCanCastleKingSide)
+            {
+                key ^= ZCastle[1];
+            }
+            if (bitBoards.BlackCanCastleQueenSide)
+            {
+                key ^= ZCastle[2];
+            }
+            if (bitBoards.BlackCanCastleKingSide)
+            {
+                key ^= ZCastle[3];
+            }
+
+            key ^= ZToMove[bitBoards.WhiteToMove ? 0 : 1];
+
             return key;
         }
 
