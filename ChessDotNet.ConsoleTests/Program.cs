@@ -17,8 +17,8 @@ namespace ChessDotNet.ConsoleTests
         static void Main(string[] args)
         {
             //DoTimings();
-            DoPerft();
-            //TestMove();
+            //DoPerft();
+            TestMove();
 
             Console.ReadLine();
         }
@@ -70,20 +70,24 @@ namespace ChessDotNet.ConsoleTests
         private static void TestMove()
         {
             var fact = new BoardFactory();
-            var arrayBoard = fact.ParseFENToArrayBoard("3k4/3p4/8/K1P4r/8/8/8/8 w - d6 0 51 ");
-            var bitBoards = fact.ArrayBoardToBitBoards(arrayBoard);
-            bitBoards.EnPassantFile = BitBoards.Files[3];
+            var arrayBoard = fact.ParseFENToArrayBoard("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -");
+            var board = fact.ArrayBoardToBitBoards(arrayBoard);
+            board.EnPassantFile = BitBoards.Files[3];
             var hyperbola = new HyperbolaQuintessence();
             var evaluationService = new EvaluationService();
-            Console.WriteLine(evaluationService.Evaluate(bitBoards, true));
+            Console.WriteLine(evaluationService.Evaluate(board, true));
             var attacksService = new AttacksService(hyperbola);
             var movesService = new PossibleMovesService(attacksService, hyperbola);
             var forWhite = true;
-            var moves = movesService.GetAllPossibleMoves(bitBoards).ToList();
+            var moves = movesService.GetPossibleKingMoves(board).ToList();
             var dests = moves.Select(x => x.To);
             var toMoveBoard = fact.PiecesToBitBoard(dests);
-            var attacked = attacksService.GetAllAttacked(bitBoards);
-            Debugging.ShowBitBoard(bitBoards.WhitePieces, bitBoards.BlackPieces, toMoveBoard);
+            var attacked = attacksService.GetAllAttacked(board);
+
+            var newMove = new Move(4,2,ChessPiece.WhiteKing);
+            var movedBoard = board.DoMove(newMove);
+
+            Debugging.ShowBitBoard(movedBoard.WhiteKings, movedBoard.WhiteRooks);
         }
     }
 }

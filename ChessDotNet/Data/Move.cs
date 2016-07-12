@@ -11,6 +11,8 @@ namespace ChessDotNet.Data
             Piece = piece;
             EnPassant = enPassant;
             PawnPromoteTo = pawnPromoteTo;
+
+            Castle = (piece == ChessPiece.WhiteKing || piece == ChessPiece.BlackKing) && Math.Abs(from - to) == 2;
         }
 
         public int From { get; }
@@ -18,6 +20,7 @@ namespace ChessDotNet.Data
         public ChessPiece Piece { get; }
         public bool EnPassant { get; }
         public ChessPiece? PawnPromoteTo { get; }
+        public bool Castle { get; }
 
         private string PositionToText(int position)
         {

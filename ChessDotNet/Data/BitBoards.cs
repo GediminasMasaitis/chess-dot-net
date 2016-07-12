@@ -167,9 +167,29 @@ namespace ChessDotNet.Data
                 {
                     bitBoard &= ~(1UL << (move.To + 8));
                 }
-                newPiecesDict.Add(pair.Key, bitBoard);
+                newPiecesDict[pair.Key] = bitBoard;
             }
             var newBoards = FromDict(newPiecesDict);
+
+            if (move.Castle)
+            {
+                var kingSide = move.To % 8 > 3;
+                var isWhite = move.Piece == ChessPiece.WhiteKing;
+                var castlingRookPos = (kingSide ? 7 : 0) + (isWhite ? 0 : 56);
+                var castlingRookNewPos = (move.From + move.To) / 2;
+
+                if (isWhite)
+                {
+                    newBoards.WhiteRooks &= ~(1UL << castlingRookPos);
+                    newBoards.WhiteRooks |= 1UL << castlingRookNewPos;
+                }
+                else
+                {
+                    newBoards.BlackRooks &= ~(1UL << castlingRookPos);
+                    newBoards.BlackRooks |= 1UL << castlingRookNewPos;
+                }
+            }
+
             if ((move.Piece == ChessPiece.WhitePawn && move.From + 16 == move.To) || (move.Piece == ChessPiece.BlackPawn && move.From - 16 == move.To))
             {
                 newBoards.EnPassantFile = Files[move.From%8];
@@ -188,12 +208,28 @@ namespace ChessDotNet.Data
             else if (move.Piece == ChessPiece.WhiteRook)
             {
                 newBoards.WhiteCanCastleKingSide = WhiteCanCastleKingSide && move.From%8 > 3;
-                newBoards.WhiteCanCastleQueenSide = WhiteCanCastleQueenSide && move.From % 8 < 3;
+                newBoards.WhiteCanCastleQueenSide = WhiteCanCastleQueenSide && move.From%8 < 3;
             }
             else
             {
                 newBoards.WhiteCanCastleKingSide = WhiteCanCastleKingSide;
                 newBoards.WhiteCanCastleQueenSide = WhiteCanCastleQueenSide;
+            }
+
+            if (move.Piece == ChessPiece.BlackKing)
+            {
+                newBoards.BlackCanCastleKingSide = false;
+                newBoards.BlackCanCastleQueenSide = false;
+            }
+            else if (move.Piece == ChessPiece.BlackRook)
+            {
+                newBoards.BlackCanCastleKingSide = BlackCanCastleKingSide && move.From % 8 > 3;
+                newBoards.BlackCanCastleQueenSide = BlackCanCastleQueenSide && move.From % 8 < 3;
+            }
+            else
+            {
+                newBoards.BlackCanCastleKingSide = BlackCanCastleKingSide;
+                newBoards.BlackCanCastleQueenSide = BlackCanCastleQueenSide;
             }
             return newBoards;
         }
