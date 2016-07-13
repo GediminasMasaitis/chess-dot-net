@@ -20,9 +20,10 @@ namespace ChessDotNet.Data
 
         public ulong[] BitBoard { get; set; }
         public int[] ArrayBoard { get; set; }
-
         public int EnPassantFileIndex { get; set; }
         public ulong EnPassantFile { get; set; }
+        public ulong Key { get; set; }
+
 
         public HistoryEntry[] History { get; set; }
 

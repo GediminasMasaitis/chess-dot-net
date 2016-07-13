@@ -3,7 +3,7 @@ using ChessDotNet.Data;
 
 namespace ChessDotNet.Hashing
 {
-    class ZobristKeys
+    static class ZobristKeys
     {
         private static ulong[,,] ZPieces { get; }
         private static ulong[] ZEnPassant { get; }
@@ -53,70 +53,58 @@ namespace ChessDotNet.Hashing
             return num;
         }
 
-        public ulong GetKey(Board board)
+        public static ulong CalculateKey(Board board)
         {
-            //TODO: Use new arrayboard
-
             var key = 0UL;
             for (var i = 0; i < 64; i++)
             {
-                if ((board.EmptySquares & (1UL << i)) != 0)
-                {
-                    // skip
-                }
 
-                else if ((board.BitBoard[ChessPiece.WhitePawn] & (1UL << i)) != 0)
+                switch (board.ArrayBoard[i])
                 {
-                    key ^= ZPieces[0, 0, i];
-                }
-                else if ((board.BitBoard[ChessPiece.BlackPawn] & (1UL << i)) != 0)
-                {
-                    key ^= ZPieces[1, 0, i];
-                }
+                    case ChessPiece.Empty:
+                        break;
 
-                else if ((board.BitBoard[ChessPiece.WhiteKnight] & (1UL << i)) != 0)
-                {
-                    key ^= ZPieces[0, 1, i];
-                }
-                else if ((board.BitBoard[ChessPiece.BlackKnight] & (1UL << i)) != 0)
-                {
-                    key ^= ZPieces[1, 1, i];
-                }
+                    case ChessPiece.WhitePawn:
+                        key ^= ZPieces[0, 0, i];
+                        break;
+                    case ChessPiece.BlackPawn:
+                        key ^= ZPieces[1, 0, i];
+                        break;
 
-                else if ((board.BitBoard[ChessPiece.WhiteBishop] & (1UL << i)) != 0)
-                {
-                    key ^= ZPieces[0, 2, i];
-                }
-                else if ((board.BitBoard[ChessPiece.BlackBishop] & (1UL << i)) != 0)
-                {
-                    key ^= ZPieces[1, 2, i];
-                }
+                    case ChessPiece.WhiteKnight:
+                        key ^= ZPieces[0, 1, i];
+                        break;
+                    case ChessPiece.BlackKnight:
+                        key ^= ZPieces[1, 1, i];
+                        break;
 
-                else if ((board.BitBoard[ChessPiece.WhiteRook] & (1UL << i)) != 0)
-                {
-                    key ^= ZPieces[0, 3, i];
-                }
-                else if ((board.BitBoard[ChessPiece.BlackRook] & (1UL << i)) != 0)
-                {
-                    key ^= ZPieces[1, 3, i];
-                }
+                    case ChessPiece.WhiteBishop:
+                        key ^= ZPieces[0, 2, i];
+                        break;
+                    case ChessPiece.BlackBishop:
+                        key ^= ZPieces[1, 2, i];
+                        break;
 
-                else if ((board.BitBoard[ChessPiece.WhiteQueen] & (1UL << i)) != 0)
-                {
-                    key ^= ZPieces[0, 4, i];
-                }
-                else if ((board.BitBoard[ChessPiece.BlackQueen] & (1UL << i)) != 0)
-                {
-                    key ^= ZPieces[1, 4, i];
-                }
+                    case ChessPiece.WhiteRook:
+                        key ^= ZPieces[0, 3, i];
+                        break;
+                    case ChessPiece.BlackRook:
+                        key ^= ZPieces[1, 3, i];
+                        break;
 
-                else if ((board.BitBoard[ChessPiece.WhiteKing] & (1UL << i)) != 0)
-                {
-                    key ^= ZPieces[0, 5, i];
-                }
-                else if ((board.BitBoard[ChessPiece.BlackKing] & (1UL << i)) != 0)
-                {
-                    key ^= ZPieces[1, 5, i];
+                    case ChessPiece.WhiteQueen:
+                        key ^= ZPieces[0, 4, i];
+                        break;
+                    case ChessPiece.BlackQueen:
+                        key ^= ZPieces[1, 4, i];
+                        break;
+
+                    case ChessPiece.WhiteKing:
+                        key ^= ZPieces[0, 5, i];
+                        break;
+                    case ChessPiece.BlackKing:
+                        key ^= ZPieces[1, 5, i];
+                        break;
                 }
             }
 
