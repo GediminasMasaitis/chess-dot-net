@@ -19,7 +19,7 @@ namespace ChessDotNet.Data
         public ulong AllPieces { get; private set; }
 
         public ulong[] BitBoard { get; set; }
-        public int[] ArrayBoard { get; }
+        public int[] ArrayBoard { get; set; }
 
         public int EnPassantFileIndex { get; set; }
         public ulong EnPassantFile { get; set; }
@@ -50,8 +50,8 @@ namespace ChessDotNet.Data
 
         public Board()
         {
-            ArrayBoard = new int[64];
-            BitBoard = new ulong[13];
+            //ArrayBoard = new int[64];
+            //BitBoard = new ulong[13];
         }
 
         static Board()
@@ -289,23 +289,35 @@ namespace ChessDotNet.Data
         {
             //foreach (var pair in PiecesDict)
             var newBoards = new Board();
-            for(var i = 1; i < 13; i++)
+            newBoards.ArrayBoard = ArrayBoard.ToArray();
+            newBoards.BitBoard = BitBoard.ToArray();
+
+            newBoards.ArrayBoard[move.From] = ChessPiece.Empty;
+            newBoards.ArrayBoard[move.To] = move.Piece;
+
+            var toPosBitBoard = 1UL << move.To;
+            newBoards.BitBoard[move.Piece] &= ~(1UL << move.From);
+            newBoards.BitBoard[move.Piece] |= toPosBitBoard;
+            if (move.TakesPiece > 0)
             {
-                var bitBoard = BitBoard[i] & ~(1UL << move.From) & ~(1UL << move.To);
-                var pieceToAdd = move.PawnPromoteTo ?? move.Piece;
-                if (i == pieceToAdd)
+                newBoards.BitBoard[move.TakesPiece] &= ~toPosBitBoard;
+            }
+            if (move.EnPassant)
+            {
+                int killedPawnPos;
+                if (move.Piece == ChessPiece.WhitePawn)
                 {
-                    bitBoard |= 1UL << move.To;
+                    killedPawnPos = move.To - 8;
                 }
-                if (move.EnPassant && move.Piece == ChessPiece.WhitePawn && i == ChessPiece.BlackPawn)
+                else
                 {
-                    bitBoard &= ~(1UL << (move.To - 8));
+                    killedPawnPos = move.To + 8;
                 }
-                if (move.EnPassant && move.Piece == ChessPiece.BlackPawn && i == ChessPiece.WhitePawn)
-                {
-                    bitBoard &= ~(1UL << (move.To + 8));
-                }
-                newBoards.BitBoard[i] = bitBoard;
+
+                var killedPawnBitBoard = 1UL << killedPawnPos;
+                newBoards.BitBoard[move.TakesPiece] &= ~killedPawnBitBoard;
+
+                newBoards.ArrayBoard[killedPawnPos] = ChessPiece.Empty;
             }
 
             if (move.Castle)
@@ -315,13 +327,16 @@ namespace ChessDotNet.Data
                 var castlingRookPos = (kingSide ? 7 : 0) + (isWhite ? 0 : 56);
                 var castlingRookNewPos = (move.From + move.To) / 2;
 
+                newBoards.ArrayBoard[castlingRookPos] = ChessPiece.Empty;
                 if (isWhite)
                 {
+                    newBoards.ArrayBoard[castlingRookNewPos] = ChessPiece.WhiteRook;
                     newBoards.BitBoard[ChessPiece.WhiteRook] &= ~(1UL << castlingRookPos);
                     newBoards.BitBoard[ChessPiece.WhiteRook] |= 1UL << castlingRookNewPos;
                 }
                 else
                 {
+                    newBoards.ArrayBoard[castlingRookNewPos] = ChessPiece.BlackRook;
                     newBoards.BitBoard[ChessPiece.BlackRook] &= ~(1UL << castlingRookPos);
                     newBoards.BitBoard[ChessPiece.BlackRook] |= 1UL << castlingRookNewPos;
                 }

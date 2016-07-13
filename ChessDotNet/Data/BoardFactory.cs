@@ -9,6 +9,8 @@ namespace ChessDotNet.Data
         {
             fen = fen.Trim();
             var board = new Board();
+            board.ArrayBoard = new int[64];
+            board.BitBoard = new ulong[13];
             var boardPosition = 0;
             var fenPosition = 0;
             for (; fenPosition < fen.Length; fenPosition++)
