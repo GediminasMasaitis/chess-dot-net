@@ -15,6 +15,6 @@ namespace ChessDotNet.Hashing
     class BoardData : IZobristKeyed
     {
         public ulong Key { get; }
-        public BitBoards Board { get; }
+        public Board Board { get; }
     }
 }

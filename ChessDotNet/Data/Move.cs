@@ -4,11 +4,12 @@ namespace ChessDotNet.Data
 {
     public struct Move
     {
-        public Move(int from, int to, ChessPiece piece, bool enPassant = false, ChessPiece? pawnPromoteTo = null)
+        public Move(int from, int to, int piece, int takesPiece = 0, bool enPassant = false, int? pawnPromoteTo = null)
         {
             From = from;
             To = to;
             Piece = piece;
+            TakesPiece = takesPiece;
             EnPassant = enPassant;
             PawnPromoteTo = pawnPromoteTo;
 
@@ -17,9 +18,10 @@ namespace ChessDotNet.Data
 
         public int From { get; }
         public int To { get; }
-        public ChessPiece Piece { get; }
+        public int Piece { get; }
+        public int TakesPiece { get; }
         public bool EnPassant { get; }
-        public ChessPiece? PawnPromoteTo { get; }
+        public int? PawnPromoteTo { get; }
         public bool Castle { get; }
 
         private string PositionToText(int position)
@@ -66,7 +68,7 @@ namespace ChessDotNet.Data
         public override string ToString()
         {
             var text = ToPositionString();
-            return $"{text}; From: {From}, To: {To}, Piece: {Piece}, EnPassant: {EnPassant}, PawnPromoteTo: {PawnPromoteTo}";
+            return $"{text}; From: {From}, To: {To}, Piece: {Piece}, TakesPiece: {TakesPiece}, EnPassant: {EnPassant}, PawnPromoteTo: {PawnPromoteTo}";
         }
     }
 }

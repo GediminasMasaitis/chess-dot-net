@@ -16,14 +16,14 @@ namespace ChessDotNet.Perft
             PossibleMovesService = possibleMovesService;
         }
 
-        public IList<string> GetPossibleMoves(BitBoards bitBoards, int depth)
+        public IList<string> GetPossibleMoves(Board board, int depth)
         {
-            return GetPossibleMovesInner(bitBoards, depth, 1, "").ToList();
+            return GetPossibleMovesInner(board, depth, 1, "").ToList();
         }
 
-        public IList<MoveAndNodes> Divide(BitBoards bitBoards, int depth)
+        public IList<MoveAndNodes> Divide(Board board, int depth)
         {
-            var moves = PossibleMovesService.GetAllPossibleMoves(bitBoards);
+            var moves = PossibleMovesService.GetAllPossibleMoves(board);
             if (depth == 1)
             {
                 return moves.Select(x => new MoveAndNodes(x.ToPositionString(), 1)).OrderBy(x => x.Move).ToList();
@@ -31,7 +31,7 @@ namespace ChessDotNet.Perft
             var results = new List<MoveAndNodes>();
             Parallel.ForEach(moves, m =>
             {
-                var moved = bitBoards.DoMove(m);
+                var moved = board.DoMove(m);
                 var count = GetPossibleMoveCountInner(moved, depth, 2);
                 var posStr = m.ToPositionString();
                 var man = new MoveAndNodes(posStr, count, m);
@@ -44,15 +44,15 @@ namespace ChessDotNet.Perft
             return ordered;
         }
 
-        public int GetPossibleMoveCount(BitBoards bitBoards, int depth)
+        public int GetPossibleMoveCount(Board board, int depth)
         {
-            return GetPossibleMoveCountInner(bitBoards, depth, 1);
+            return GetPossibleMoveCountInner(board, depth, 1);
         }
 
-        public int GetPossibleMoveCountInner(BitBoards bitBoards, int depth, int currentDepth)
+        public int GetPossibleMoveCountInner(Board board, int depth, int currentDepth)
         {
             var currentNum = 0;
-            var moves = PossibleMovesService.GetAllPossibleMoves(bitBoards);
+            var moves = PossibleMovesService.GetAllPossibleMoves(board);
             if (currentDepth >= depth)
             {
                 currentNum = moves.Count;
@@ -64,7 +64,7 @@ namespace ChessDotNet.Perft
                     var sync = new object();
                     Parallel.ForEach(moves, m =>
                     {
-                        var movedBoard = bitBoards.DoMove(m);
+                        var movedBoard = board.DoMove(m);
                         var possibleMoveCountInner = GetPossibleMoveCountInner(movedBoard, depth, currentDepth + 1);
                         lock (sync)
                         {
@@ -76,7 +76,7 @@ namespace ChessDotNet.Perft
                 {
                     foreach (var move in moves)
                     {
-                        var movedBoard = bitBoards.DoMove(move);
+                        var movedBoard = board.DoMove(move);
                         var possibleMoveCountInner = GetPossibleMoveCountInner(movedBoard, depth, currentDepth + 1);
                         currentNum += possibleMoveCountInner;
                     }
@@ -85,9 +85,9 @@ namespace ChessDotNet.Perft
             return currentNum;
         }
 
-        private IEnumerable<string> GetPossibleMovesInner(BitBoards bitBoards, int depth, int currentDepth, string currentString)
+        private IEnumerable<string> GetPossibleMovesInner(Board board, int depth, int currentDepth, string currentString)
         {
-            var moves = PossibleMovesService.GetAllPossibleMoves(bitBoards);
+            var moves = PossibleMovesService.GetAllPossibleMoves(board);
             foreach (var move in moves)
             {
                 var moveString = currentString + (currentString.Length == 0 ? string.Empty : " ") + move.ToPositionString();
@@ -97,7 +97,7 @@ namespace ChessDotNet.Perft
                 }
                 else
                 {
-                    var movedBoard = bitBoards.DoMove(move);
+                    var movedBoard = board.DoMove(move);
                     foreach (var otherBoards in GetPossibleMovesInner(movedBoard, depth, currentDepth + 1, moveString))
                     {
                         yield return otherBoards;

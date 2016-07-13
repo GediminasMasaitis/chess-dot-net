@@ -60,7 +60,7 @@ namespace ChessDotNet.ConsoleTests
             var attacksService = new AttacksService(hyperbola);
             var movesService = new PossibleMovesService(attacksService, hyperbola);
             var perft = new PerftService(movesService);
-            var results = perft.GetPossibleMoves(fact.ParseFENToBitBoards(fen), 1);
+            var results = perft.GetPossibleMoves(fact.ParseFEN(fen), 1);
             using (var sharperClient = new SharperPerftClient(@"C:\sharper\Sharper.exe", fen))
             {
                 var perftRunner = new PerftRunner(perft, sharperClient, fact);
@@ -72,9 +72,8 @@ namespace ChessDotNet.ConsoleTests
         private static void TestMove()
         {
             var fact = new BoardFactory();
-            var arrayBoard = fact.ParseFENToArrayBoard("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -");
-            var board = fact.ArrayBoardToBitBoards(arrayBoard);
-            board.EnPassantFile = BitBoards.Files[3];
+            var board = fact.ParseFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -");
+            board.EnPassantFile = Board.Files[3];
             var hyperbola = new HyperbolaQuintessence();
             var evaluationService = new EvaluationService();
             Console.WriteLine(evaluationService.Evaluate(board));
@@ -89,7 +88,7 @@ namespace ChessDotNet.ConsoleTests
             var newMove = new Move(4,2,ChessPiece.WhiteKing);
             var movedBoard = board.DoMove(newMove);
 
-            Debugging.ShowBitBoard(movedBoard.WhiteKings, movedBoard.WhiteRooks);
+            Debugging.ShowBitBoard(movedBoard.BitBoard[ChessPiece.WhiteKing], movedBoard.BitBoard[ChessPiece.WhiteRook]);
         }
 
         private static void DoSearch()
@@ -97,7 +96,7 @@ namespace ChessDotNet.ConsoleTests
             var fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
             //fen = "2rr3k/pp3pp1/1nnqbN1p/3pN3/2pP4/2P3Q1/PPB4P/R4RK1 w - -";
             var fact = new BoardFactory();
-            var board = fact.ParseFENToBitBoards(fen);
+            var board = fact.ParseFEN(fen);
 
             var hyperbola = new HyperbolaQuintessence();
             var evaluationService = new EvaluationService();

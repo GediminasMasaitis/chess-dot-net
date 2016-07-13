@@ -40,14 +40,14 @@ namespace ChessDotNet.Searching
             NodesSearched = 0;
         }
 
-        public PVSResult Search(BitBoards bitBoards, int maxDepth)
+        public PVSResult Search(Board board, int maxDepth)
         {
             Clear();
             var sw = new Stopwatch();
             sw.Start();
             for (var i = 1; i <= maxDepth; i++)
             {
-                var score = PrincipalVariationSearch(int.MinValue + 1, int.MaxValue, bitBoards, i, 0);
+                var score = PrincipalVariationSearch(int.MinValue + 1, int.MaxValue, board, i, 0);
                 Console.WriteLine($"Depth: {i}; Score: {score}; {PrintPVTable()}");
             }
             sw.Stop();
@@ -85,12 +85,12 @@ namespace ChessDotNet.Searching
             public Move Move { get; }
         }
 
-        public int PrincipalVariationSearch(int alpha, int beta, BitBoards bitBoards, int depth, int currentDepth)
+        public int PrincipalVariationSearch(int alpha, int beta, Board board, int depth, int currentDepth)
         {
             int score;
             if (currentDepth == depth)
             {
-                score = EvaluationService.Evaluate(bitBoards);
+                score = EvaluationService.Evaluate(board);
                 NodesSearched++;
                 return score;
             }
@@ -101,11 +101,11 @@ namespace ChessDotNet.Searching
             var bestMove = 0;
             var doPV = true;
 
-            var potentialMoves = PossibleMovesService.GetAllPotentialMoves(bitBoards);
+            var potentialMoves = PossibleMovesService.GetAllPotentialMoves(board);
             for (var i = 0; i < potentialMoves.Count; i++)
             {
                 var potentialMove = potentialMoves[i];
-                var bbAfter = PossibleMovesService.DoMoveIfKingSafe(bitBoards, potentialMove);
+                var bbAfter = PossibleMovesService.DoMoveIfKingSafe(board, potentialMove);
                 if (bbAfter == null)
                 {
                     continue;
@@ -147,8 +147,8 @@ namespace ChessDotNet.Searching
 
             if (validMoves == 0)
             {
-                var enemyAttacks = PossibleMovesService.AttacksService.GetAllAttacked(bitBoards, !bitBoards.WhiteToMove);
-                var myKing = bitBoards.WhiteToMove ? bitBoards.WhiteKings : bitBoards.BlackKings;
+                var enemyAttacks = PossibleMovesService.AttacksService.GetAllAttacked(board, !board.WhiteToMove);
+                var myKing = board.WhiteToMove ? board.BitBoard[ChessPiece.WhiteKing] : board.BitBoard[ChessPiece.BlackKing];
                 if ((enemyAttacks & myKing) != 0)
                 {
                     return -MateScore + currentDepth;
@@ -168,20 +168,20 @@ namespace ChessDotNet.Searching
             return alpha;
         }
 
-        public int ZeroWindowSearch(int beta, BitBoards bitBoards, int depth, int currentDepth)
+        public int ZeroWindowSearch(int beta, Board board, int depth, int currentDepth)
         {
             var alpha = beta - 1;
             var score = int.MinValue;
             if (currentDepth == depth)
             {
-                score = EvaluationService.Evaluate(bitBoards);
+                score = EvaluationService.Evaluate(board);
                 return score;
             }
 
-            var potentialMoves = PossibleMovesService.GetAllPotentialMoves(bitBoards);
+            var potentialMoves = PossibleMovesService.GetAllPotentialMoves(board);
             foreach (var potentialMove in potentialMoves)
             {
-                var bbAfter = PossibleMovesService.DoMoveIfKingSafe(bitBoards, potentialMove);
+                var bbAfter = PossibleMovesService.DoMoveIfKingSafe(board, potentialMove);
                 if (bbAfter != null)
                 {
                     score = -ZeroWindowSearch(-alpha, bbAfter, depth, currentDepth + 1);

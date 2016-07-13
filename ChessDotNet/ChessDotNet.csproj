@@ -76,9 +76,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Data\ArrayBoard.cs" />
-    <Compile Include="Data\BitBoards.cs" />
-    <Compile Include="Data\BoardBase.cs" />
+    <Compile Include="Data\Board.cs" />
     <Compile Include="Data\ChessPiece.cs" />
     <Compile Include="Data\BoardFactory.cs" />
     <Compile Include="Debugging.cs" />

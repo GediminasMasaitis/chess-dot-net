@@ -54,50 +54,50 @@ namespace ChessDotNet.Evaluation
             0, 0, 5, 10, 10, 5, 0, 0
         };
 
-        public int Evaluate(BitBoards bitBoards)
+        public int Evaluate(Board board)
         {
             var score = 0;
-            score += EvaluateWeights(bitBoards);
-            score += EvaluatePositions(bitBoards);
+            score += EvaluateWeights(board);
+            score += EvaluatePositions(board);
             return score;
         }
 
-        public int EvaluatePositions(BitBoards bitBoards)
+        public int EvaluatePositions(Board board)
         {
             var score = 0;
 
             for (var i = 0; i < 64; i++)
             {
-                if ((bitBoards.WhitePawns & (1UL << i)) != 0)
+                if ((board.BitBoard[ChessPiece.WhitePawn] & (1UL << i)) != 0)
                 {
                     score += PawnTable[i];
                 }
-                else if ((bitBoards.WhiteNights & (1UL << i)) != 0)
+                else if ((board.BitBoard[ChessPiece.WhiteKnight] & (1UL << i)) != 0)
                 {
                     score += KnightTable[i];
                 }
-                else if ((bitBoards.WhiteBishops & (1UL << i)) != 0)
+                else if ((board.BitBoard[ChessPiece.WhiteBishop] & (1UL << i)) != 0)
                 {
                     score += BishopTable[i];
                 }
-                else if ((bitBoards.WhiteRooks & (1UL << i)) != 0)
+                else if ((board.BitBoard[ChessPiece.WhiteRook] & (1UL << i)) != 0)
                 {
                     score += RookTable[i];
                 }
 
-                else if ((bitBoards.BlackPawns & (1UL << i)) != 0)
+                else if ((board.BitBoard[ChessPiece.BlackPawn] & (1UL << i)) != 0)
                 {
                     score -= PawnTable[63-i];
                 }
-                else if ((bitBoards.BlackNights & (1UL << i)) != 0)
+                else if ((board.BitBoard[ChessPiece.BlackKnight] & (1UL << i)) != 0)
                 {
                     score -= KnightTable[63-i];
                 }
-                else if ((bitBoards.BlackBishops & (1UL << i)) != 0)
+                else if ((board.BitBoard[ChessPiece.BlackBishop] & (1UL << i)) != 0)
                 {
                     score -= BishopTable[63-i];
                 }
-                else if ((bitBoards.BlackRooks & (1UL << i)) != 0)
+                else if ((board.BitBoard[ChessPiece.BlackRook] & (1UL << i)) != 0)
                 {
                     score -= RookTable[63-i];
                 }
@@ -106,10 +106,10 @@ namespace ChessDotNet.Evaluation
             return score;
         }
 
-        public int EvaluateWeights(BitBoards bitBoards)
+        public int EvaluateWeights(Board board)
         {
-            var whitePieces = bitBoards.CountPiecesForWhite();
-            var blackPieces = bitBoards.CountPiecesForBlack();
+            var whitePieces = board.CountPiecesForWhite();
+            var blackPieces = board.CountPiecesForBlack();
 
             var whiteWeights = EvaluatePieceCountWeights(whitePieces);
             var blackWeights = EvaluatePieceCountWeights(blackPieces);

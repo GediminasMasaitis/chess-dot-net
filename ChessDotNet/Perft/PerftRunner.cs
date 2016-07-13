@@ -26,7 +26,7 @@ namespace ChessDotNet.Perft
 
         public void Test(string fen, int depth)
         {
-            var bitBoards = BoardFactory.ParseFENToBitBoards(fen);
+            var bitBoards = BoardFactory.ParseFEN(fen);
             OutLine($"Running perft testing, up to depth {depth}");
             OutLine(string.Empty);
             var sw = new Stopwatch();
@@ -55,7 +55,7 @@ namespace ChessDotNet.Perft
             OutLine("Tests completed!");
         }
 
-        private void FindMismatch(BitBoards bitBoards, int mismatchDepth, IList<MoveAndNodes> engineResults, IList<string> previousBadMoves = null)
+        private void FindMismatch(Board board, int mismatchDepth, IList<MoveAndNodes> engineResults, IList<string> previousBadMoves = null)
         {
             previousBadMoves = previousBadMoves ?? new List<string>();
             var allBadMoves = previousBadMoves.Aggregate("", (c, n) => c + " " + n);
@@ -98,7 +98,7 @@ namespace ChessDotNet.Perft
                     var badmove = engineResults[i].Move;
                     previousBadMoves.Add(badmove);
 
-                    var boardAfterBadMove = bitBoards.DoMove(engineResults[i].EngineMove.Value);
+                    var boardAfterBadMove = board.DoMove(engineResults[i].EngineMove.Value);
                     var newResults = PerftService.Divide(boardAfterBadMove, mismatchDepth - 1);
 
                     FindMismatch(boardAfterBadMove, mismatchDepth - 1, newResults, previousBadMoves);

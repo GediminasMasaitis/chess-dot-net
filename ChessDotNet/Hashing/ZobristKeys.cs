@@ -53,94 +53,96 @@ namespace ChessDotNet.Hashing
             return num;
         }
 
-        public ulong GetKey(BitBoards bitBoards)
+        public ulong GetKey(Board board)
         {
+            //TODO: Use new arrayboard
+
             var key = 0UL;
             for (var i = 0; i < 64; i++)
             {
-                if ((bitBoards.EmptySquares & (1UL << i)) != 0)
+                if ((board.EmptySquares & (1UL << i)) != 0)
                 {
                     // skip
                 }
 
-                else if ((bitBoards.WhitePawns & (1UL << i)) != 0)
+                else if ((board.BitBoard[ChessPiece.WhitePawn] & (1UL << i)) != 0)
                 {
                     key ^= ZPieces[0, 0, i];
                 }
-                else if ((bitBoards.BlackPawns & (1UL << i)) != 0)
+                else if ((board.BitBoard[ChessPiece.BlackPawn] & (1UL << i)) != 0)
                 {
                     key ^= ZPieces[1, 0, i];
                 }
 
-                else if ((bitBoards.WhiteNights & (1UL << i)) != 0)
+                else if ((board.BitBoard[ChessPiece.WhiteKnight] & (1UL << i)) != 0)
                 {
                     key ^= ZPieces[0, 1, i];
                 }
-                else if ((bitBoards.BlackNights & (1UL << i)) != 0)
+                else if ((board.BitBoard[ChessPiece.BlackKnight] & (1UL << i)) != 0)
                 {
                     key ^= ZPieces[1, 1, i];
                 }
 
-                else if ((bitBoards.WhiteBishops & (1UL << i)) != 0)
+                else if ((board.BitBoard[ChessPiece.WhiteBishop] & (1UL << i)) != 0)
                 {
                     key ^= ZPieces[0, 2, i];
                 }
-                else if ((bitBoards.BlackBishops & (1UL << i)) != 0)
+                else if ((board.BitBoard[ChessPiece.BlackBishop] & (1UL << i)) != 0)
                 {
                     key ^= ZPieces[1, 2, i];
                 }
 
-                else if ((bitBoards.WhiteRooks & (1UL << i)) != 0)
+                else if ((board.BitBoard[ChessPiece.WhiteRook] & (1UL << i)) != 0)
                 {
                     key ^= ZPieces[0, 3, i];
                 }
-                else if ((bitBoards.BlackRooks & (1UL << i)) != 0)
+                else if ((board.BitBoard[ChessPiece.BlackRook] & (1UL << i)) != 0)
                 {
                     key ^= ZPieces[1, 3, i];
                 }
 
-                else if ((bitBoards.WhiteQueens & (1UL << i)) != 0)
+                else if ((board.BitBoard[ChessPiece.WhiteQueen] & (1UL << i)) != 0)
                 {
                     key ^= ZPieces[0, 4, i];
                 }
-                else if ((bitBoards.BlackQueens & (1UL << i)) != 0)
+                else if ((board.BitBoard[ChessPiece.BlackQueen] & (1UL << i)) != 0)
                 {
                     key ^= ZPieces[1, 4, i];
                 }
 
-                else if ((bitBoards.WhiteKings & (1UL << i)) != 0)
+                else if ((board.BitBoard[ChessPiece.WhiteKing] & (1UL << i)) != 0)
                 {
                     key ^= ZPieces[0, 5, i];
                 }
-                else if ((bitBoards.BlackKings & (1UL << i)) != 0)
+                else if ((board.BitBoard[ChessPiece.BlackKing] & (1UL << i)) != 0)
                 {
                     key ^= ZPieces[1, 5, i];
                 }
             }
 
-            if (bitBoards.EnPassantFileIndex >= 0)
+            if (board.EnPassantFileIndex >= 0)
             {
-                key ^= ZEnPassant[bitBoards.EnPassantFileIndex];
+                key ^= ZEnPassant[board.EnPassantFileIndex];
             }
 
-            if (bitBoards.WhiteCanCastleQueenSide)
+            if (board.WhiteCanCastleQueenSide)
             {
                 key ^= ZCastle[0];
             }
-            if (bitBoards.WhiteCanCastleKingSide)
+            if (board.WhiteCanCastleKingSide)
             {
                 key ^= ZCastle[1];
             }
-            if (bitBoards.BlackCanCastleQueenSide)
+            if (board.BlackCanCastleQueenSide)
             {
                 key ^= ZCastle[2];
             }
-            if (bitBoards.BlackCanCastleKingSide)
+            if (board.BlackCanCastleKingSide)
             {
                 key ^= ZCastle[3];
             }
 
-            key ^= ZToMove[bitBoards.WhiteToMove ? 0 : 1];
+            key ^= ZToMove[board.WhiteToMove ? 0 : 1];
 
             return key;
         }

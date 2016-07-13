@@ -1,29 +1,25 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace ChessDotNet.Data
 {
-    public class BitBoards : BoardBase
+    public class Board
     {
-        public ulong WhitePawns { get; set; }
-        public ulong WhiteNights { get; set; }
-        public ulong WhiteBishops { get; set; }
-        public ulong WhiteRooks { get; set; }
-        public ulong WhiteQueens { get; set; }
-        public ulong WhiteKings { get; set; }
+        public bool WhiteToMove { get; set; }
 
-        public ulong BlackPawns { get; set; }
-        public ulong BlackNights { get; set; }
-        public ulong BlackBishops { get; set; }
-        public ulong BlackRooks { get; set; }
-        public ulong BlackQueens { get; set; }
-        public ulong BlackKings { get; set; }
+        public bool WhiteCanCastleKingSide { get; set; }
+        public bool WhiteCanCastleQueenSide { get; set; }
+        public bool BlackCanCastleKingSide { get; set; }
+        public bool BlackCanCastleQueenSide { get; set; }
 
         public ulong WhitePieces { get; private set; }
         public ulong BlackPieces { get; private set; }
         public ulong EmptySquares { get; private set; }
         public ulong AllPieces { get; private set; }
-        public IReadOnlyDictionary<ChessPiece, ulong> PiecesDict { get; private set; }
-        public ChessPiece[] Pieces { get; }
+
+        public ulong[] BitBoard { get; set; }
+        public int[] ArrayBoard { get; }
 
         public int EnPassantFileIndex { get; set; }
         public ulong EnPassantFile { get; set; }
@@ -52,12 +48,13 @@ namespace ChessDotNet.Data
         public static ulong BlackQueenSideCastleAttackMask { get; }
 
 
-        public BitBoards()
+        public Board()
         {
-            Pieces = new ChessPiece[64];
+            ArrayBoard = new int[64];
+            BitBoard = new ulong[13];
         }
 
-        static BitBoards()
+        static Board()
         {
             KnightSpan = 43234889994UL;
             KnightSpanPosition = 18;
@@ -145,119 +142,171 @@ namespace ChessDotNet.Data
             BlackKingSideCastleAttackMask = kingSideCastleAttackMask & Ranks[7];
         }
 
-        public void SyncPieces()
+        public void SyncBitBoardsToArrayBoard()
         {
             for (var i = 0; i < 64; i++)
             {
                 if ((EmptySquares & (1UL << i)) != 0)
                 {
-                    Pieces[i] = ChessPiece.Empty;
+                    ArrayBoard[i] = ChessPiece.Empty;
                 }
-                else if ((WhitePawns & (1UL << i)) != 0)
+                else if ((BitBoard[ChessPiece.WhitePawn] & (1UL << i)) != 0)
                 {
-                    Pieces[i] = ChessPiece.WhitePawn;
+                    ArrayBoard[i] = ChessPiece.WhitePawn;
                 }
-                else if ((BlackPawns & (1UL << i)) != 0)
+                else if ((BitBoard[ChessPiece.BlackPawn] & (1UL << i)) != 0)
                 {
-                    Pieces[i] = ChessPiece.BlackPawn;
-                }
-
-                else if ((WhiteNights & (1UL << i)) != 0)
-                {
-                    Pieces[i] = ChessPiece.WhiteKnight;
-                }
-                else if ((BlackNights & (1UL << i)) != 0)
-                {
-                    Pieces[i] = ChessPiece.BlackKnight;
+                    ArrayBoard[i] = ChessPiece.BlackPawn;
                 }
 
-                else if ((WhiteBishops & (1UL << i)) != 0)
+                else if ((BitBoard[ChessPiece.WhiteKnight] & (1UL << i)) != 0)
                 {
-                    Pieces[i] = ChessPiece.WhiteBishop;
+                    ArrayBoard[i] = ChessPiece.WhiteKnight;
                 }
-                else if ((BlackBishops & (1UL << i)) != 0)
+                else if ((BitBoard[ChessPiece.BlackKnight] & (1UL << i)) != 0)
                 {
-                    Pieces[i] = ChessPiece.BlackBishop;
-                }
-
-                else if ((WhiteRooks & (1UL << i)) != 0)
-                {
-                    Pieces[i] = ChessPiece.WhiteRook;
-                }
-                else if ((BlackRooks & (1UL << i)) != 0)
-                {
-                    Pieces[i] = ChessPiece.BlackRook;
+                    ArrayBoard[i] = ChessPiece.BlackKnight;
                 }
 
-                else if ((WhiteQueens & (1UL << i)) != 0)
+                else if ((BitBoard[ChessPiece.WhiteBishop] & (1UL << i)) != 0)
                 {
-                    Pieces[i] = ChessPiece.WhiteQueen;
+                    ArrayBoard[i] = ChessPiece.WhiteBishop;
                 }
-                else if ((BlackQueens & (1UL << i)) != 0)
+                else if ((BitBoard[ChessPiece.BlackBishop] & (1UL << i)) != 0)
                 {
-                    Pieces[i] = ChessPiece.BlackQueen;
+                    ArrayBoard[i] = ChessPiece.BlackBishop;
                 }
 
-                else if ((WhiteKings & (1UL << i)) != 0)
+                else if ((BitBoard[ChessPiece.WhiteRook] & (1UL << i)) != 0)
                 {
-                    Pieces[i] = ChessPiece.WhiteKing;
+                    ArrayBoard[i] = ChessPiece.WhiteRook;
                 }
-                else//else if ((BlackKings & (1UL << i)) != 0)
+                else if ((BitBoard[ChessPiece.BlackRook] & (1UL << i)) != 0)
                 {
-                    Pieces[i] = ChessPiece.BlackKing;
+                    ArrayBoard[i] = ChessPiece.BlackRook;
+                }
+
+                else if ((BitBoard[ChessPiece.WhiteQueen] & (1UL << i)) != 0)
+                {
+                    ArrayBoard[i] = ChessPiece.WhiteQueen;
+                }
+                else if ((BitBoard[ChessPiece.BlackQueen] & (1UL << i)) != 0)
+                {
+                    ArrayBoard[i] = ChessPiece.BlackQueen;
+                }
+
+                else if ((BitBoard[ChessPiece.WhiteKing] & (1UL << i)) != 0)
+                {
+                    ArrayBoard[i] = ChessPiece.WhiteKing;
+                }
+                else//else if ((BitBoard[ChessPiece.BlackKing] & (1UL << i)) != 0)
+                {
+                    ArrayBoard[i] = ChessPiece.BlackKing;
                 }
             }
         }
 
-        public void Sync(IReadOnlyDictionary<ChessPiece, ulong> dictToUse = null)
+        public void SyncArrayBoardToBitBoards()
         {
-            WhitePieces = WhitePawns | WhiteNights | WhiteBishops | WhiteRooks | WhiteQueens | WhiteKings;
-            BlackPieces = BlackPawns | BlackNights | BlackBishops | BlackRooks | BlackQueens | BlackKings;
-            AllPieces = WhitePieces | BlackPieces;
-            EmptySquares = ~AllPieces;
-
-            PiecesDict = dictToUse ?? new Dictionary<ChessPiece, ulong>
+            for (var i = 0; i < 64; i++)
             {
-                { ChessPiece.WhitePawn, WhitePawns },
-                { ChessPiece.WhiteKnight, WhiteNights },
-                { ChessPiece.WhiteBishop, WhiteBishops },
-                { ChessPiece.WhiteRook, WhiteRooks},
-                { ChessPiece.WhiteQueen, WhiteQueens },
-                { ChessPiece.WhiteKing, WhiteKings },
+                var piece = ArrayBoard[i];
+                var squareMask = 1UL << i;
+                switch (piece)
+                {
+                    case ChessPiece.Empty:
+                        break;
 
-                { ChessPiece.BlackPawn, BlackPawns },
-                { ChessPiece.BlackKnight, BlackNights },
-                { ChessPiece.BlackBishop, BlackBishops },
-                { ChessPiece.BlackRook, BlackRooks},
-                { ChessPiece.BlackQueen, BlackQueens },
-                { ChessPiece.BlackKing, BlackKings }
-            };
+                    case ChessPiece.WhitePawn:
+                        BitBoard[ChessPiece.WhitePawn] |= squareMask;
+                        break;
+                    case ChessPiece.BlackPawn:
+                        BitBoard[ChessPiece.BlackPawn] |= squareMask;
+                        break;
 
-            SyncPieces();
+                    case ChessPiece.WhiteKnight:
+                        BitBoard[ChessPiece.WhiteKnight] |= squareMask;
+                        break;
+                    case ChessPiece.BlackKnight:
+                        BitBoard[ChessPiece.BlackKnight] |= squareMask;
+                        break;
+
+                    case ChessPiece.WhiteBishop:
+                        BitBoard[ChessPiece.WhiteBishop] |= squareMask;
+                        break;
+                    case ChessPiece.BlackBishop:
+                        BitBoard[ChessPiece.BlackBishop] |= squareMask;
+                        break;
+
+                    case ChessPiece.WhiteRook:
+                        BitBoard[ChessPiece.WhiteRook] |= squareMask;
+                        break;
+                    case ChessPiece.BlackRook:
+                        BitBoard[ChessPiece.BlackRook] |= squareMask;
+                        break;
+
+                    case ChessPiece.WhiteQueen:
+                        BitBoard[ChessPiece.WhiteQueen] |= squareMask;
+                        break;
+                    case ChessPiece.BlackQueen:
+                        BitBoard[ChessPiece.BlackQueen] |= squareMask;
+                        break;
+
+                    case ChessPiece.WhiteKing:
+                        BitBoard[ChessPiece.WhiteKing] |= squareMask;
+                        break;
+                    case ChessPiece.BlackKing:
+                        BitBoard[ChessPiece.BlackKing] |= squareMask;
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(piece), piece, null);
+                }
+            }
+            SyncExtraBitBoards();
         }
 
-        public BitBoards DoMove(Move move)
+        public void SyncExtraBitBoards()
         {
-            var newPiecesDict = new Dictionary<ChessPiece, ulong>(PiecesDict.Count);
-            foreach (var pair in PiecesDict)
+            WhitePieces = BitBoard[ChessPiece.WhitePawn] 
+                | BitBoard[ChessPiece.WhiteKnight]
+                | BitBoard[ChessPiece.WhiteBishop] 
+                | BitBoard[ChessPiece.WhiteRook]
+                | BitBoard[ChessPiece.WhiteQueen]
+                | BitBoard[ChessPiece.WhiteKing];
+
+            BlackPieces = BitBoard[ChessPiece.BlackPawn]
+                | BitBoard[ChessPiece.BlackKnight]
+                | BitBoard[ChessPiece.BlackBishop]
+                | BitBoard[ChessPiece.BlackRook]
+                | BitBoard[ChessPiece.BlackQueen]
+                | BitBoard[ChessPiece.BlackKing];
+
+            AllPieces = WhitePieces | BlackPieces;
+            EmptySquares = ~AllPieces;
+        }
+
+        public Board DoMove(Move move)
+        {
+            //foreach (var pair in PiecesDict)
+            var newBoards = new Board();
+            for(var i = 1; i < 13; i++)
             {
-                var bitBoard = pair.Value & ~(1UL << move.From) & ~(1UL << move.To);
+                var bitBoard = BitBoard[i] & ~(1UL << move.From) & ~(1UL << move.To);
                 var pieceToAdd = move.PawnPromoteTo ?? move.Piece;
-                if (pair.Key == pieceToAdd)
+                if (i == pieceToAdd)
                 {
                     bitBoard |= 1UL << move.To;
                 }
-                if (move.EnPassant && move.Piece == ChessPiece.WhitePawn && pair.Key == ChessPiece.BlackPawn)
+                if (move.EnPassant && move.Piece == ChessPiece.WhitePawn && i == ChessPiece.BlackPawn)
                 {
                     bitBoard &= ~(1UL << (move.To - 8));
                 }
-                if (move.EnPassant && move.Piece == ChessPiece.BlackPawn && pair.Key == ChessPiece.WhitePawn)
+                if (move.EnPassant && move.Piece == ChessPiece.BlackPawn && i == ChessPiece.WhitePawn)
                 {
                     bitBoard &= ~(1UL << (move.To + 8));
                 }
-                newPiecesDict[pair.Key] = bitBoard;
+                newBoards.BitBoard[i] = bitBoard;
             }
-            var newBoards = FromDict(newPiecesDict);
 
             if (move.Castle)
             {
@@ -268,13 +317,13 @@ namespace ChessDotNet.Data
 
                 if (isWhite)
                 {
-                    newBoards.WhiteRooks &= ~(1UL << castlingRookPos);
-                    newBoards.WhiteRooks |= 1UL << castlingRookNewPos;
+                    newBoards.BitBoard[ChessPiece.WhiteRook] &= ~(1UL << castlingRookPos);
+                    newBoards.BitBoard[ChessPiece.WhiteRook] |= 1UL << castlingRookNewPos;
                 }
                 else
                 {
-                    newBoards.BlackRooks &= ~(1UL << castlingRookPos);
-                    newBoards.BlackRooks |= 1UL << castlingRookNewPos;
+                    newBoards.BitBoard[ChessPiece.BlackRook] &= ~(1UL << castlingRookPos);
+                    newBoards.BitBoard[ChessPiece.BlackRook] |= 1UL << castlingRookNewPos;
                 }
             }
 
@@ -339,50 +388,18 @@ namespace ChessDotNet.Data
                     break;
             }
 
-            newBoards.Sync();
+            newBoards.SyncExtraBitBoards();
             return newBoards;
         }
 
-        private BitBoards FromDict(IReadOnlyDictionary<ChessPiece, ulong> dictionary)
+
+        public Board Clone()
         {
-            var newBoards = new BitBoards
+            var newBoards = new Board
             {
-                WhitePawns = dictionary[ChessPiece.WhitePawn],
-                WhiteNights = dictionary[ChessPiece.WhiteKnight],
-                WhiteBishops = dictionary[ChessPiece.WhiteBishop],
-                WhiteRooks = dictionary[ChessPiece.WhiteRook],
-                WhiteQueens = dictionary[ChessPiece.WhiteQueen],
-                WhiteKings = dictionary[ChessPiece.WhiteKing],
-
-                BlackPawns = dictionary[ChessPiece.BlackPawn],
-                BlackNights = dictionary[ChessPiece.BlackKnight],
-                BlackBishops = dictionary[ChessPiece.BlackBishop],
-                BlackRooks = dictionary[ChessPiece.BlackRook],
-                BlackQueens = dictionary[ChessPiece.BlackQueen],
-                BlackKings = dictionary[ChessPiece.BlackKing],
+                BitBoard = BitBoard.ToArray()
             };
-            return newBoards;
-        }
-
-        public BitBoards Clone()
-        {
-            var newBoards = new BitBoards
-            {
-                WhitePawns = WhitePawns,
-                WhiteNights = WhiteNights,
-                WhiteBishops = WhiteBishops,
-                WhiteRooks = WhiteRooks,
-                WhiteQueens = WhiteQueens,
-                WhiteKings = WhiteKings,
-
-                BlackPawns = BlackPawns,
-                BlackNights = BlackNights,
-                BlackBishops = BlackBishops,
-                BlackRooks = BlackRooks,
-                BlackQueens = BlackQueens,
-                BlackKings = BlackKings
-            };
-            newBoards.Sync();
+            newBoards.SyncExtraBitBoards();
             return newBoards;
         }
 
@@ -404,21 +421,21 @@ namespace ChessDotNet.Data
 
         public PieceCounts CountPiecesForWhite()
         {
-            var pawns = CountPieces(WhitePawns);
-            var knights = CountPieces(WhiteNights);
-            var bishops = CountPieces(WhiteBishops);
-            var rooks = CountPieces(WhiteRooks);
-            var queens = CountPieces(WhiteQueens);
+            var pawns = CountPieces(BitBoard[ChessPiece.WhitePawn]);
+            var knights = CountPieces(BitBoard[ChessPiece.WhiteKnight]);
+            var bishops = CountPieces(BitBoard[ChessPiece.WhiteBishop]);
+            var rooks = CountPieces(BitBoard[ChessPiece.WhiteRook]);
+            var queens = CountPieces(BitBoard[ChessPiece.WhiteQueen]);
             return new PieceCounts(pawns, knights, bishops, rooks, queens);
         }
 
         public PieceCounts CountPiecesForBlack()
         {
-            var pawns = CountPieces(BlackPawns);
-            var knights = CountPieces(BlackNights);
-            var bishops = CountPieces(BlackBishops);
-            var rooks = CountPieces(BlackRooks);
-            var queens = CountPieces(BlackQueens);
+            var pawns = CountPieces(BitBoard[ChessPiece.BlackPawn]);
+            var knights = CountPieces(BitBoard[ChessPiece.BlackKnight]);
+            var bishops = CountPieces(BitBoard[ChessPiece.BlackBishop]);
+            var rooks = CountPieces(BitBoard[ChessPiece.BlackRook]);
+            var queens = CountPieces(BitBoard[ChessPiece.BlackQueen]);
             return new PieceCounts(pawns, knights, bishops, rooks, queens);
         }
     }
