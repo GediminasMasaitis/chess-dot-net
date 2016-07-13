@@ -11,6 +11,7 @@ namespace ChessDotNet.Data
             var board = new Board();
             board.ArrayBoard = new int[64];
             board.BitBoard = new ulong[13];
+            board.History = new HistoryEntry[0];
             var boardPosition = 0;
             var fenPosition = 0;
             for (; fenPosition < fen.Length; fenPosition++)

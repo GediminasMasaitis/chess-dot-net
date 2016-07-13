@@ -55,7 +55,8 @@ namespace ChessDotNet.Searching
             Console.WriteLine();
             Console.WriteLine("Decided to move: " + PVTable[0].Move.ToPositionString());
             Console.WriteLine($"Nodes searched: {NodesSearched}; Time taken: {sw.ElapsedMilliseconds} ms; Speed: {speed} N/s");
-            Console.WriteLine($"fhf={FailHighFirst}; fh={FailHigh}; fhf/fh={FailHighFirst/FailHigh}");
+            var ratio = (FailHighFirst/(double) FailHigh).ToString("0.000");
+            Console.WriteLine($"fhf={FailHighFirst}; fh={FailHigh}; fhf/fh={ratio}");
             return PVTable[0];
         }
 
@@ -90,8 +91,8 @@ namespace ChessDotNet.Searching
             int score;
             if (currentDepth == depth)
             {
-                score = EvaluationService.Evaluate(board);
                 NodesSearched++;
+                score = EvaluationService.Evaluate(board);
                 return score;
             }
 

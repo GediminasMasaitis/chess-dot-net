@@ -24,6 +24,7 @@ namespace ChessDotNet.Data
         public int EnPassantFileIndex { get; set; }
         public ulong EnPassantFile { get; set; }
 
+        public HistoryEntry[] History { get; set; }
 
         public static ulong AllBoard { get; }
         public static ulong KnightSpan { get; private set; }
@@ -47,9 +48,9 @@ namespace ChessDotNet.Data
         public static ulong BlackKingSideCastleAttackMask { get; }
         public static ulong BlackQueenSideCastleAttackMask { get; }
 
-
         public Board()
         {
+            //History = new List<HistoryEntry>(128);
             //ArrayBoard = new int[64];
             //BitBoard = new ulong[13];
         }
@@ -291,6 +292,11 @@ namespace ChessDotNet.Data
             var newBoards = new Board();
             newBoards.ArrayBoard = ArrayBoard.ToArray();
             newBoards.BitBoard = BitBoard.ToArray();
+            var newHistory = new HistoryEntry[History.Length + 1];
+            Array.Copy(History, newHistory, History.Length);
+            var newEntry = new HistoryEntry(this, move);
+            newHistory[newHistory.Length - 1] = newEntry;
+            newBoards.History = newHistory;
 
             newBoards.ArrayBoard[move.From] = ChessPiece.Empty;
             newBoards.ArrayBoard[move.To] = move.Piece;
@@ -403,17 +409,6 @@ namespace ChessDotNet.Data
                     break;
             }
 
-            newBoards.SyncExtraBitBoards();
-            return newBoards;
-        }
-
-
-        public Board Clone()
-        {
-            var newBoards = new Board
-            {
-                BitBoard = BitBoard.ToArray()
-            };
             newBoards.SyncExtraBitBoards();
             return newBoards;
         }
