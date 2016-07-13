@@ -59,6 +59,11 @@ namespace ChessDotNet.Evaluation
             var score = 0;
             score += EvaluateWeights(board);
             score += EvaluatePositions(board);
+
+            if (!board.WhiteToMove)
+            {
+                score = -score;
+            }
             return score;
         }
 

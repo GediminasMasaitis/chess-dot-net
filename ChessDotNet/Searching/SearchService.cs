@@ -102,6 +102,25 @@ namespace ChessDotNet.Searching
             return false;
         }
 
+        public void SortNextMove(int currentIndex, IList<Move> moves)
+        {
+            var bestScore = int.MinValue;
+            var bestScoreIndex = -1;
+            for (var i = currentIndex; i < moves.Count; i++)
+            {
+                var score = moves[i].MVVLVAScore;
+                if (score > bestScore)
+                {
+                    bestScore = score;
+                    bestScoreIndex = i;
+                }
+            }
+
+            var temp = moves[currentIndex];
+            moves[currentIndex] = moves[bestScoreIndex];
+            moves[bestScoreIndex] = temp;
+        }
+
         public int PrincipalVariationSearch(int alpha, int beta, Board board, int depth, int currentDepth)
         {
             int score;
@@ -133,6 +152,7 @@ namespace ChessDotNet.Searching
             var potentialMoves = PossibleMovesService.GetAllPotentialMoves(board);
             for (var i = 0; i < potentialMoves.Count; i++)
             {
+                SortNextMove(i, potentialMoves);
                 var potentialMove = potentialMoves[i];
                 var bbAfter = PossibleMovesService.DoMoveIfKingSafe(board, potentialMove);
                 if (bbAfter == null)
@@ -170,7 +190,7 @@ namespace ChessDotNet.Searching
                     }
                     alpha = score;
                     bestMove = i;
-                    doPV = false;
+                    //doPV = false;
                 }
             }
 
