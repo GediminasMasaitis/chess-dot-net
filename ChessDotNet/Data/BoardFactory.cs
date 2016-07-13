@@ -189,6 +189,7 @@ namespace ChessDotNet.Data
             bitBoard.BlackCanCastleKingSide = arrayBoard.BlackCanCastleKingSide;
             bitBoard.BlackCanCastleQueenSide = arrayBoard.BlackCanCastleQueenSide;
             bitBoard.Sync();
+            bitBoard.SyncPieces();
             return bitBoard;
         }
     }

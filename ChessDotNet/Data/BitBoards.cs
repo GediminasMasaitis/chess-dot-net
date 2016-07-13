@@ -23,6 +23,7 @@ namespace ChessDotNet.Data
         public ulong EmptySquares { get; private set; }
         public ulong AllPieces { get; private set; }
         public IReadOnlyDictionary<ChessPiece, ulong> PiecesDict { get; private set; }
+        public ChessPiece[] Pieces { get; }
 
         public int EnPassantFileIndex { get; set; }
         public ulong EnPassantFile { get; set; }
@@ -53,7 +54,7 @@ namespace ChessDotNet.Data
 
         public BitBoards()
         {
-            
+            Pieces = new ChessPiece[64];
         }
 
         static BitBoards()
@@ -144,6 +145,69 @@ namespace ChessDotNet.Data
             BlackKingSideCastleAttackMask = kingSideCastleAttackMask & Ranks[7];
         }
 
+        public void SyncPieces()
+        {
+            for (var i = 0; i < 64; i++)
+            {
+                if ((EmptySquares & (1UL << i)) != 0)
+                {
+                    Pieces[i] = ChessPiece.Empty;
+                }
+                else if ((WhitePawns & (1UL << i)) != 0)
+                {
+                    Pieces[i] = ChessPiece.WhitePawn;
+                }
+                else if ((BlackPawns & (1UL << i)) != 0)
+                {
+                    Pieces[i] = ChessPiece.BlackPawn;
+                }
+
+                else if ((WhiteNights & (1UL << i)) != 0)
+                {
+                    Pieces[i] = ChessPiece.WhiteKnight;
+                }
+                else if ((BlackNights & (1UL << i)) != 0)
+                {
+                    Pieces[i] = ChessPiece.BlackKnight;
+                }
+
+                else if ((WhiteBishops & (1UL << i)) != 0)
+                {
+                    Pieces[i] = ChessPiece.WhiteBishop;
+                }
+                else if ((BlackBishops & (1UL << i)) != 0)
+                {
+                    Pieces[i] = ChessPiece.BlackBishop;
+                }
+
+                else if ((WhiteRooks & (1UL << i)) != 0)
+                {
+                    Pieces[i] = ChessPiece.WhiteRook;
+                }
+                else if ((BlackRooks & (1UL << i)) != 0)
+                {
+                    Pieces[i] = ChessPiece.BlackRook;
+                }
+
+                else if ((WhiteQueens & (1UL << i)) != 0)
+                {
+                    Pieces[i] = ChessPiece.WhiteQueen;
+                }
+                else if ((BlackQueens & (1UL << i)) != 0)
+                {
+                    Pieces[i] = ChessPiece.BlackQueen;
+                }
+
+                else if ((WhiteKings & (1UL << i)) != 0)
+                {
+                    Pieces[i] = ChessPiece.WhiteKing;
+                }
+                else//else if ((BlackKings & (1UL << i)) != 0)
+                {
+                    Pieces[i] = ChessPiece.BlackKing;
+                }
+            }
+        }
 
         public void Sync(IReadOnlyDictionary<ChessPiece, ulong> dictToUse = null)
         {
@@ -168,6 +232,8 @@ namespace ChessDotNet.Data
                 { ChessPiece.BlackQueen, BlackQueens },
                 { ChessPiece.BlackKing, BlackKings }
             };
+
+            SyncPieces();
         }
 
         public BitBoards DoMove(Move move)

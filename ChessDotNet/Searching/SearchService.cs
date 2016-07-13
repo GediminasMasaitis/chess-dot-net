@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -18,6 +19,10 @@ namespace ChessDotNet.Searching
         private const int MaxDepth = 64;
         private PVSResult[] PVTable { get; set; }
 
+        private long FailHigh { get; set; }
+        private long FailHighFirst { get; set; }
+        private long NodesSearched { get; set; }
+
         public const int MateScore = 50000;
         public const int MateThereshold = 49000;
 
@@ -25,21 +30,47 @@ namespace ChessDotNet.Searching
         {
             PossibleMovesService = possibleMovesService;
             EvaluationService = evaluationService;
-            Clear();
         }
 
         public void Clear()
         {
             PVTable = new PVSResult[MaxDepth];
+            FailHigh = 0;
+            FailHighFirst = 0;
+            NodesSearched = 0;
         }
 
         public PVSResult Search(BitBoards bitBoards, int maxDepth)
         {
+            Clear();
+            var sw = new Stopwatch();
+            sw.Start();
             for (var i = 1; i <= maxDepth; i++)
             {
                 var score = PrincipalVariationSearch(int.MinValue + 1, int.MaxValue, bitBoards, i, 0);
+                Console.WriteLine($"Depth: {i}; Score: {score}; {PrintPVTable()}");
             }
+            sw.Stop();
+            var speed = (NodesSearched / sw.Elapsed.TotalSeconds).ToString("0");
+            Console.WriteLine();
+            Console.WriteLine("Decided to move: " + PVTable[0].Move.ToPositionString());
+            Console.WriteLine($"Nodes searched: {NodesSearched}; Time taken: {sw.ElapsedMilliseconds} ms; Speed: {speed} N/s");
+            Console.WriteLine($"fhf={FailHighFirst}; fh={FailHigh}; fhf/fh={FailHighFirst/FailHigh}");
             return PVTable[0];
+        }
+
+        public string PrintPVTable()
+        {
+            var sb = new StringBuilder();
+            for (var i = 0; i < MaxDepth; i++)
+            {
+                if (PVTable[i] == null)
+                {
+                    break;
+                }
+                sb.Append(PVTable[i].Move.ToPositionString() + " ");
+            }
+            return sb.ToString();
         }
 
         public class PVSResult
@@ -60,6 +91,7 @@ namespace ChessDotNet.Searching
             if (currentDepth == depth)
             {
                 score = EvaluationService.Evaluate(bitBoards);
+                NodesSearched++;
                 return score;
             }
 
@@ -99,7 +131,12 @@ namespace ChessDotNet.Searching
                 {
                     if (score >= beta)
                     {
-                        Console.WriteLine("Beta cutoff, score " + score + ", beta: " + beta);
+                        if (validMoves == 1)
+                        {
+                            FailHighFirst++;
+                        }
+                        FailHigh++;
+                        //Console.WriteLine("Beta cutoff, score " + score + ", beta: " + beta);
                         return beta;
                     }
                     alpha = score;
@@ -124,7 +161,7 @@ namespace ChessDotNet.Searching
 
             if (alpha != oldAlpha)
             {
-                Console.WriteLine("Alpha changed from " + oldAlpha + " to " + alpha + " at depth " + currentDepth);
+                //Console.WriteLine("Alpha changed from " + oldAlpha + " to " + alpha + " at depth " + currentDepth);
                 PVTable[currentDepth] = new PVSResult(alpha, potentialMoves[bestMove]);
             }
 

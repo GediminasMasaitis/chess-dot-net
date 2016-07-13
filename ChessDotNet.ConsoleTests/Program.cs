@@ -18,9 +18,9 @@ namespace ChessDotNet.ConsoleTests
         static void Main(string[] args)
         {
             //DoTimings();
-            //DoPerft();
+            DoPerft();
             //TestMove();
-            DoSearch();
+            //DoSearch();
 
             Console.ReadLine();
         }
@@ -95,7 +95,7 @@ namespace ChessDotNet.ConsoleTests
         private static void DoSearch()
         {
             var fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-            fen = "2rr3k/pp3pp1/1nnqbN1p/3pN3/2pP4/2P3Q1/PPB4P/R4RK1 w - -";
+            //fen = "2rr3k/pp3pp1/1nnqbN1p/3pN3/2pP4/2P3Q1/PPB4P/R4RK1 w - -";
             var fact = new BoardFactory();
             var board = fact.ParseFENToBitBoards(fen);
 
@@ -105,10 +105,7 @@ namespace ChessDotNet.ConsoleTests
             var movesService = new PossibleMovesService(attacksService, hyperbola);
             var searchService = new SearchService(movesService, evaluationService);
 
-            var move = searchService.Search(board, 4);
-            
-
-            Console.WriteLine(move.ToString());
+            var move = searchService.Search(board, 6);
         }
     }
 }
