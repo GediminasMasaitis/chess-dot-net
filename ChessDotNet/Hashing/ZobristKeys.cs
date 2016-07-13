@@ -3,7 +3,7 @@ using ChessDotNet.Data;
 
 namespace ChessDotNet.Hashing
 {
-    static class ZobristKeys
+    public static class ZobristKeys
     {
         public static ulong[,] ZPieces { get; }
         public static ulong[] ZEnPassant { get; }
@@ -12,7 +12,7 @@ namespace ChessDotNet.Hashing
 
         static ZobristKeys()
         {
-            ZPieces = new ulong[64, 14];
+            ZPieces = new ulong[64, 13];
             ZEnPassant = new ulong[8];
             ZCastle = new ulong[4];
 
@@ -52,7 +52,7 @@ namespace ChessDotNet.Hashing
             for (var i = 0; i < 64; i++)
             {
                 var piece = board.ArrayBoard[i];
-                //if (piece != ChessPiece.Empty)
+                if (piece != ChessPiece.Empty)
                 {
                     key ^= ZPieces[i, piece];
                 }

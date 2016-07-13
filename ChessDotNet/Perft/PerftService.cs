@@ -1,8 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using ChessDotNet.Data;
+using ChessDotNet.Hashing;
 using ChessDotNet.MoveGeneration;
 
 namespace ChessDotNet.Perft
@@ -10,10 +12,12 @@ namespace ChessDotNet.Perft
     public class PerftService
     {
         public PossibleMovesService PossibleMovesService { get; set; }
+        public bool MultiThreaded { get; set; }
 
         public PerftService(PossibleMovesService possibleMovesService)
         {
             PossibleMovesService = possibleMovesService;
+            MultiThreaded = true;
         }
 
         public IList<string> GetPossibleMoves(Board board, int depth)
@@ -29,7 +33,7 @@ namespace ChessDotNet.Perft
                 return moves.Select(x => new MoveAndNodes(x.ToPositionString(), 1)).OrderBy(x => x.Move).ToList();
             }
             var results = new List<MoveAndNodes>();
-            Parallel.ForEach(moves, m =>
+            Action<Move> act = m =>
             {
                 var moved = board.DoMove(m);
                 var count = GetPossibleMoveCountInner(moved, depth, 2);
@@ -39,7 +43,18 @@ namespace ChessDotNet.Perft
                 {
                     results.Add(man);
                 }
-            });
+            };
+            if (MultiThreaded)
+            {
+                Parallel.ForEach(moves, act);
+            }
+            else
+            {
+                foreach (var move in moves)
+                {
+                    act.Invoke(move);
+                }
+            }
             var ordered = results.OrderBy(x => x.Move).ToList();
             return ordered;
         }

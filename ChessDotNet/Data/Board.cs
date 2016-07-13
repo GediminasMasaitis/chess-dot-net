@@ -57,6 +57,7 @@ namespace ChessDotNet.Data
             //History = new List<HistoryEntry>(128);
             //ArrayBoard = new int[64];
             //BitBoard = new ulong[13];
+            EnPassantFileIndex = -1;
         }
 
         static Board()
@@ -297,6 +298,7 @@ namespace ChessDotNet.Data
             newBoards.ArrayBoard = ArrayBoard.ToArray();
             newBoards.BitBoard = BitBoard.ToArray();
             newBoards.CastlingPermissions = CastlingPermissions.ToArray();
+            newBoards.Key = Key;
 
             var newHistory = new HistoryEntry[History.Length + 1];
             Array.Copy(History, newHistory, History.Length);
