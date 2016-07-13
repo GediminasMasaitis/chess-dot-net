@@ -79,6 +79,7 @@
     <Compile Include="Data\Board.cs" />
     <Compile Include="Data\ChessPiece.cs" />
     <Compile Include="Data\BoardFactory.cs" />
+    <Compile Include="Data\PieceCounts.cs" />
     <Compile Include="Debugging.cs" />
     <Compile Include="ExtensionMethods.cs" />
     <Compile Include="Data\Move.cs" />
@@ -86,6 +87,7 @@
     <Compile Include="Hashing\TranspositionTable.cs" />
     <Compile Include="MoveGeneration\AttacksService.cs" />
     <Compile Include="MoveGeneration\HyperbolaQuintessence.cs" />
+    <Compile Include="Evaluation\MVVLVAScoreService.cs" />
     <Compile Include="Perft\IPerftClient.cs" />
     <Compile Include="Perft\MoveAndNodes.cs" />
     <Compile Include="Perft\PerftService.cs" />

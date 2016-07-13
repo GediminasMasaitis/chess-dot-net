@@ -1,4 +1,5 @@
 ﻿using System;
+using ChessDotNet.Evaluation;
 
 namespace ChessDotNet.Data
 {
@@ -23,6 +24,7 @@ namespace ChessDotNet.Data
         public bool EnPassant { get; }
         public int? PawnPromoteTo { get; }
         public bool Castle { get; }
+        public int MVVLVAScore => MVVLVAScoreCalculation.Scores[Piece, TakesPiece];
 
         private string PositionToText(int position)
         {
