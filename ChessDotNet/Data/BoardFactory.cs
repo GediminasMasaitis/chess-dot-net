@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using ChessDotNet.Hashing;
 
 namespace ChessDotNet.Data
 {
@@ -11,7 +12,9 @@ namespace ChessDotNet.Data
             var board = new Board();
             board.ArrayBoard = new int[64];
             board.BitBoard = new ulong[13];
+            board.CastlingPermissions = new bool[4];
             board.History = new HistoryEntry[0];
+
             var boardPosition = 0;
             var fenPosition = 0;
             for (; fenPosition < fen.Length; fenPosition++)
@@ -105,22 +108,23 @@ namespace ChessDotNet.Data
                 switch (fen[fenPosition])
                 {
                     case 'K':
-                        board.WhiteCanCastleKingSide = true;
+                        board.CastlingPermissions[CastlePermission.WhiteKingSide] = true;
                         break;
                     case 'Q':
-                        board.WhiteCanCastleQueenSide = true;
+                        board.CastlingPermissions[CastlePermission.WhiteQueenSide] = true;
                         break;
                     case 'k':
-                        board.BlackCanCastleKingSide = true;
+                        board.CastlingPermissions[CastlePermission.BlackKingSide] = true;
                         break;
                     case 'q':
-                        board.BlackCanCastleQueenSide = true;
+                        board.CastlingPermissions[CastlePermission.BlackQueenSide] = true;
                         break;
                 }
                 fenPosition++;
             }
             board.SyncExtraBitBoards();
             board.SyncBitBoardsToArrayBoard();
+            board.Key = ZobristKeys.CalculateKey(board);
             return board;
         }
 

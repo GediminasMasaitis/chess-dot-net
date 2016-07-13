@@ -259,8 +259,8 @@ namespace ChessDotNet.MoveGeneration
 
             if (isWhite)
             {
-                castlingPermissionQueenSide = board.WhiteCanCastleQueenSide;
-                castlingPermissionKingSide = board.WhiteCanCastleKingSide;
+                castlingPermissionQueenSide = board.CastlingPermissions[CastlePermission.WhiteQueenSide];
+                castlingPermissionKingSide = board.CastlingPermissions[CastlePermission.WhiteKingSide];
                 kingPos = board.BitBoard[ChessPiece.WhiteKing].BitScanForward();
                 queenSideCastleMask = Board.WhiteQueenSideCastleMask;
                 kingSideCastleMask = Board.WhiteKingSideCastleMask;
@@ -270,8 +270,8 @@ namespace ChessDotNet.MoveGeneration
             }
             else
             {
-                castlingPermissionQueenSide = board.BlackCanCastleQueenSide;
-                castlingPermissionKingSide = board.BlackCanCastleKingSide;
+                castlingPermissionQueenSide = board.CastlingPermissions[CastlePermission.BlackQueenSide];
+                castlingPermissionKingSide = board.CastlingPermissions[CastlePermission.BlackKingSide];
                 kingPos = board.BitBoard[ChessPiece.BlackKing].BitScanForward();
                 queenSideCastleMask = Board.BlackQueenSideCastleMask;
                 kingSideCastleMask = Board.BlackKingSideCastleMask;
