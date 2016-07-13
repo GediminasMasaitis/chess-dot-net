@@ -27,8 +27,8 @@ namespace ChessDotNet.Data
         public ulong EnPassantFile { get; set; }
         public ulong Key { get; set; }
 
-
         public HistoryEntry[] History { get; set; }
+        public int LastTookPieceHistoryIndex { get; set; }
 
         public static ulong AllBoard { get; }
         public static ulong KnightSpan { get; private set; }
@@ -316,10 +316,18 @@ namespace ChessDotNet.Data
             newBoards.BitBoard[move.Piece] |= toPosBitBoard;
             newBoards.Key ^= ZobristKeys.ZPieces[move.To, move.Piece];
 
-            if (move.TakesPiece > 0 && !move.EnPassant)
+            if (move.TakesPiece > 0)
             {
-                newBoards.BitBoard[move.TakesPiece] &= ~toPosBitBoard;
-                newBoards.Key ^= ZobristKeys.ZPieces[move.To, move.Piece];
+                if (!move.EnPassant)
+                {
+                    newBoards.BitBoard[move.TakesPiece] &= ~toPosBitBoard;
+                    newBoards.Key ^= ZobristKeys.ZPieces[move.To, move.Piece];
+                }
+                newBoards.LastTookPieceHistoryIndex = History.Length;
+            }
+            else
+            {
+                newBoards.LastTookPieceHistoryIndex = LastTookPieceHistoryIndex;
             }
 
             if (move.EnPassant)

@@ -49,6 +49,10 @@ namespace ChessDotNet.Searching
             {
                 var score = PrincipalVariationSearch(int.MinValue + 1, int.MaxValue, board, i, 0);
                 Console.WriteLine($"Depth: {i}; Score: {score}; {PrintPVTable()}");
+                if (score > MateThereshold)
+                {
+                    break;
+                }
             }
             sw.Stop();
             var speed = (NodesSearched / sw.Elapsed.TotalSeconds).ToString("0");
@@ -86,6 +90,18 @@ namespace ChessDotNet.Searching
             public Move Move { get; }
         }
 
+        public bool IsRepetition(Board board)
+        {
+            for (var i = board.LastTookPieceHistoryIndex; i < board.History.Length; i++)
+            {
+                if (board.Key == board.History[i].Board.Key)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         public int PrincipalVariationSearch(int alpha, int beta, Board board, int depth, int currentDepth)
         {
             int score;
@@ -94,6 +110,18 @@ namespace ChessDotNet.Searching
                 NodesSearched++;
                 score = EvaluationService.Evaluate(board);
                 return score;
+            }
+
+            NodesSearched++;
+
+            var isRepetition = IsRepetition(board);
+            if (isRepetition)
+            {
+                return 0;
+            }
+            if (board.History.Length - board.LastTookPieceHistoryIndex >= 100)
+            {
+                return 0;
             }
 
             // sort moves
