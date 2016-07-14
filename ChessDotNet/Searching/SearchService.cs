@@ -54,7 +54,7 @@ namespace ChessDotNet.Searching
             for (var i = 1; i <= maxDepth; i++)
             {
                 var score = PrincipalVariationSearch(-Inf, Inf, board, i, 0);
-                Console.WriteLine($"Depth: {i}; Score: {score}; {PrintPVTable()}");
+                Console.WriteLine($"Depth: {i}; Score: {score}; Searched: {NodesSearched}; {PrintPVTable()}");
                 if (score > MateThereshold)
                 {
                     break;
@@ -126,7 +126,7 @@ namespace ChessDotNet.Searching
             {
                 return mvvlva + 10000000;
             }
-
+            //return 0;
             if (SearchKillers[currentDepth, 0] == moveKey)
             {
                 return 9000000;
@@ -135,7 +135,8 @@ namespace ChessDotNet.Searching
             {
                 return 8000000;
             }
-            return 0;
+            //return 0;
+            return SearchHistory[move.Piece, move.To];
         }
 
         public void SortNextMove(int currentIndex, Board currentBoard, IList<Move> moves, int currentDepth)
