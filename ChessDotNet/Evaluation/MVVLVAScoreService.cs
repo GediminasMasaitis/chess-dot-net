@@ -14,7 +14,7 @@ namespace ChessDotNet.Evaluation
 
             for (var i = 0; i < PieceScores.Length; i++)
             {
-                for (var j = 0; j < PieceScores.Length; j++)
+                for (var j = 1; j < PieceScores.Length; j++)
                 {
                     Scores[i, j] = PieceScores[j]*100 + 6 - PieceScores[i];
                 }

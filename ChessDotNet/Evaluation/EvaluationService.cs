@@ -57,7 +57,7 @@ namespace ChessDotNet.Evaluation
         public int Evaluate(Board board)
         {
             var score = 0;
-            score += EvaluateWeights(board);
+            //score += EvaluateWeights(board);
             score += EvaluatePositions(board);
 
             if (!board.WhiteToMove)

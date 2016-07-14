@@ -24,7 +24,8 @@ namespace ChessDotNet.Data
         public bool EnPassant { get; }
         public int? PawnPromoteTo { get; }
         public bool Castle { get; }
-        public int MVVLVAScore => TakesPiece > 0 ? MVVLVAScoreCalculation.Scores[Piece, TakesPiece] : 0;
+        //public int MVVLVAScore => TakesPiece > 0 ? MVVLVAScoreCalculation.Scores[Piece, TakesPiece] : 0;
+        public int Key => (From << 16) + To;
 
         private string PositionToText(int position)
         {
