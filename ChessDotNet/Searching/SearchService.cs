@@ -112,7 +112,6 @@ namespace ChessDotNet.Searching
 
         public int CalculateMoveScore(Board currentBoard, Move move, int currentDepth)
         {
-            //return 0;
             var moveKey = move.Key;
             var isCurrentPV = currentDepth > 0 && PVTable[currentDepth - 1] != null && PVTable[currentDepth - 1].Board.Key == currentBoard.Key;
             if (isCurrentPV)
@@ -141,6 +140,7 @@ namespace ChessDotNet.Searching
 
         public void SortNextMove(int currentIndex, Board currentBoard, IList<Move> moves, int currentDepth)
         {
+            //return;
             var bestScore = -Inf;
             var bestScoreIndex = -1;
             for (var i = currentIndex; i < moves.Count; i++)
@@ -161,12 +161,14 @@ namespace ChessDotNet.Searching
         public int PrincipalVariationSearch(int alpha, int beta, Board board, int depth, int currentDepth)
         {
             int score;
-            if (currentDepth == depth)
+            var quiessence = currentDepth >= depth;
+            /*if (currentDepth == depth)
             {
                 NodesSearched++;
                 score = EvaluationService.Evaluate(board);
                 return score;
-            }
+            }*/
+
 
             NodesSearched++;
 
@@ -179,6 +181,24 @@ namespace ChessDotNet.Searching
             {
                 return 0;
             }
+            if (currentDepth >= MaxDepth)
+            {
+                return EvaluationService.Evaluate(board);
+            }
+
+            if (quiessence)
+            {
+                score = EvaluationService.Evaluate(board);
+                //return score;
+                if (score >= beta)
+                {
+                    return beta;
+                }
+                if (score > alpha)
+                {
+                    alpha = score;
+                }
+            }
 
             // sort moves
             var oldAlpha = alpha;
@@ -187,6 +207,11 @@ namespace ChessDotNet.Searching
             var doPV = true;
 
             var potentialMoves = PossibleMovesService.GetAllPotentialMoves(board);
+            if (quiessence)
+            {
+                potentialMoves = potentialMoves.Where(x => x.TakesPiece > 0).ToList();
+            }
+            //Console.WriteLine(potentialMoves.Count);
             var bbsAfter = new Board[potentialMoves.Count];
             for (var i = 0; i < potentialMoves.Count; i++)
             {
@@ -241,7 +266,7 @@ namespace ChessDotNet.Searching
                 }
             }
 
-            if (validMoves == 0)
+            if (!quiessence && validMoves == 0)
             {
                 var enemyAttacks = PossibleMovesService.AttacksService.GetAllAttacked(board, !board.WhiteToMove);
                 var myKing = board.WhiteToMove ? board.BitBoard[ChessPiece.WhiteKing] : board.BitBoard[ChessPiece.BlackKing];
@@ -258,7 +283,7 @@ namespace ChessDotNet.Searching
             if (alpha != oldAlpha)
             {
                 PVTable[currentDepth] = new PVSResult(alpha, bbsAfter[bestMove], potentialMoves[bestMove]);
-                Console.WriteLine("Alpha changed from " + oldAlpha + " to " + alpha + " at depth " + currentDepth + ". PV: " + PrintPVTable());
+                //Console.WriteLine("Alpha changed from " + oldAlpha + " to " + alpha + " at depth " + currentDepth + ". PV: " + PrintPVTable());
             }
 
             return alpha;

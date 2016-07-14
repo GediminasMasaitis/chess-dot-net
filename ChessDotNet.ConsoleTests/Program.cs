@@ -57,6 +57,7 @@ namespace ChessDotNet.ConsoleTests
             var fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
             //fen = "3k4/3p4/8/K1P4r/8/8/8/8 b - - 0 50";
             //fen = "8/1kP5/8/K2p3r/8/8/8/8 w - - 1 53 ";
+            fen = "r1b1k2r/ppppnppp/2n2q2/2b5/3NP3/2P1B3/PP3PPP/RN1QKB1R w KQkq - 0 1";
             var fact = new BoardFactory();
             var hyperbola = new HyperbolaQuintessence();
             var attacksService = new AttacksService(hyperbola);
@@ -120,7 +121,7 @@ namespace ChessDotNet.ConsoleTests
         {
             var fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"; // Starting pos
             //fen = "2rr3k/pp3pp1/1nnqbN1p/3pN3/2pP4/2P3Q1/PPB4P/R4RK1 w - -"; // Mate in 3
-            //fen = "r1b1k2r/ppppnppp/2n2q2/2b5/3NP3/2P1B3/PP3PPP/RN1QKB1R w KQkq - 0 1"; // Developed
+            fen = "r1b1k2r/ppppnppp/2n2q2/2b5/3NP3/2P1B3/PP3PPP/RN1QKB1R w KQkq - 0 1"; // Developed
 
             var fact = new BoardFactory();
             var board = fact.ParseFEN(fen);
@@ -131,7 +132,7 @@ namespace ChessDotNet.ConsoleTests
             var movesService = new PossibleMovesService(attacksService, hyperbola);
             var searchService = new SearchService(movesService, evaluationService);
 
-            var move = searchService.Search(board, 2);
+            var move = searchService.Search(board, 6);
         }
     }
 }
