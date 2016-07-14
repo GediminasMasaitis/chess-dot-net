@@ -85,6 +85,7 @@
     <Compile Include="Debugging.cs" />
     <Compile Include="ExtensionMethods.cs" />
     <Compile Include="Data\Move.cs" />
+    <Compile Include="Game.cs" />
     <Compile Include="Hashing\BoardData.cs" />
     <Compile Include="Hashing\TranspositionTable.cs" />
     <Compile Include="MoveGeneration\AttacksService.cs" />
