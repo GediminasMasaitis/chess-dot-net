@@ -475,6 +475,7 @@ namespace ChessDotNet.Data
         {
             const string separators  = "   +---+---+---+---+---+---+---+---+";
             const string fileMarkers = "     A   B   C   D   E   F   G   H  ";
+            const bool useUnicodeSymbols = false;
             var sb = new StringBuilder();
             for (var i = 7; i >= 0; i--)
             {
@@ -484,7 +485,7 @@ namespace ChessDotNet.Data
                 for (var j = 0; j < 8; j++)
                 {
                     var piece = ArrayBoard[i*8 + j];
-                    var pieceChar = ChessPieceToChar(piece);
+                    var pieceChar = useUnicodeSymbols ? ChessPiece.ChessPieceToSymbol(piece) : ChessPiece.ChessPieceToLetter(piece);
                     sb.Append($"| {pieceChar} ");
                 }
                 sb.AppendLine("|");
@@ -494,45 +495,6 @@ namespace ChessDotNet.Data
             return sb.ToString();
         }
 
-        public char ChessPieceToChar(int chessPiece)
-        {
-            switch (chessPiece)
-            {
-                case ChessPiece.Empty:
-                    return ' ';
-
-                case ChessPiece.WhitePawn:
-                    return 'P';
-                case ChessPiece.BlackPawn:
-                    return 'p';
-
-                case ChessPiece.WhiteKnight:
-                    return 'N';
-                case ChessPiece.BlackKnight:
-                    return 'n';
-
-                case ChessPiece.WhiteBishop:
-                    return 'B';
-                case ChessPiece.BlackBishop:
-                    return 'b';
-
-                case ChessPiece.WhiteRook:
-                    return 'R';
-                case ChessPiece.BlackRook:
-                    return 'r';
-
-                case ChessPiece.WhiteQueen:
-                    return 'Q';
-                case ChessPiece.BlackQueen:
-                    return 'q';
-
-                case ChessPiece.WhiteKing:
-                    return 'K';
-                case ChessPiece.BlackKing:
-                    return 'k';
-                default:
-                    return '?';
-            }
-        }
+        
     }
 }

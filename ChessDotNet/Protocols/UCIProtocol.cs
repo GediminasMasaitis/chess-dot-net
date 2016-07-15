@@ -72,6 +72,9 @@ namespace ChessDotNet.Protocols
                 case "print":
                     Output(Game.Print());
                     break;
+                case "quit":
+                    Exit(0);
+                    break;
             }
         }
 
