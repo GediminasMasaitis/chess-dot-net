@@ -52,22 +52,40 @@ namespace ChessDotNet.Data
             var piece = board.ArrayBoard[from];
             var takesPiece = board.ArrayBoard[to];
             var enPassant = false;
-
+            int? pawnPromotesTo = null;
+            var isWhite = board.WhiteToMove;
             if (piece == ChessPiece.WhitePawn || piece == ChessPiece.BlackPawn)
             {
                 if (from%8 != to%8) // Must be take
                 {
                     if (takesPiece == ChessPiece.Empty) // Must be en-passant
                     {
-                        takesPiece = piece == ChessPiece.WhitePawn ? ChessPiece.BlackPawn : ChessPiece.WhitePawn;
+                        takesPiece = isWhite ? ChessPiece.BlackPawn : ChessPiece.WhitePawn;
                         enPassant = true;
                     }
                 }
             }
 
-            var move = new Move(from, to, piece, takesPiece, enPassant);
+            if (moveText.Length == 5)
+            {
+                switch (moveText[4])
+                {
+                    case 'Q':
+                        pawnPromotesTo = isWhite ? ChessPiece.WhiteQueen : ChessPiece.BlackQueen;
+                        break;
+                    case 'N':
+                        pawnPromotesTo = isWhite ? ChessPiece.WhiteKnight : ChessPiece.BlackKnight;
+                        break;
+                    case 'B':
+                        pawnPromotesTo = isWhite ? ChessPiece.WhitePawn : ChessPiece.BlackPawn;
+                        break;
+                    case 'R':
+                        pawnPromotesTo = isWhite ? ChessPiece.WhiteRook : ChessPiece.BlackRook;
+                        break;
+                }
+            }
 
-            // TODO: promotions
+            var move = new Move(from, to, piece, takesPiece, enPassant, pawnPromotesTo);
 
             return move;
         }
