@@ -23,7 +23,8 @@ namespace ChessDotNet.ConsoleTests
             //TestMove();
             //TestZobrist();
             //TestRepetitions();
-            DoSearch();
+            //DoSearch();
+            Console.WriteLine(new BoardFactory().ParseFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").Print());
             Console.ReadLine();
         }
 

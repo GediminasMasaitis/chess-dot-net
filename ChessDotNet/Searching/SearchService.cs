@@ -39,14 +39,14 @@ namespace ChessDotNet.Searching
         public void Clear()
         {
             PVTable = new PVSResult[MaxDepth];
-            SearchKillers = new int[MaxDepth,2];
+            SearchKillers = new int[MaxDepth, 2];
             SearchHistory = new int[13,64];
             FailHigh = 0;
             FailHighFirst = 0;
             NodesSearched = 0;
         }
 
-        public PVSResult Search(Board board, int maxDepth)
+        public IList<PVSResult> Search(Board board, int maxDepth)
         {
             Clear();
             var sw = new Stopwatch();
@@ -54,7 +54,7 @@ namespace ChessDotNet.Searching
             for (var i = 1; i <= maxDepth; i++)
             {
                 var score = PrincipalVariationSearch(-Inf, Inf, board, i, 0);
-                Console.WriteLine($"Depth: {i}; Score: {score}; Searched: {NodesSearched}; {PrintPVTable()}");
+                //Console.WriteLine($"Depth: {i}; Score: {score}; Searched: {NodesSearched}; {PrintPVTable()}");
                 if (score > MateThereshold)
                 {
                     break;
@@ -62,12 +62,12 @@ namespace ChessDotNet.Searching
             }
             sw.Stop();
             var speed = (NodesSearched / sw.Elapsed.TotalSeconds).ToString("0");
-            Console.WriteLine();
-            Console.WriteLine("Decided to move: " + PVTable[0].Move.ToPositionString());
-            Console.WriteLine($"Nodes searched: {NodesSearched}; Time taken: {sw.ElapsedMilliseconds} ms; Speed: {speed} N/s");
+            //Console.WriteLine();
+            //Console.WriteLine("Decided to move: " + PVTable[0].Move.ToPositionString());
+            //Console.WriteLine($"Nodes searched: {NodesSearched}; Time taken: {sw.ElapsedMilliseconds} ms; Speed: {speed} N/s");
             var ratio = (FailHighFirst/(double) FailHigh).ToString("0.000");
-            Console.WriteLine($"fhf={FailHighFirst}; fh={FailHigh}; fhf/fh={ratio}");
-            return PVTable[0];
+            //Console.WriteLine($"fhf={FailHighFirst}; fh={FailHigh}; fhf/fh={ratio}");
+            return PVTable;
         }
 
         public string PrintPVTable()

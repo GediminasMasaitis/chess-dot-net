@@ -12,18 +12,17 @@ namespace ChessDotNet
 {
     public class Game
     {
+        private BoardFactory BoardFact { get; set; }
         private HyperbolaQuintessence Hyperbola { get; set; }
         private EvaluationService Evaluation { get; set; }
         private AttacksService Attacks { get; set; }
         private PossibleMovesService Moves { get; set; }
         private SearchService Search { get; set; }
 
-        public Game(string fen = null)
-        {
-            fen = fen ?? "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"; // Starting pos
+        private Board CurrentBoard { get; set; }
 
-            var fact = new BoardFactory();
-            var board = fact.ParseFEN(fen);
+        public Game()
+        {
 
             var hyperbola = new HyperbolaQuintessence();
             var evaluationService = new EvaluationService();
@@ -31,6 +30,7 @@ namespace ChessDotNet
             var movesService = new PossibleMovesService(attacksService, hyperbola);
             var searchService = new SearchService(movesService, evaluationService);
 
+            BoardFact = new BoardFactory();
             Hyperbola = hyperbola;
             Evaluation = evaluationService;
             Attacks = attacksService;
@@ -38,5 +38,43 @@ namespace ChessDotNet
             Search = searchService;
         }
 
+        public void SetPositionByFEN(string fen)
+        {
+            CurrentBoard = BoardFact.ParseFEN(fen);
+        }
+
+        public void SetPositionByMoves(bool startNewBoard, IEnumerable<string> moves)
+        {
+            if (startNewBoard)
+            {
+                SetStartingPos();
+            }
+            foreach (var moveStr in moves)
+            {
+                var move = Move.FromPositionString(CurrentBoard, moveStr);
+                CurrentBoard = CurrentBoard.DoMove(move);
+            }
+        }
+
+        public void SetStartingPos()
+        {
+            SetPositionByFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+        }
+
+        public string Print()
+        {
+            return CurrentBoard.Print();
+        }
+
+        public IList<SearchService.PVSResult> SearchMove()
+        {
+            if (CurrentBoard == null)
+            {
+                SetStartingPos();
+            }
+            var searchResult = Search.Search(CurrentBoard, 5);
+            CurrentBoard = searchResult[0].Board;
+            return searchResult;
+        }
     }
 }

@@ -27,13 +27,35 @@ namespace ChessDotNet.Data
         //public int MVVLVAScore => TakesPiece > 0 ? MVVLVAScoreCalculation.Scores[Piece, TakesPiece] : 0;
         public int Key => (From << 16) + To;
 
-        private string PositionToText(int position)
+        private static string PositionToText(int position)
         {
             var rank = position / 8;
             var file = position % 8;
 
-            var str = (char)(97 + file) + (rank + 1).ToString();
+            var str = (char)(file + 97) + (rank + 1).ToString();
             return str;
+        }
+
+        private static int TextToPosition(string text)
+        {
+            var textLower = text.ToLower();
+            var file = text[0] - 97;
+            var rank = text[1] - 0x31;
+            var position = rank*8 + file;
+            return position;
+        }
+
+        public static Move FromPositionString(Board board, string moveText)
+        {
+            var from = TextToPosition(moveText.Substring(0, 2));
+            var to = TextToPosition(moveText.Substring(2, 2));
+            var piece = board.ArrayBoard[from];
+            var takesPiece = board.ArrayBoard[to];
+            var move = new Move(from, to, piece, takesPiece);
+
+            // TODO: en passants, castling, promotions
+
+            return move;
         }
 
         public string ToPositionString()
