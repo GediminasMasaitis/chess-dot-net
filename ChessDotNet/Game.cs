@@ -66,13 +66,13 @@ namespace ChessDotNet
             return CurrentBoard.Print();
         }
 
-        public IList<SearchService.PVSResult> SearchMove()
+        public IList<SearchService.PVSResult> SearchMove(SearchParams searchParams)
         {
             if (CurrentBoard == null)
             {
                 SetStartingPos();
             }
-            var searchResult = Search.Search(CurrentBoard, 5);
+            var searchResult = Search.Search(CurrentBoard, 5, searchParams);
             CurrentBoard = searchResult[0].Board;
             return searchResult;
         }

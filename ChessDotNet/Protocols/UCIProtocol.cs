@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using ChessDotNet.Searching;
 
 namespace ChessDotNet.Protocols
 {
@@ -29,6 +30,7 @@ namespace ChessDotNet.Protocols
                     Game.SetStartingPos();
                     break;
                 case "position":
+                {
                     var isStartPos = false;
                     var byFen = false;
 
@@ -62,12 +64,36 @@ namespace ChessDotNet.Protocols
                         var moves = words.Skip(i).ToList();
                         Game.SetPositionByMoves(isStartPos, moves);
                     }
+                }
                     break;
                 case "go":
-                    var results = Game.SearchMove();
+                {
+                    var searchParams = new SearchParams();
+                    for (var i = 0; i < words.Length; i++)
+                    {
+                        switch (words[i])
+                        {
+                            case "wtime":
+                                searchParams.WhiteTime = int.Parse(words[++i]);
+                                break;
+                            case "btime":
+                                searchParams.BlackTime = int.Parse(words[++i]);
+                                break;
+                            case "winc":
+                                searchParams.WhiteTimeIncrement = int.Parse(words[++i]);
+                                break;
+                            case "binc":
+                                searchParams.BlackTimeIncrement = int.Parse(words[++i]);
+                                break;
+
+                        }
+                    }
+
+                    var results = Game.SearchMove(searchParams);
                     var moveStr = results[0].Move.ToPositionString();
                     var ponderStr = results[1].Move.ToPositionString();
                     Output($"bestmove {moveStr} ponder {ponderStr}");
+                }
                     break;
                 case "print":
                     Output(Game.Print());

@@ -46,8 +46,9 @@ namespace ChessDotNet.Searching
             NodesSearched = 0;
         }
 
-        public IList<PVSResult> Search(Board board, int maxDepth)
+        public IList<PVSResult> Search(Board board, int maxDepth, SearchParams searchParams = null)
         {
+            searchParams = searchParams ?? new SearchParams();
             Clear();
             var sw = new Stopwatch();
             sw.Start();
