@@ -476,6 +476,11 @@ namespace ChessDotNet.Data
             const string separators  = "   +---+---+---+---+---+---+---+---+";
             const string fileMarkers = "     A   B   C   D   E   F   G   H  ";
             const bool useUnicodeSymbols = false;
+
+            var infos = new List<string>();
+
+            infos.Add("Hash key: " + Key.ToString("X").PadLeft(16, '0'));
+
             var sb = new StringBuilder();
             for (var i = 7; i >= 0; i--)
             {
@@ -488,7 +493,12 @@ namespace ChessDotNet.Data
                     var pieceChar = useUnicodeSymbols ? ChessPiece.ChessPieceToSymbol(piece) : ChessPiece.ChessPieceToLetter(piece);
                     sb.Append($"| {pieceChar} ");
                 }
-                sb.AppendLine("|");
+                sb.Append("|   ");
+                if (infos.Count > 7-i)
+                {
+                    sb.Append(infos[7-i]);
+                }
+                sb.AppendLine();
             }
             sb.AppendLine(separators);
             sb.AppendLine(fileMarkers);

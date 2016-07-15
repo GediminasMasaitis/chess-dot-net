@@ -16,7 +16,7 @@ namespace ChessDotNet.Hashing
             ZEnPassant = new ulong[8];
             ZCastle = new ulong[4];
 
-            var rng = new Random();
+            var rng = new Random(0);
             for (var i = 1; i < 64; i++)
             {
                 for (var j = 0; j < 13; j++)
