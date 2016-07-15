@@ -51,9 +51,23 @@ namespace ChessDotNet.Data
             var to = TextToPosition(moveText.Substring(2, 2));
             var piece = board.ArrayBoard[from];
             var takesPiece = board.ArrayBoard[to];
-            var move = new Move(from, to, piece, takesPiece);
+            var enPassant = false;
 
-            // TODO: en passants, castling, promotions
+            if (piece == ChessPiece.WhitePawn || piece == ChessPiece.BlackPawn)
+            {
+                if (from%8 != to%8) // Must be take
+                {
+                    if (takesPiece == ChessPiece.Empty) // Must be en-passant
+                    {
+                        takesPiece = piece == ChessPiece.WhitePawn ? ChessPiece.BlackPawn : ChessPiece.WhitePawn;
+                        enPassant = true;
+                    }
+                }
+            }
+
+            var move = new Move(from, to, piece, takesPiece, enPassant);
+
+            // TODO: promotions
 
             return move;
         }
