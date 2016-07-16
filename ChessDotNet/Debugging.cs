@@ -25,5 +25,10 @@ namespace ChessDotNet
 
             Process.Start(exePath, argsStr);
         }
+
+        public static void Dump(this ulong bitBoard)
+        {
+            ShowBitBoard(bitBoard);
+        }
     }
 }

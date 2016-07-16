@@ -72,7 +72,7 @@ namespace ChessDotNet
             {
                 SetStartingPos();
             }
-            var searchResult = Search.Search(CurrentBoard, 5, searchParams);
+            var searchResult = Search.Search(CurrentBoard, searchParams);
             CurrentBoard = searchResult[0].Board;
             return searchResult;
         }

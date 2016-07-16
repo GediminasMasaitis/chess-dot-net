@@ -46,22 +46,52 @@ namespace ChessDotNet.Searching
             NodesSearched = 0;
         }
 
-        public IList<PVSResult> Search(Board board, int maxDepth, SearchParams searchParams = null)
+        public IList<PVSResult> Search(Board board, SearchParams searchParams = null)
         {
             searchParams = searchParams ?? new SearchParams();
             Clear();
             var sw = new Stopwatch();
-            sw.Start();
-            for (var i = 1; i <= maxDepth; i++)
+            var totalTimeSpent = 0L;
+            var lastIterationSpent = 0L;
+            var timeRemaining = board.WhiteToMove ? searchParams.WhiteTime : searchParams.BlackTime;
+            var allowedForMove = timeRemaining/30;
+            if (searchParams.Infinite)
             {
+                allowedForMove = 5000;
+            }
+            var maxDepth = searchParams.MaxDepth ?? 64;
+            var i = 1;
+            for (; i <= maxDepth; i++)
+            {
+                sw.Restart();
                 var score = PrincipalVariationSearch(-Inf, Inf, board, i, 0);
+                sw.Stop();
+
+                var elapsedNow = sw.ElapsedMilliseconds;
+                totalTimeSpent += elapsedNow;
+
+                if (totalTimeSpent > allowedForMove)
+                {
+                    break;
+                }
+
+                if (i > 3)
+                {
+                    var growthFactor = (double)elapsedNow/lastIterationSpent;
+                    var estimatedNextIteration = elapsedNow*growthFactor;
+                    if (totalTimeSpent + estimatedNextIteration > allowedForMove)
+                    {
+                        break;
+                    }
+                }
+                lastIterationSpent = elapsedNow;
+
                 //Console.WriteLine($"Depth: {i}; Score: {score}; Searched: {NodesSearched}; {PrintPVTable()}");
                 if (score > MateThereshold)
                 {
                     break;
                 }
             }
-            sw.Stop();
             var speed = (NodesSearched / sw.Elapsed.TotalSeconds).ToString("0");
             //Console.WriteLine();
             //Console.WriteLine("Decided to move: " + PVTable[0].Move.ToPositionString());

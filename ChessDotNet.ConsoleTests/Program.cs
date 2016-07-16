@@ -19,12 +19,14 @@ namespace ChessDotNet.ConsoleTests
         static void Main(string[] args)
         {
             //DoTimings();
-            //DoPerft();
+            DoPerft();
             //TestMove();
             //TestZobrist();
             //TestRepetitions();
             //DoSearch();
-            Console.WriteLine(new BoardFactory().ParseFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").Print());
+            //Console.WriteLine(new BoardFactory().ParseFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").Print());
+            //var pos = 27;
+            //Debugging.ShowBitBoard(EvaluationService.PassedPawnMasksWhite[pos], EvaluationService.PassedPawnMasksBlack[pos], EvaluationService.IsolatedPawnMasks[pos]);
             Console.ReadLine();
         }
 
@@ -58,7 +60,8 @@ namespace ChessDotNet.ConsoleTests
             var fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
             //fen = "3k4/3p4/8/K1P4r/8/8/8/8 b - - 0 50";
             //fen = "8/1kP5/8/K2p3r/8/8/8/8 w - - 1 53 ";
-            fen = "r1b1k2r/ppppnppp/2n2q2/2b5/3NP3/2P1B3/PP3PPP/RN1QKB1R w KQkq - 0 1";
+            //fen = "r1b1k2r/ppppnppp/2n2q2/2b5/3NP3/2P1B3/PP3PPP/RN1QKB1R w KQkq - 0 1";
+            fen = "2k5/8/8/8/8/8/6p1/2K5 w - - 1 1 ";
             var fact = new BoardFactory();
             var hyperbola = new HyperbolaQuintessence();
             var attacksService = new AttacksService(hyperbola);
@@ -69,7 +72,7 @@ namespace ChessDotNet.ConsoleTests
             {
                 var perftRunner = new PerftRunner(perft, sharperClient, fact);
                 perftRunner.OnOut += Console.Write;
-                perftRunner.Test(fen, 6);
+                perftRunner.Test(fen, 8);
             }
         }
 
@@ -175,7 +178,11 @@ namespace ChessDotNet.ConsoleTests
             var movesService = new PossibleMovesService(attacksService, hyperbola);
             var searchService = new SearchService(movesService, evaluationService);
 
-            var move = searchService.Search(board, 6);
+            var sParams = new SearchParams();
+            sParams.MaxDepth = 5;
+            sParams.Infinite = true;
+
+            var move = searchService.Search(board, sParams);
         }
     }
 }

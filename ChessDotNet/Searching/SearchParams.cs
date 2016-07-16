@@ -8,9 +8,17 @@ namespace ChessDotNet.Searching
 {
     public class SearchParams
     {
-        public int WhiteTime { get; set; }
-        public int BlackTime { get; set; }
-        public int WhiteTimeIncrement { get; set; }
-        public int BlackTimeIncrement { get; set; }
+        public SearchParams()
+        {
+            //Infinite = true;
+        }
+
+        public long WhiteTime { get; set; }
+        public long BlackTime { get; set; }
+        public long WhiteTimeIncrement { get; set; }
+        public long BlackTimeIncrement { get; set; }
+        public bool Infinite { get; set; }
+
+        public int? MaxDepth { get; set; }
     }
 }

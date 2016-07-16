@@ -33,7 +33,8 @@ namespace ChessDotNet.Protocols
                 {
                     var isStartPos = false;
                     var byFen = false;
-
+                    var byMoves = false;
+                    var fen = string.Empty;
                     var i = 1;
                     var positionParsingReady = false;
                     for (; i < words.Length && !positionParsingReady; i++)
@@ -44,25 +45,39 @@ namespace ChessDotNet.Protocols
                                 isStartPos = true;
                                 break;
                             case "moves":
-                                byFen = false;
+                                byMoves = true;
                                 positionParsingReady = true;
                                 break;
                             case "fen":
                                 byFen = true;
-                                positionParsingReady = true;
+                                i++;
+                                while (true)
+                                {
+                                    if (i == words.Length)
+                                    {
+                                        positionParsingReady = true;
+                                        break;
+                                    }
+                                    if (words[i] == "moves")
+                                    {
+                                        byMoves = true;
+                                        positionParsingReady = true;
+                                        break;
+                                    }
+                                    fen += words[i++] + " ";
+                                }
                                 break;
                         }
                     }
 
                     if (byFen)
                     {
-                        var remainingText = words.Skip(i).Aggregate((c, n) => c + " " + n);
-                        Game.SetPositionByFEN(remainingText);
+                        Game.SetPositionByFEN(fen);
                     }
-                    else
+                    if(byMoves)
                     {
                         var moves = words.Skip(i).ToList();
-                        Game.SetPositionByMoves(isStartPos, moves);
+                        Game.SetPositionByMoves(isStartPos && !byFen, moves);
                     }
                 }
                     break;
@@ -74,18 +89,20 @@ namespace ChessDotNet.Protocols
                         switch (words[i])
                         {
                             case "wtime":
-                                searchParams.WhiteTime = int.Parse(words[++i]);
+                                searchParams.WhiteTime = long.Parse(words[++i]);
                                 break;
                             case "btime":
-                                searchParams.BlackTime = int.Parse(words[++i]);
+                                searchParams.BlackTime = long.Parse(words[++i]);
                                 break;
                             case "winc":
-                                searchParams.WhiteTimeIncrement = int.Parse(words[++i]);
+                                searchParams.WhiteTimeIncrement = long.Parse(words[++i]);
                                 break;
                             case "binc":
-                                searchParams.BlackTimeIncrement = int.Parse(words[++i]);
+                                searchParams.BlackTimeIncrement = long.Parse(words[++i]);
                                 break;
-
+                            case "infinite":
+                                searchParams.Infinite = true;
+                                break;
                         }
                     }
 

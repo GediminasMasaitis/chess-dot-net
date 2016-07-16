@@ -313,16 +313,17 @@ namespace ChessDotNet.Data
             newBoards.BitBoard[move.Piece] &= ~(1UL << move.From);
             newBoards.Key ^= ZobristKeys.ZPieces[move.From, move.Piece];
 
-            newBoards.ArrayBoard[move.To] = move.Piece;
-            newBoards.BitBoard[move.Piece] |= toPosBitBoard;
-            newBoards.Key ^= ZobristKeys.ZPieces[move.To, move.Piece];
+            var promotedPiece = move.PawnPromoteTo ?? move.Piece;
+            newBoards.ArrayBoard[move.To] = promotedPiece;
+            newBoards.BitBoard[promotedPiece] |= toPosBitBoard;
+            newBoards.Key ^= ZobristKeys.ZPieces[move.To, promotedPiece];
 
             if (move.TakesPiece > 0)
             {
                 if (!move.EnPassant)
                 {
                     newBoards.BitBoard[move.TakesPiece] &= ~toPosBitBoard;
-                    newBoards.Key ^= ZobristKeys.ZPieces[move.To, move.Piece];
+                    newBoards.Key ^= ZobristKeys.ZPieces[move.To, move.TakesPiece];
                 }
                 newBoards.LastTookPieceHistoryIndex = History.Length;
             }
