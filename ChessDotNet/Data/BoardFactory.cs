@@ -124,6 +124,8 @@ namespace ChessDotNet.Data
             }
             board.SyncExtraBitBoards();
             board.SyncBitBoardsToArrayBoard();
+            board.SyncPiecesCount();
+            board.SyncMaterial();
             board.Key = ZobristKeys.CalculateKey(board);
             return board;
         }

@@ -11,7 +11,7 @@ namespace ChessDotNet
         {
             // TODO: Clean this hack up
             var dll = Assembly.GetExecutingAssembly().Location;
-            var dllPath = Path.GetDirectoryName(dll);
+            var dllPath = Path.GetDirectoryName(dll).Replace(@"\x64", string.Empty);
 
 #if DEBUG
             var debugPath = "Debug";

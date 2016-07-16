@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using ChessDotNet.Evaluation;
 using ChessDotNet.Hashing;
 
 namespace ChessDotNet.Data
@@ -11,11 +12,6 @@ namespace ChessDotNet.Data
         public bool WhiteToMove { get; set; }
 
         public bool[] CastlingPermissions { get; set; }
-
-        //public bool WhiteCanCastleKingSide { get; set; }
-        //public bool WhiteCanCastleQueenSide { get; set; }
-        //public bool BlackCanCastleKingSide { get; set; }
-        //public bool BlackCanCastleQueenSide { get; set; }
 
         public ulong WhitePieces { get; private set; }
         public ulong BlackPieces { get; private set; }
@@ -30,6 +26,10 @@ namespace ChessDotNet.Data
 
         public HistoryEntry[] History { get; set; }
         public int LastTookPieceHistoryIndex { get; set; }
+
+        public int[] PieceCounts { get; set; }
+        public int WhiteMaterial { get; set; }
+        public int BlackMaterial { get; set; }
 
         public static ulong AllBoard { get; }
         public static ulong KnightSpan { get; private set; }
@@ -299,6 +299,9 @@ namespace ChessDotNet.Data
             newBoard.ArrayBoard = ArrayBoard.ToArray();
             newBoard.BitBoard = BitBoard.ToArray();
             newBoard.CastlingPermissions = CastlingPermissions.ToArray();
+            newBoard.PieceCounts = PieceCounts.ToArray();
+            newBoard.WhiteMaterial = WhiteMaterial;
+            newBoard.BlackMaterial = BlackMaterial;
             newBoard.Key = Key;
 
             var newHistory = new HistoryEntry[History.Length + 1];
@@ -307,6 +310,7 @@ namespace ChessDotNet.Data
             newHistory[newHistory.Length - 1] = newEntry;
             newBoard.History = newHistory;
 
+            var forWhite = WhiteToMove;
             newBoard.WhiteToMove = !WhiteToMove;
             newBoard.Key ^= ZobristKeys.ZWhiteToMove;
 
@@ -321,7 +325,27 @@ namespace ChessDotNet.Data
             newBoard.BitBoard[move.Piece] &= ~(1UL << move.From);
             newBoard.Key ^= ZobristKeys.ZPieces[move.From, move.Piece];
 
-            var promotedPiece = move.PawnPromoteTo ?? move.Piece;
+            int promotedPiece;
+            if (move.PawnPromoteTo.HasValue)
+            {
+                promotedPiece = move.PawnPromoteTo.Value;
+                newBoard.PieceCounts[move.Piece]--;
+                newBoard.PieceCounts[promotedPiece]++;
+                if (forWhite)
+                {
+                    newBoard.WhiteMaterial -= EvaluationService.Weights[ChessPiece.WhitePawn];
+                    newBoard.WhiteMaterial += EvaluationService.Weights[promotedPiece];
+                }
+                else
+                {
+                    newBoard.BlackMaterial -= EvaluationService.Weights[ChessPiece.BlackPawn];
+                    newBoard.BlackMaterial += EvaluationService.Weights[promotedPiece];
+                }
+            }
+            else
+            {
+                promotedPiece = move.Piece;
+            }
             newBoard.ArrayBoard[move.To] = promotedPiece;
             newBoard.BitBoard[promotedPiece] |= toPosBitBoard;
             newBoard.Key ^= ZobristKeys.ZPieces[move.To, promotedPiece];
@@ -334,6 +358,15 @@ namespace ChessDotNet.Data
                     newBoard.Key ^= ZobristKeys.ZPieces[move.To, move.TakesPiece];
                 }
                 newBoard.LastTookPieceHistoryIndex = History.Length;
+                newBoard.PieceCounts[move.TakesPiece]--;
+                if (forWhite)
+                {
+                    newBoard.BlackMaterial -= EvaluationService.Weights[move.TakesPiece];
+                }
+                else
+                {
+                    newBoard.WhiteMaterial -= EvaluationService.Weights[move.TakesPiece];
+                }
             }
             else
             {
@@ -441,40 +474,28 @@ namespace ChessDotNet.Data
             return newBoard;
         }
 
-        public int CountPieces(ulong pieceBitBoard)
+        public void SyncMaterial()
         {
-            var count = 0;
-            while (pieceBitBoard != 0)
+            WhiteMaterial = 0;
+            BlackMaterial = 0;
+            for (var i = 1; i < 7; i++)
             {
-                count++;
-                pieceBitBoard &= pieceBitBoard - 1;
+                WhiteMaterial += PieceCounts[i]*EvaluationService.Weights[i];
             }
-            return count;
+            for (var i = 7; i < 13; i++)
+            {
+                BlackMaterial += PieceCounts[i]*EvaluationService.Weights[i];
+            }
         }
 
-        public PieceCounts CountPieces(bool forWhite)
+        public void SyncPiecesCount()
         {
-            return forWhite ? CountPiecesForWhite() : CountPiecesForBlack();
-        }
-
-        public PieceCounts CountPiecesForWhite()
-        {
-            var pawns = CountPieces(BitBoard[ChessPiece.WhitePawn]);
-            var knights = CountPieces(BitBoard[ChessPiece.WhiteKnight]);
-            var bishops = CountPieces(BitBoard[ChessPiece.WhiteBishop]);
-            var rooks = CountPieces(BitBoard[ChessPiece.WhiteRook]);
-            var queens = CountPieces(BitBoard[ChessPiece.WhiteQueen]);
-            return new PieceCounts(pawns, knights, bishops, rooks, queens);
-        }
-
-        public PieceCounts CountPiecesForBlack()
-        {
-            var pawns = CountPieces(BitBoard[ChessPiece.BlackPawn]);
-            var knights = CountPieces(BitBoard[ChessPiece.BlackKnight]);
-            var bishops = CountPieces(BitBoard[ChessPiece.BlackBishop]);
-            var rooks = CountPieces(BitBoard[ChessPiece.BlackRook]);
-            var queens = CountPieces(BitBoard[ChessPiece.BlackQueen]);
-            return new PieceCounts(pawns, knights, bishops, rooks, queens);
+            PieceCounts = new int[13];
+            for (var i = 0; i < 64; i++)
+            {
+                var piece = ArrayBoard[i];
+                PieceCounts[piece]++;
+            }
         }
 
         public string Print()
