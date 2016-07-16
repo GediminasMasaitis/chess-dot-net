@@ -23,10 +23,11 @@ namespace ChessDotNet.ConsoleTests
             //TestMove();
             //TestZobrist();
             //TestRepetitions();
-            //DoSearch();
+            DoSearch();
             //Console.WriteLine(new BoardFactory().ParseFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").Print());
-            var pos = 27;
-            Debugging.ShowBitBoard(EvaluationService.PassedPawnMasksWhite[pos], EvaluationService.PassedPawnMasksBlack[pos], EvaluationService.IsolatedPawnMasks[pos]);
+            Console.WriteLine("Done");
+            //var pos = 27;
+            //Debugging.ShowBitBoard(EvaluationService.PassedPawnMasksWhite[pos], EvaluationService.PassedPawnMasksBlack[pos], EvaluationService.IsolatedPawnMasks[pos]);
             Console.ReadLine();
         }
 
@@ -177,7 +178,7 @@ namespace ChessDotNet.ConsoleTests
             var attacksService = new AttacksService(hyperbola);
             var movesService = new PossibleMovesService(attacksService, hyperbola);
             var searchService = new SearchService(movesService, evaluationService);
-
+            searchService.OnSearchInfo += info => Console.WriteLine(info.ToString());
             var sParams = new SearchParams();
             sParams.MaxDepth = 5;
             sParams.Infinite = true;

@@ -17,6 +17,8 @@ namespace ChessDotNet.Searching
         public PossibleMovesService PossibleMovesService { get; set; }
         public IEvaluationService EvaluationService { get; set; }
 
+        public event Action<SearchInfo> OnSearchInfo;
+
         private const int Inf = int.MaxValue;
         private const int MaxDepth = 64;
         private PVSResult[] PVTable { get; set; }
@@ -27,8 +29,8 @@ namespace ChessDotNet.Searching
         private long FailHighFirst { get; set; }
         private long NodesSearched { get; set; }
 
-        public const int MateScore = 50000;
-        public const int MateThereshold = 49000;
+        private const int MateScore = 50000;
+        private const int MateThereshold = 49000;
 
         public SearchService(PossibleMovesService possibleMovesService, IEvaluationService evaluationService)
         {
@@ -70,6 +72,24 @@ namespace ChessDotNet.Searching
                 var elapsedNow = sw.ElapsedMilliseconds;
                 totalTimeSpent += elapsedNow;
 
+                var searchInfo = new SearchInfo();
+                searchInfo.Depth = i;
+                searchInfo.Score = score;
+                searchInfo.NodesSearched = NodesSearched;
+                searchInfo.Time = totalTimeSpent;
+                searchInfo.PrincipalVariation = PVTable.Take(i).Where(x => x != null).ToList();
+                if (score > MateThereshold)
+                {
+                    searchInfo.MateIn = MateScore - score;
+                }
+
+                OnSearchInfo?.Invoke(searchInfo);
+
+                if (score > MateThereshold)
+                {
+                    break;
+                }
+
                 if (totalTimeSpent > allowedForMove)
                 {
                     break;
@@ -87,10 +107,6 @@ namespace ChessDotNet.Searching
                 lastIterationSpent = elapsedNow;
 
                 //Console.WriteLine($"Depth: {i}; Score: {score}; Searched: {NodesSearched}; {PrintPVTable()}");
-                if (score > MateThereshold)
-                {
-                    break;
-                }
             }
             var speed = (NodesSearched / sw.Elapsed.TotalSeconds).ToString("0");
             //Console.WriteLine();

@@ -17,7 +17,7 @@ namespace ChessDotNet
         private EvaluationService Evaluation { get; set; }
         private AttacksService Attacks { get; set; }
         private PossibleMovesService Moves { get; set; }
-        private SearchService Search { get; set; }
+        public SearchService Search { get; set; }
 
         private Board CurrentBoard { get; set; }
 

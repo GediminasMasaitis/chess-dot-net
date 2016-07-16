@@ -104,6 +104,7 @@
     <Compile Include="Protocols\UCIProtocol.cs" />
     <Compile Include="Evaluation\EvaluationService.cs" />
     <Compile Include="Searching\PVSResult.cs" />
+    <Compile Include="Searching\SearchInfo.cs" />
     <Compile Include="Searching\SearchParams.cs" />
     <Compile Include="Searching\SearchService.cs" />
     <Compile Include="Hashing\ZobristKeys.cs" />
