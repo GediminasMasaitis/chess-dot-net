@@ -108,8 +108,16 @@ namespace ChessDotNet.Protocols
 
                     var results = Game.SearchMove(searchParams);
                     var moveStr = results[0].Move.ToPositionString();
-                    var ponderStr = results[1].Move.ToPositionString();
-                    Output($"bestmove {moveStr} ponder {ponderStr}");
+
+                    if (results[1] == null)
+                    {
+                        Output($"bestmove {moveStr}");
+                    }
+                    else
+                    {
+                        var ponderStr = results[1].Move.ToPositionString();
+                        Output($"bestmove {moveStr} ponder {ponderStr}");
+                    }
                 }
                     break;
                 case "print":

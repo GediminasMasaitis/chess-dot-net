@@ -115,19 +115,6 @@ namespace ChessDotNet.Searching
             return sb.ToString();
         }
 
-        public class PVSResult
-        {
-            public PVSResult(int score, Board board, Move move)
-            {
-                Score = score;
-                Board = board;
-                Move = move;
-            }
-
-            public int Score { get; }
-            public Board Board { get; }
-            public Move Move { get; }
-        }
 
         public bool IsRepetition(Board board)
         {
@@ -298,7 +285,7 @@ namespace ChessDotNet.Searching
                 }
             }
 
-            if (!quiessence && validMoves == 0)
+            if (depth == currentDepth + 1 && validMoves == 0)
             {
                 var enemyAttacks = PossibleMovesService.AttacksService.GetAllAttacked(board, !board.WhiteToMove);
                 var myKing = board.WhiteToMove ? board.BitBoard[ChessPiece.WhiteKing] : board.BitBoard[ChessPiece.BlackKing];

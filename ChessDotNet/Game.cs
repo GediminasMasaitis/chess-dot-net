@@ -66,7 +66,7 @@ namespace ChessDotNet
             return CurrentBoard.Print();
         }
 
-        public IList<SearchService.PVSResult> SearchMove(SearchParams searchParams)
+        public IList<PVSResult> SearchMove(SearchParams searchParams)
         {
             if (CurrentBoard == null)
             {

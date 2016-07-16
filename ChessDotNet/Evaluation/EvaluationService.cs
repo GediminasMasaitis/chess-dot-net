@@ -75,6 +75,8 @@ namespace ChessDotNet.Evaluation
                 200, 200, 200, 200, 200, 200, 200, 200
             };
 
+            IsolatedScore = -10;
+
             Weights = new[] {100, 325, 325, 550, 1000, 50000};
 
             PawnTable = new[]
@@ -122,6 +124,7 @@ namespace ChessDotNet.Evaluation
                 25, 25, 25, 25, 25, 25, 25, 25,
                 0, 0, 5, 10, 10, 5, 0, 0
             };
+
             Mirror = new[]
             {
                 56, 57, 58, 59, 60, 61, 62, 63,
