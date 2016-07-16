@@ -12,6 +12,8 @@ namespace ChessDotNet.Evaluation
         public static int[] PassedPawnScores { get; }
         public static int IsolatedScore { get; }
 
+        public static int BishopPairScore { get; }
+
         public static int RookOpenScore { get; set; }
         public static int RookSemiOpenScore { get; set; }
         public static int QueenOpenScore { get; set; }
@@ -76,6 +78,7 @@ namespace ChessDotNet.Evaluation
             };
 
             IsolatedScore = -10;
+            BishopPairScore = 30;
 
             Weights = new[] {0, 100, 325, 325, 550, 1000, 50000, 100, 325, 325, 550, 1000, 50000 };
 
@@ -262,6 +265,15 @@ namespace ChessDotNet.Evaluation
                         case ChessPiece.BlackKing:
                             break;
                     }
+                }
+
+                if (board.PieceCounts[ChessPiece.WhiteBishop] == 2)
+                {
+                    score += BishopPairScore;
+                }
+                if (board.PieceCounts[ChessPiece.BlackBishop] == 2)
+                {
+                    score -= BishopPairScore;
                 }
             }
             return score;
