@@ -78,7 +78,7 @@ namespace ChessDotNet.Evaluation
             };
 
             IsolatedScore = -10;
-            BishopPairScore = 30;
+            BishopPairScore = 25;
 
             Weights = new[] {0, 100, 325, 325, 550, 1000, 50000, 100, 325, 325, 550, 1000, 50000 };
 

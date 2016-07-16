@@ -1,0 +1,27 @@
+EVALUATION
+  King safety
+  Endgame factor
+  Different score tables for mid/end games
+  
+SEARCH
+  Transposition tables
+  Null move pruning
+  Selectivity extensions
+  Improved mate search. Parallel?
+  Fix PV-move ordering?
+  Zero-width search?
+  Opening books
+  End-game books?
+  Futility pruning / Late move pruning?
+  Aspiration windows?
+
+PROTOCOLS
+  Stopping and quitting mid-search with UCI
+  Pondering with UCI
+  Implement WinBoard
+
+TESTING
+  Mirrored evaluation tests
+  Automate perft on multiple positions
+  Some way to assert conditions in speed-critical parts, possibly with #IF DEBUG
+  A "one click" engine self-test function
