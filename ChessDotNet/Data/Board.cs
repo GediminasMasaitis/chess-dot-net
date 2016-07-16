@@ -498,7 +498,7 @@ namespace ChessDotNet.Data
             }
         }
 
-        public string Print()
+        public string Print(IEvaluationService evaluationService = null)
         {
             const string separators  = "   +---+---+---+---+---+---+---+---+";
             const string fileMarkers = "     A   B   C   D   E   F   G   H  ";
@@ -507,6 +507,19 @@ namespace ChessDotNet.Data
             var infos = new List<string>();
 
             infos.Add("Hash key: " + Key.ToString("X").PadLeft(16, '0'));
+            infos.Add("To move: " + (WhiteToMove ? "White" : "Black"));
+            infos.Add("Material: " + (WhiteMaterial - BlackMaterial));
+            infos.Add("White material: " + WhiteMaterial);
+            infos.Add("Black material: " + BlackMaterial);
+            if (evaluationService != null)
+            {
+                var score = evaluationService.Evaluate(this);
+                if (!WhiteToMove)
+                {
+                    score = -score;
+                }
+                infos.Add("Evaluation: " + score);
+            }
 
             var sb = new StringBuilder();
             for (var i = 7; i >= 0; i--)

@@ -63,7 +63,7 @@ namespace ChessDotNet
 
         public string Print()
         {
-            return CurrentBoard.Print();
+            return CurrentBoard.Print(Evaluation);
         }
 
         public IList<PVSResult> SearchMove(SearchParams searchParams)
