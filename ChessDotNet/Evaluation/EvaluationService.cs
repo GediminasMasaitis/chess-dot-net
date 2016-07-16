@@ -3,7 +3,7 @@ using ChessDotNet.Data;
 
 namespace ChessDotNet.Evaluation
 {
-    public class EvaluationService
+    public class EvaluationService : IEvaluationService
     {
         private static int[] Weights = {100, 325, 325, 550, 1000, 50000};
 
@@ -55,7 +55,7 @@ namespace ChessDotNet.Evaluation
             0, 0, 5, 10, 10, 5, 0, 0
         };
 
-        private int[] Mirror = {
+        private static int[] Mirror = {
             56  ,   57  ,   58  ,   59  ,   60  ,   61  ,   62  ,   63  ,
             48  ,   49  ,   50  ,   51  ,   52  ,   53  ,   54  ,   55  ,
             40  ,   41  ,   42  ,   43  ,   44  ,   45  ,   46  ,   47  ,

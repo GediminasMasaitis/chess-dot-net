@@ -15,7 +15,7 @@ namespace ChessDotNet.Searching
     public class SearchService
     {
         public PossibleMovesService PossibleMovesService { get; set; }
-        public EvaluationService EvaluationService { get; set; }
+        public IEvaluationService EvaluationService { get; set; }
 
         private const int Inf = int.MaxValue;
         private const int MaxDepth = 64;
@@ -30,7 +30,7 @@ namespace ChessDotNet.Searching
         public const int MateScore = 50000;
         public const int MateThereshold = 49000;
 
-        public SearchService(PossibleMovesService possibleMovesService, EvaluationService evaluationService)
+        public SearchService(PossibleMovesService possibleMovesService, IEvaluationService evaluationService)
         {
             PossibleMovesService = possibleMovesService;
             EvaluationService = evaluationService;

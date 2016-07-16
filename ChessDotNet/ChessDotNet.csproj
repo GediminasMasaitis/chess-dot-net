@@ -83,6 +83,7 @@
     <Compile Include="Data\HistoryEntry.cs" />
     <Compile Include="Data\PieceCounts.cs" />
     <Compile Include="Debugging.cs" />
+    <Compile Include="Evaluation\IEvaluationService.cs" />
     <Compile Include="ExtensionMethods.cs" />
     <Compile Include="Data\Move.cs" />
     <Compile Include="Game.cs" />
