@@ -15,8 +15,10 @@ namespace ChessDotNet.Data
             PawnPromoteTo = pawnPromoteTo;
 
             Castle = (piece == ChessPiece.WhiteKing || piece == ChessPiece.BlackKing) && Math.Abs(from - to) == 2;
+            NullMove = piece == 0;
         }
 
+        public bool NullMove { get; }
         public int From { get; }
         public int To { get; }
         public int Piece { get; }

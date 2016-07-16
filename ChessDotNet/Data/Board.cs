@@ -295,41 +295,49 @@ namespace ChessDotNet.Data
         public Board DoMove(Move move)
         {
             //foreach (var pair in PiecesDict)
-            var newBoards = new Board();
-            newBoards.ArrayBoard = ArrayBoard.ToArray();
-            newBoards.BitBoard = BitBoard.ToArray();
-            newBoards.CastlingPermissions = CastlingPermissions.ToArray();
-            newBoards.Key = Key;
+            var newBoard = new Board();
+            newBoard.ArrayBoard = ArrayBoard.ToArray();
+            newBoard.BitBoard = BitBoard.ToArray();
+            newBoard.CastlingPermissions = CastlingPermissions.ToArray();
+            newBoard.Key = Key;
 
             var newHistory = new HistoryEntry[History.Length + 1];
             Array.Copy(History, newHistory, History.Length);
             var newEntry = new HistoryEntry(this, move);
             newHistory[newHistory.Length - 1] = newEntry;
-            newBoards.History = newHistory;
+            newBoard.History = newHistory;
+
+            newBoard.WhiteToMove = !WhiteToMove;
+            newBoard.Key ^= ZobristKeys.ZWhiteToMove;
+
+            if (move.NullMove)
+            {
+                return newBoard;
+            }
 
             var toPosBitBoard = 1UL << move.To;
 
-            newBoards.ArrayBoard[move.From] = ChessPiece.Empty;
-            newBoards.BitBoard[move.Piece] &= ~(1UL << move.From);
-            newBoards.Key ^= ZobristKeys.ZPieces[move.From, move.Piece];
+            newBoard.ArrayBoard[move.From] = ChessPiece.Empty;
+            newBoard.BitBoard[move.Piece] &= ~(1UL << move.From);
+            newBoard.Key ^= ZobristKeys.ZPieces[move.From, move.Piece];
 
             var promotedPiece = move.PawnPromoteTo ?? move.Piece;
-            newBoards.ArrayBoard[move.To] = promotedPiece;
-            newBoards.BitBoard[promotedPiece] |= toPosBitBoard;
-            newBoards.Key ^= ZobristKeys.ZPieces[move.To, promotedPiece];
+            newBoard.ArrayBoard[move.To] = promotedPiece;
+            newBoard.BitBoard[promotedPiece] |= toPosBitBoard;
+            newBoard.Key ^= ZobristKeys.ZPieces[move.To, promotedPiece];
 
             if (move.TakesPiece > 0)
             {
                 if (!move.EnPassant)
                 {
-                    newBoards.BitBoard[move.TakesPiece] &= ~toPosBitBoard;
-                    newBoards.Key ^= ZobristKeys.ZPieces[move.To, move.TakesPiece];
+                    newBoard.BitBoard[move.TakesPiece] &= ~toPosBitBoard;
+                    newBoard.Key ^= ZobristKeys.ZPieces[move.To, move.TakesPiece];
                 }
-                newBoards.LastTookPieceHistoryIndex = History.Length;
+                newBoard.LastTookPieceHistoryIndex = History.Length;
             }
             else
             {
-                newBoards.LastTookPieceHistoryIndex = LastTookPieceHistoryIndex;
+                newBoard.LastTookPieceHistoryIndex = LastTookPieceHistoryIndex;
             }
 
             if (move.EnPassant)
@@ -346,26 +354,26 @@ namespace ChessDotNet.Data
 
                 var killedPawnBitBoard = 1UL << killedPawnPos;
 
-                newBoards.BitBoard[move.TakesPiece] &= ~killedPawnBitBoard;
-                newBoards.ArrayBoard[killedPawnPos] = ChessPiece.Empty;
-                newBoards.Key ^= ZobristKeys.ZPieces[killedPawnPos, move.Piece];
+                newBoard.BitBoard[move.TakesPiece] &= ~killedPawnBitBoard;
+                newBoard.ArrayBoard[killedPawnPos] = ChessPiece.Empty;
+                newBoard.Key ^= ZobristKeys.ZPieces[killedPawnPos, move.Piece];
             }
 
             if (EnPassantFile != 0)
             {
-                newBoards.Key ^= ZobristKeys.ZEnPassant[EnPassantFileIndex];
+                newBoard.Key ^= ZobristKeys.ZEnPassant[EnPassantFileIndex];
             }
             if ((move.Piece == ChessPiece.WhitePawn && move.From + 16 == move.To) || (move.Piece == ChessPiece.BlackPawn && move.From - 16 == move.To))
             {
                 var fileIndex = move.From % 8;
-                newBoards.EnPassantFile = Files[fileIndex];
-                newBoards.EnPassantFileIndex = fileIndex;
-                newBoards.Key ^= ZobristKeys.ZEnPassant[fileIndex];
+                newBoard.EnPassantFile = Files[fileIndex];
+                newBoard.EnPassantFileIndex = fileIndex;
+                newBoard.Key ^= ZobristKeys.ZEnPassant[fileIndex];
             }
             else
             {
-                newBoards.EnPassantFile = 0;
-                newBoards.EnPassantFileIndex = -1;
+                newBoard.EnPassantFile = 0;
+                newBoard.EnPassantFileIndex = -1;
             }
 
             if (move.Castle)
@@ -376,64 +384,61 @@ namespace ChessDotNet.Data
                 var castlingRookNewPos = (move.From + move.To) / 2;
                 var rookPiece = isWhite ? ChessPiece.WhiteRook : ChessPiece.BlackRook;
 
-                newBoards.ArrayBoard[castlingRookPos] = ChessPiece.Empty;
-                newBoards.ArrayBoard[castlingRookNewPos] = rookPiece;
-                newBoards.BitBoard[rookPiece] &= ~(1UL << castlingRookPos);
-                newBoards.BitBoard[rookPiece] |= 1UL << castlingRookNewPos;
-                newBoards.Key ^= ZobristKeys.ZPieces[castlingRookPos, rookPiece];
-                newBoards.Key ^= ZobristKeys.ZPieces[castlingRookNewPos, rookPiece];
+                newBoard.ArrayBoard[castlingRookPos] = ChessPiece.Empty;
+                newBoard.ArrayBoard[castlingRookNewPos] = rookPiece;
+                newBoard.BitBoard[rookPiece] &= ~(1UL << castlingRookPos);
+                newBoard.BitBoard[rookPiece] |= 1UL << castlingRookNewPos;
+                newBoard.Key ^= ZobristKeys.ZPieces[castlingRookPos, rookPiece];
+                newBoard.Key ^= ZobristKeys.ZPieces[castlingRookNewPos, rookPiece];
             }
 
             if (move.Piece == ChessPiece.WhiteKing)
             {
-                newBoards.CastlingPermissions[CastlePermission.WhiteQueenSide] = false;
-                newBoards.CastlingPermissions[CastlePermission.WhiteKingSide] = false;
+                newBoard.CastlingPermissions[CastlePermission.WhiteQueenSide] = false;
+                newBoard.CastlingPermissions[CastlePermission.WhiteKingSide] = false;
             }
             else if (move.Piece == ChessPiece.WhiteRook)
             {
-                newBoards.CastlingPermissions[CastlePermission.WhiteQueenSide] = CastlingPermissions[CastlePermission.WhiteQueenSide] && move.From != 0;
-                newBoards.CastlingPermissions[CastlePermission.WhiteKingSide] = CastlingPermissions[CastlePermission.WhiteKingSide] && move.From != 7;
+                newBoard.CastlingPermissions[CastlePermission.WhiteQueenSide] = CastlingPermissions[CastlePermission.WhiteQueenSide] && move.From != 0;
+                newBoard.CastlingPermissions[CastlePermission.WhiteKingSide] = CastlingPermissions[CastlePermission.WhiteKingSide] && move.From != 7;
             }
             else if (move.Piece == ChessPiece.BlackKing)
             {
-                newBoards.CastlingPermissions[CastlePermission.BlackQueenSide] = false;
-                newBoards.CastlingPermissions[CastlePermission.BlackKingSide] = false;
+                newBoard.CastlingPermissions[CastlePermission.BlackQueenSide] = false;
+                newBoard.CastlingPermissions[CastlePermission.BlackKingSide] = false;
             }
             else if (move.Piece == ChessPiece.BlackRook)
             {
-                newBoards.CastlingPermissions[CastlePermission.BlackQueenSide] = CastlingPermissions[CastlePermission.BlackQueenSide] && move.From != 56;
-                newBoards.CastlingPermissions[CastlePermission.BlackKingSide] = CastlingPermissions[CastlePermission.BlackKingSide] && move.From != 63;
+                newBoard.CastlingPermissions[CastlePermission.BlackQueenSide] = CastlingPermissions[CastlePermission.BlackQueenSide] && move.From != 56;
+                newBoard.CastlingPermissions[CastlePermission.BlackKingSide] = CastlingPermissions[CastlePermission.BlackKingSide] && move.From != 63;
             }
 
             switch (move.To)
             {
                 case 0:
-                    newBoards.CastlingPermissions[CastlePermission.WhiteQueenSide] = false;
+                    newBoard.CastlingPermissions[CastlePermission.WhiteQueenSide] = false;
                     break;
                 case 7:
-                    newBoards.CastlingPermissions[CastlePermission.WhiteKingSide] = false;
+                    newBoard.CastlingPermissions[CastlePermission.WhiteKingSide] = false;
                     break;
                 case 56:
-                    newBoards.CastlingPermissions[CastlePermission.BlackQueenSide] = false;
+                    newBoard.CastlingPermissions[CastlePermission.BlackQueenSide] = false;
                     break;
                 case 63:
-                    newBoards.CastlingPermissions[CastlePermission.BlackKingSide] = false;
+                    newBoard.CastlingPermissions[CastlePermission.BlackKingSide] = false;
                     break;
             }
 
             for (var i = 0; i < 4; i++)
             {
-                if (CastlingPermissions[i] != newBoards.CastlingPermissions[i])
+                if (CastlingPermissions[i] != newBoard.CastlingPermissions[i])
                 {
-                    newBoards.Key ^= ZobristKeys.ZCastle[i];
+                    newBoard.Key ^= ZobristKeys.ZCastle[i];
                 }
             }
 
-            newBoards.WhiteToMove = !WhiteToMove;
-            newBoards.Key ^= ZobristKeys.ZWhiteToMove;
-
-            newBoards.SyncExtraBitBoards();
-            return newBoards;
+            newBoard.SyncExtraBitBoards();
+            return newBoard;
         }
 
         public int CountPieces(ulong pieceBitBoard)
