@@ -12,6 +12,11 @@ namespace ChessDotNet.Evaluation
         public static int[] PassedPawnScores { get; }
         public static int IsolatedScore { get; }
 
+        public static int RookOpenScore { get; set; }
+        public static int RookSemiOpenScore { get; set; }
+        public static int QueenOpenScore { get; set; }
+        public static int QueenSemiOpenScore { get; set; }
+
         public static int[] Weights { get; }
 
         public static int[] PawnTable { get; }
@@ -147,69 +152,116 @@ namespace ChessDotNet.Evaluation
         {
             var score = 0;
 
-            for (var i = 0; i < 64; i++)
+            for (var rank = 0; rank < 8; rank++)
             {
-                switch (board.ArrayBoard[i])
+                for (var file = 0; file < 8; file++)
                 {
-                    case ChessPiece.Empty:
-                        break;
+                    var pos = rank*8 + file;
+                    switch (board.ArrayBoard[pos])
+                    {
+                        case ChessPiece.Empty:
+                            break;
 
-                    case ChessPiece.WhitePawn:
-                        score += PawnTable[i];
-                        if ((board.BitBoard[ChessPiece.BlackPawn] & PassedPawnMasksWhite[i]) == 0)
-                        {
-                            score += PassedPawnScores[i];
-                        }
-                        if ((board.BitBoard[ChessPiece.WhitePawn] & IsolatedPawnMasks[i]) == 0)
-                        {
-                            score += IsolatedScore;
-                        }
-                        break;
-                    case ChessPiece.BlackPawn:
-                        score -= PawnTable[Mirror[i]];
-                        if ((board.BitBoard[ChessPiece.WhitePawn] & PassedPawnMasksBlack[i]) == 0)
-                        {
-                            score -= PassedPawnScores[Mirror[i]];
-                        }
-                        if ((board.BitBoard[ChessPiece.BlackPawn] & IsolatedPawnMasks[i]) == 0)
-                        {
-                            score += IsolatedScore;
-                        }
-                        break;
+                        case ChessPiece.WhitePawn:
+                            score += PawnTable[pos];
+                            if ((board.BitBoard[ChessPiece.BlackPawn] & PassedPawnMasksWhite[pos]) == 0)
+                            {
+                                score += PassedPawnScores[pos];
+                            }
+                            if ((board.BitBoard[ChessPiece.WhitePawn] & IsolatedPawnMasks[pos]) == 0)
+                            {
+                                score += IsolatedScore;
+                            }
+                            break;
+                        case ChessPiece.BlackPawn:
+                            score -= PawnTable[Mirror[pos]];
+                            if ((board.BitBoard[ChessPiece.WhitePawn] & PassedPawnMasksBlack[pos]) == 0)
+                            {
+                                score -= PassedPawnScores[Mirror[pos]];
+                            }
+                            if ((board.BitBoard[ChessPiece.BlackPawn] & IsolatedPawnMasks[pos]) == 0)
+                            {
+                                score -= IsolatedScore;
+                            }
+                            break;
 
-                    case ChessPiece.WhiteKnight:
-                        score += KnightTable[i];
-                        break;
-                    case ChessPiece.BlackKnight:
-                        score -= KnightTable[Mirror[i]];
-                        break;
+                        case ChessPiece.WhiteKnight:
+                            score += KnightTable[pos];
+                            break;
+                        case ChessPiece.BlackKnight:
+                            score -= KnightTable[Mirror[pos]];
+                            break;
 
-                    case ChessPiece.WhiteBishop:
-                        score += BishopTable[i];
-                        break;
-                    case ChessPiece.BlackBishop:
-                        score -= BishopTable[Mirror[i]];
-                        break;
+                        case ChessPiece.WhiteBishop:
+                            score += BishopTable[pos];
+                            break;
+                        case ChessPiece.BlackBishop:
+                            score -= BishopTable[Mirror[pos]];
+                            break;
 
-                    case ChessPiece.WhiteRook:
-                        score += RookTable[i];
-                        break;
-                    case ChessPiece.BlackRook:
-                        score -= RookTable[Mirror[i]];
-                        break;
+                        case ChessPiece.WhiteRook:
+                            score += RookTable[pos];
+                            if ((board.BitBoard[ChessPiece.BlackPawn] & Board.Files[file]) == 0)
+                            {
+                                if ((board.BitBoard[ChessPiece.WhitePawn] & Board.Files[file]) == 0)
+                                {
+                                    score += RookOpenScore;
+                                }
+                                else
+                                {
+                                    score += RookSemiOpenScore;
+                                }
+                            }
+                            break;
+                        case ChessPiece.BlackRook:
+                            score -= RookTable[Mirror[pos]];
+                            if ((board.BitBoard[ChessPiece.WhitePawn] & Board.Files[file]) == 0)
+                            {
+                                if ((board.BitBoard[ChessPiece.BlackPawn] & Board.Files[file]) == 0)
+                                {
+                                    score -= RookOpenScore;
+                                }
+                                else
+                                {
+                                    score -= RookSemiOpenScore;
+                                }
+                            }
+                            break;
 
-                    case ChessPiece.WhiteQueen:
-                        break;
-                    case ChessPiece.BlackQueen:
-                        break;
+                        case ChessPiece.WhiteQueen:
+                            if ((board.BitBoard[ChessPiece.BlackPawn] & Board.Files[file]) == 0)
+                            {
+                                if ((board.BitBoard[ChessPiece.WhitePawn] & Board.Files[file]) == 0)
+                                {
+                                    score += QueenOpenScore;
+                                }
+                                else
+                                {
+                                    score += QueenSemiOpenScore;
+                                }
+                            }
+                            break;
+                        case ChessPiece.BlackQueen:
+                            if ((board.BitBoard[ChessPiece.WhitePawn] & Board.Files[file]) == 0)
+                            {
+                                if ((board.BitBoard[ChessPiece.BlackPawn] & Board.Files[file]) == 0)
+                                {
+                                    score -= QueenOpenScore;
+                                }
+                                else
+                                {
+                                    score -= QueenOpenScore;
+                                }
+                            }
+                            break;
 
-                    case ChessPiece.WhiteKing:
-                        break;
-                    case ChessPiece.BlackKing:
-                        break;
+                        case ChessPiece.WhiteKing:
+                            break;
+                        case ChessPiece.BlackKing:
+                            break;
+                    }
                 }
             }
-
             return score;
         }
 
