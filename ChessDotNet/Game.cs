@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Input;
 using ChessDotNet.Data;
 using ChessDotNet.Evaluation;
 using ChessDotNet.MoveGeneration;
+using ChessDotNet.Protocols;
 using ChessDotNet.Searching;
 
 namespace ChessDotNet
@@ -18,17 +20,17 @@ namespace ChessDotNet
         private AttacksService Attacks { get; set; }
         private PossibleMovesService Moves { get; set; }
         public SearchService Search { get; set; }
-
         private Board CurrentBoard { get; set; }
+        private IInterruptor Interruptor { get; set; }
 
-        public Game()
+        public Game(IInterruptor interruptor)
         {
 
             var hyperbola = new HyperbolaQuintessence();
             var evaluationService = new EvaluationService();
             var attacksService = new AttacksService(hyperbola);
             var movesService = new PossibleMovesService(attacksService, hyperbola);
-            var searchService = new SearchService(movesService, evaluationService);
+            var searchService = new SearchService(movesService, evaluationService, interruptor);
 
             BoardFact = new BoardFactory();
             Hyperbola = hyperbola;

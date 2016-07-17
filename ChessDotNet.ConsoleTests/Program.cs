@@ -10,6 +10,7 @@ using ChessDotNet.Evaluation;
 using ChessDotNet.Hashing;
 using ChessDotNet.MoveGeneration;
 using ChessDotNet.Perft;
+using ChessDotNet.Protocols;
 using ChessDotNet.Searching;
 
 namespace ChessDotNet.ConsoleTests
@@ -137,7 +138,8 @@ namespace ChessDotNet.ConsoleTests
             var evaluationService = new EvaluationService();
             var attacksService = new AttacksService(hyperbola);
             var movesService = new PossibleMovesService(attacksService, hyperbola);
-            var searchService = new SearchService(movesService, evaluationService);
+            var interruptor = new ConsoleInterruptor();
+            var searchService = new SearchService(movesService, evaluationService, interruptor);
 
             Console.WriteLine(searchService.IsRepetition(board));
 
@@ -179,7 +181,8 @@ namespace ChessDotNet.ConsoleTests
             var evaluationService = new EvaluationService();
             var attacksService = new AttacksService(hyperbola);
             var movesService = new PossibleMovesService(attacksService, hyperbola);
-            var searchService = new SearchService(movesService, evaluationService);
+            var interruptor = new ConsoleInterruptor();
+            var searchService = new SearchService(movesService, evaluationService, interruptor);
             searchService.OnSearchInfo += info => Console.WriteLine(info.ToString());
             var sParams = new SearchParams();
             sParams.MaxDepth = 5;

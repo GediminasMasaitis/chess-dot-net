@@ -16,11 +16,11 @@ SEARCH
   Aspiration windows?
 
 PROTOCOLS
-  Stopping and quitting mid-search with UCI
   Pondering with UCI
   Implement WinBoard
 
 TESTING
+  Loading FEN lists
   Mirrored evaluation tests
   Automate perft on multiple positions
   Some way to assert conditions in speed-critical parts, possibly with #IF DEBUG

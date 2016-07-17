@@ -1,15 +1,18 @@
 ﻿using System;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using ChessDotNet.Searching;
 
 namespace ChessDotNet.Protocols
 {
     public class UCIProtocol : IChessProtocol
     {
-        public UCIProtocol()
+        private Game Game { get; set; }
+
+        public UCIProtocol(IInterruptor interruptor)
         {
-            Game = new Game();
+            Game = new Game(interruptor);
             Game.Search.OnSearchInfo += OnOnSearchInfo;
         }
 
@@ -22,8 +25,6 @@ namespace ChessDotNet.Protocols
             var outStr = $"info depth {searchInfo.Depth} multipv 1 score {score} nodes {searchInfo.NodesSearched} nps {nps} time {time} pv {pv}";
             Output(outStr);
         }
-
-        private Game Game { get; set; }
 
         public void Input(string message)
         {
@@ -135,6 +136,7 @@ namespace ChessDotNet.Protocols
                 case "print":
                     Output(Game.Print());
                     break;
+                case "exit":
                 case "quit":
                     Exit(0);
                     break;
