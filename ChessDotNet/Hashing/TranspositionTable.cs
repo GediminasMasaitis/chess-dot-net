@@ -14,7 +14,7 @@ namespace ChessDotNet.Hashing
 
         public TranspositionTable(int size)
         {
-            TableSize = 1 << 16;
+            TableSize = 1U << size;
             Table = new TData[TableSize];
         }
 

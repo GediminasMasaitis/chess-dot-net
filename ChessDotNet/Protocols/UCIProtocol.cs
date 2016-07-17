@@ -122,7 +122,7 @@ namespace ChessDotNet.Protocols
                     var results = Game.SearchMove(searchParams);
                     var moveStr = results[0].Move.ToPositionString();
 
-                    if (results[1] == null)
+                    if (results[1] == default(TTEntry))
                     {
                         Output($"bestmove {moveStr}");
                     }

@@ -68,14 +68,14 @@ namespace ChessDotNet
             return CurrentBoard.Print(Evaluation);
         }
 
-        public IList<PVSResult> SearchMove(SearchParams searchParams)
+        public IList<TTEntry> SearchMove(SearchParams searchParams)
         {
             if (CurrentBoard == null)
             {
                 SetStartingPos();
             }
             var searchResult = Search.Search(CurrentBoard, searchParams);
-            CurrentBoard = searchResult[0].Board;
+            CurrentBoard = CurrentBoard.DoMove(searchResult[0].Move);
             return searchResult;
         }
     }

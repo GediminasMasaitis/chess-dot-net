@@ -4,8 +4,6 @@ EVALUATION
   Different score tables for mid/end games
   
 SEARCH
-  Transposition tables
-  Null move pruning
   Selectivity extensions
   Improved mate search. Parallel?
   Fix PV-move ordering?
@@ -20,6 +18,7 @@ PROTOCOLS
   Implement WinBoard
 
 TESTING
+  Debug-only assertions
   Loading FEN lists
   Mirrored evaluation tests
   Automate perft on multiple positions

@@ -20,11 +20,11 @@ namespace ChessDotNet.ConsoleTests
         static void Main(string[] args)
         {
             //DoTimings();
-            DoPerft();
+            //DoPerft();
             //TestMove();
             //TestZobrist();
             //TestRepetitions();
-            //DoSearch();
+            DoSearch();
             //Console.WriteLine(new BoardFactory().ParseFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").Print());
             //var pos = 27;
             //Debugging.ShowBitBoard(EvaluationService.PassedPawnMasksWhite[pos], EvaluationService.PassedPawnMasksBlack[pos], EvaluationService.IsolatedPawnMasks[pos]);
@@ -63,9 +63,9 @@ namespace ChessDotNet.ConsoleTests
             var fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
             //fen = "3k4/3p4/8/K1P4r/8/8/8/8 b - - 0 50";
             //fen = "8/1kP5/8/K2p3r/8/8/8/8 w - - 1 53 ";
-            //fen = "r1b1k2r/ppppnppp/2n2q2/2b5/3NP3/2P1B3/PP3PPP/RN1QKB1R w KQkq - 0 1";
+            fen = "r1b1k2r/ppppnppp/2n2q2/2b5/3NP3/2P1B3/PP3PPP/RN1QKB1R w KQkq - 0 1";
             //fen = "2k5/8/8/8/8/8/6p1/2K5 w - - 1 1 ";
-            fen = "rnbqkbnr/1ppppppp/8/p7/1P6/P7/2PPPPPP/RNBQKBNR b KQkq b3 0 2 ";
+            //fen = "rnbqkbnr/1ppppppp/8/p7/1P6/P7/2PPPPPP/RNBQKBNR b KQkq b3 0 2 ";
             var fact = new BoardFactory();
             var hyperbola = new HyperbolaQuintessence();
             var attacksService = new AttacksService(hyperbola);
@@ -173,7 +173,7 @@ namespace ChessDotNet.ConsoleTests
             var fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"; // Starting pos
             //fen = "2rr3k/pp3pp1/1nnqbN1p/3pN3/2pP4/2P3Q1/PPB4P/R4RK1 w - -"; // Mate in 3
             fen = "r1b1k2r/ppppnppp/2n2q2/2b5/3NP3/2P1B3/PP3PPP/RN1QKB1R w KQkq - 0 1"; // Developed
-
+            fen = "r1b1kb1r/2pp1ppp/1np1q3/p3P3/2P5/1P6/PB1NQPPP/R3KB1R b KQkq - 0 1 "; // Midgame
             var fact = new BoardFactory();
             var board = fact.ParseFEN(fen);
 
@@ -185,7 +185,7 @@ namespace ChessDotNet.ConsoleTests
             var searchService = new SearchService(movesService, evaluationService, interruptor);
             searchService.OnSearchInfo += info => Console.WriteLine(info.ToString());
             var sParams = new SearchParams();
-            sParams.MaxDepth = 5;
+            //sParams.MaxDepth = 5;
             sParams.Infinite = true;
 
             var move = searchService.Search(board, sParams);

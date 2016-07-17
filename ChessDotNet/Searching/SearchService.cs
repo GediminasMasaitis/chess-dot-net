@@ -24,12 +24,15 @@ namespace ChessDotNet.Searching
         private bool Stopped { get; set; }
         private const int Inf = int.MaxValue;
         private const int MaxDepth = 64;
-        private PVSResult[] PVTable { get; set; }
+
+        private TranspositionTable<TTEntry> TTable { get; set; }
         private int[,] SearchKillers { get; set; }
         private int[,] SearchHistory { get; set; }
 
         private long FailHigh { get; set; }
         private long FailHighFirst { get; set; }
+
+        private long NullMoveCutOffs { get; set; }
         private long NodesSearched { get; set; }
 
         private const int MateScore = 50000;
@@ -40,21 +43,39 @@ namespace ChessDotNet.Searching
             PossibleMovesService = possibleMovesService;
             EvaluationService = evaluationService;
             Interruptor = interruptor;
+            TTable = new TranspositionTable<TTEntry>(26);
         }
 
         public void Clear()
         {
-            PVTable = new PVSResult[MaxDepth];
             SearchKillers = new int[MaxDepth, 2];
             SearchHistory = new int[13,64];
             FailHigh = 0;
             FailHighFirst = 0;
+            NullMoveCutOffs = 0;
             NodesSearched = 0;
             Stopped = false;
             Interruptor.Start();
         }
 
-        public IList<PVSResult> Search(Board board, SearchParams searchParams = null)
+        public IList<TTEntry> GetPVLine(Board board)
+        {
+            var entries = new List<TTEntry>();
+
+            while (true)
+            {
+                TTEntry entry;
+                var success = TTable.TryGet(board.Key, out entry);
+                if (!success)
+                {
+                    return entries;
+                }
+                entries.Add(entry);
+                board = board.DoMove(entry.Move);
+            }
+        }
+
+        public IList<TTEntry> Search(Board board, SearchParams searchParams = null)
         {
             searchParams = searchParams ?? new SearchParams();
             Clear();
@@ -65,18 +86,17 @@ namespace ChessDotNet.Searching
             var allowedForMove = searchParams.Infinite ? int.MaxValue : timeRemaining / 30;
             var maxDepth = searchParams.MaxDepth ?? 64;
             var i = 1;
-            var lastNonCorruptPV = PVTable.ToArray();
             for (; i <= maxDepth; i++)
             {
                 sw.Restart();
-                var score = PrincipalVariationSearch(-Inf, Inf, board, i, 0, false);
+                var score = PrincipalVariationSearch(-Inf, Inf, board, i, 0, true);
                 sw.Stop();
 
+                var pvLine = GetPVLine(board);
                 if (Stopped)
                 {
-                    return lastNonCorruptPV;
+                    return pvLine;
                 }
-                lastNonCorruptPV = PVTable.ToArray();
 
                 var elapsedNow = sw.ElapsedMilliseconds;
                 totalTimeSpent += elapsedNow;
@@ -86,7 +106,7 @@ namespace ChessDotNet.Searching
                 searchInfo.Score = score;
                 searchInfo.NodesSearched = NodesSearched;
                 searchInfo.Time = totalTimeSpent;
-                searchInfo.PrincipalVariation = PVTable.Take(i).Where(x => x != null).ToList();
+                searchInfo.PrincipalVariation = pvLine;
                 if (score > MateThereshold)
                 {
                     searchInfo.MateIn = MateScore - score;
@@ -123,23 +143,8 @@ namespace ChessDotNet.Searching
             //Console.WriteLine($"Nodes searched: {NodesSearched}; Time taken: {sw.ElapsedMilliseconds} ms; Speed: {speed} N/s");
             var ratio = (FailHighFirst/(double) FailHigh).ToString("0.000");
             //Console.WriteLine($"fhf={FailHighFirst}; fh={FailHigh}; fhf/fh={ratio}");
-            return PVTable;
+            return GetPVLine(board);
         }
-
-        public string PrintPVTable()
-        {
-            var sb = new StringBuilder();
-            for (var i = 0; i < MaxDepth; i++)
-            {
-                if (PVTable[i] == null)
-                {
-                    break;
-                }
-                sb.Append(PVTable[i].Move.ToPositionString() + " ");
-            }
-            return sb.ToString();
-        }
-
 
         public bool IsRepetition(Board board)
         {
@@ -153,16 +158,21 @@ namespace ChessDotNet.Searching
             return false;
         }
 
-        public int CalculateMoveScore(Board currentBoard, Move move, int currentDepth)
+        public int CalculateMoveScore(Board currentBoard, Move move, int currentDepth, Move? pvMove)
         {
             var moveKey = move.Key;
-            var isCurrentPV = currentDepth > 0 && PVTable[currentDepth - 1] != null && PVTable[currentDepth - 1].Board.Key == currentBoard.Key;
+            /*var isCurrentPV = currentDepth > 0 && PVTable[currentDepth - 1] != null && PVTable[currentDepth - 1].Board.Key == currentBoard.Key;
             if (isCurrentPV)
             {
                 if (PVTable[currentDepth] != null && PVTable[currentDepth].Move.Key == moveKey)
                 {
                     return 20000000;
                 }
+            }*/
+            var isCurrentPV = pvMove.HasValue && pvMove.Value.Key == move.Key;
+            if (isCurrentPV)
+            {
+                return 20000000;
             }
             var mvvlva = MVVLVAScoreCalculation.Scores[move.Piece,move.TakesPiece];
             if (mvvlva > 0)
@@ -182,14 +192,14 @@ namespace ChessDotNet.Searching
             return SearchHistory[move.Piece, move.To];
         }
 
-        public void SortNextMove(int currentIndex, Board currentBoard, IList<Move> moves, int currentDepth)
+        public void SortNextMove(int currentIndex, Board currentBoard, IList<Move> moves, int currentDepth, Move? pvMove)
         {
             //return;
             var bestScore = -Inf;
             var bestScoreIndex = -1;
             for (var i = currentIndex; i < moves.Count; i++)
             {
-                var score = CalculateMoveScore(currentBoard, moves[i], currentDepth);
+                var score = CalculateMoveScore(currentBoard, moves[i], currentDepth, pvMove);
                 if (score > bestScore)
                 {
                     bestScore = score;
@@ -204,6 +214,17 @@ namespace ChessDotNet.Searching
 
         public int PrincipalVariationSearch(int alpha, int beta, Board board, int depth, int currentDepth, bool allowNullMoveSearch)
         {
+#if DEBUG
+            if (beta <= alpha)
+            {
+                throw new Exception();
+            }
+            if (depth < 0)
+            {
+                throw new Exception();
+            }
+            board.CheckBoard();
+#endif
             if ((NodesSearched & 2047) == 0)
             {
                 if (Interruptor.IsInterrupted())
@@ -213,16 +234,6 @@ namespace ChessDotNet.Searching
                 }
             }
 
-            int score;
-            var quiessence = currentDepth >= depth;
-            /*if (currentDepth == depth)
-            {
-                NodesSearched++;
-                score = EvaluationService.Evaluate(board);
-                return score;
-            }*/
-
-
             NodesSearched++;
 
             var isRepetition = IsRepetition(board);
@@ -230,27 +241,21 @@ namespace ChessDotNet.Searching
             {
                 return 0;
             }
+
             if (board.History.Length - board.LastTookPieceHistoryIndex >= 100)
             {
                 return 0;
             }
+
             if (currentDepth >= MaxDepth)
             {
                 return EvaluationService.Evaluate(board);
             }
 
-            if (quiessence)
+            if (depth <= 0)
             {
-                score = EvaluationService.Evaluate(board);
-                //return score;
-                if (score >= beta)
-                {
-                    return beta;
-                }
-                if (score > alpha)
-                {
-                    alpha = score;
-                }
+                // quiessence next
+                return Quiessence(alpha, beta, board, currentDepth);
             }
 
             var enemyAttacks = PossibleMovesService.AttacksService.GetAllAttacked(board, !board.WhiteToMove);
@@ -262,8 +267,33 @@ namespace ChessDotNet.Searching
                 depth++;
             }
 
-            const int nullMoveFactor = 3;
-            if (!allowNullMoveSearch && !inCheck && board.History.Length > 0 && currentDepth > 3)
+            int score = -Inf;
+            Move? pvMove = null;
+
+            TTEntry foundEntry;
+            var found = TTable.TryGet(board.Key, out foundEntry);
+            if (found && foundEntry.Key == board.Key)
+            {
+                pvMove = foundEntry.Move;
+                if (foundEntry.Depth >= depth)
+                {
+                    switch (foundEntry.Flag)
+                    {
+                        case TTFlags.Beta:
+                            return beta;
+                            break;
+                        case TTFlags.Exact:
+                            return foundEntry.Score;
+                            break;
+                        case TTFlags.Alpha:
+                            return alpha;
+                            break;
+                    }
+                }
+            }
+
+            const int nullMoveFactor = 2;
+            if (allowNullMoveSearch && !inCheck && currentDepth > 0 && depth >= nullMoveFactor+1)
             {
                 var haveBigPiece = false;
                 var pieceOffset = board.WhiteToMove ? 1 : 7;
@@ -279,33 +309,33 @@ namespace ChessDotNet.Searching
                 {
                     var nullMove = new Move(0,0,0);
                     var nullBoard = board.DoMove(nullMove);
-                    score = -PrincipalVariationSearch(-beta, -beta + 1, nullBoard, depth - nullMoveFactor, currentDepth + 1, false);
-                    if (score >= beta)
-                    {
-                        return beta;
-                    }
+                    score = -PrincipalVariationSearch(-beta, -beta + 1, nullBoard, depth - nullMoveFactor - 1, currentDepth + 1, false);
                     if (Stopped)
                     {
                         return 0;
                     }
+
+                    if (score >= beta && score > -MateThereshold && score < MateThereshold)
+                    {
+                        NullMoveCutOffs++;
+                        return beta;
+                    }
                 }
             }
 
+            var potentialMoves = PossibleMovesService.GetAllPotentialMoves(board);
+
             var oldAlpha = alpha;
             var validMoves = 0;
-            var bestMove = 0;
-            var doPV = true;
 
-            var potentialMoves = PossibleMovesService.GetAllPotentialMoves(board);
-            if (quiessence)
-            {
-                potentialMoves = potentialMoves.Where(x => x.TakesPiece > 0).ToList();
-            }
-            //Console.WriteLine(potentialMoves.Count);
+            Move? bestMove = null;
+            var bestScore = -Inf;
+            score = -Inf;
+
             var bbsAfter = new Board[potentialMoves.Count];
             for (var i = 0; i < potentialMoves.Count; i++)
             {
-                SortNextMove(i, board, potentialMoves, currentDepth);
+                SortNextMove(i, board, potentialMoves, currentDepth, pvMove);
                 var potentialMove = potentialMoves[i];
                 var bbAfter = PossibleMovesService.DoMoveIfKingSafe(board, potentialMove);
                 if (bbAfter == null)
@@ -314,53 +344,52 @@ namespace ChessDotNet.Searching
                 }
                 bbsAfter[i] = bbAfter;
                 validMoves++;
-                if (doPV)
-                {
-                    score = -PrincipalVariationSearch(-beta, -alpha, bbAfter, depth, currentDepth + 1, allowNullMoveSearch);
-                }
-                else
-                {
-                    score = -ZeroWindowSearch(-alpha, bbAfter, depth, currentDepth + 1);
-                    if (score > alpha)
-                    {
-                        score = -PrincipalVariationSearch(-beta, -alpha, bbAfter, depth, currentDepth + 1, allowNullMoveSearch);
-                    }
-                }
+
+                score = -PrincipalVariationSearch(-beta, -alpha, bbAfter, depth-1, currentDepth + 1, true);
+
                 if (Stopped)
                 {
                     return 0;
                 }
-                /*if (score > MateThereshold)
+
+                if (score > bestScore)
                 {
-                    break;
-                }*/
-                if (score > alpha)
-                {
-                    if (score >= beta)
+                    bestScore = score;
+                    bestMove = potentialMove;
+
+                    if (score > alpha)
                     {
-                        if (validMoves == 1)
+                        if (score >= beta)
                         {
-                            FailHighFirst++;
+                            if (validMoves == 1)
+                            {
+                                FailHighFirst++;
+                            }
+                            FailHigh++;
+
+                            if (potentialMove.TakesPiece == 0)
+                            {
+                                SearchKillers[currentDepth, 1] = SearchKillers[currentDepth, 0];
+                                SearchKillers[currentDepth, 0] = potentialMove.Key;
+                            }
+
+                            var entry = new TTEntry(board.Key, bestMove.Value, beta, TTFlags.Beta, depth);
+                            TTable.Add(board.Key, entry);
+
+                            return beta;
                         }
-                        FailHigh++;
-                        //Console.WriteLine("Beta cutoff, score " + score + ", beta: " + beta);
+                        alpha = score;
+
                         if (potentialMove.TakesPiece == 0)
                         {
-                            SearchKillers[currentDepth, 1] = SearchKillers[currentDepth, 0];
-                            SearchKillers[currentDepth, 0] = potentialMove.Key;
+                            SearchHistory[potentialMove.Piece, potentialMove.To] += depth;
                         }
-                        return beta;
+
                     }
-                    alpha = score;
-                    bestMove = i;
-
-                    SearchHistory[potentialMove.Piece, potentialMove.To] += depth - currentDepth;
-
-                    //doPV = false;
                 }
             }
 
-            if (depth == currentDepth + 1 && validMoves == 0)
+            if (validMoves == 0)
             {
                 if (inCheck)
                 {
@@ -372,39 +401,128 @@ namespace ChessDotNet.Searching
                 }
             }
 
+#if DEBUG
+            if (alpha < oldAlpha)
+            {
+                throw new Exception();
+            }
+#endif
+
             if (alpha != oldAlpha)
             {
-                PVTable[currentDepth] = new PVSResult(alpha, bbsAfter[bestMove], potentialMoves[bestMove]);
-                //Console.WriteLine("Alpha changed from " + oldAlpha + " to " + alpha + " at depth " + currentDepth + ". PV: " + PrintPVTable());
+                var entry = new TTEntry(board.Key, bestMove.Value, bestScore, TTFlags.Exact, depth);
+                TTable.Add(board.Key, entry);
+                //PVTable[currentDepth] = new PVSResult(alpha, bbsAfter[bestMove], potentialMoves[bestMove]);
+            }
+            else
+            {
+                var entry = new TTEntry(board.Key, bestMove.Value, alpha, TTFlags.Alpha, depth);
+                TTable.Add(board.Key, entry);
             }
 
             return alpha;
         }
 
-        public int ZeroWindowSearch(int beta, Board board, int depth, int currentDepth)
+        public int Quiessence(int alpha, int beta, Board board, int currentDepth)
         {
-            var alpha = beta - 1;
-            var score = int.MinValue;
-            if (currentDepth == depth)
+#if DEBUG
+            if (beta <= alpha)
             {
-                score = EvaluationService.Evaluate(board);
-                return score;
+                throw new Exception();
+            }
+            board.CheckBoard();
+#endif
+            if ((NodesSearched & 2047) == 0)
+            {
+                if (Interruptor.IsInterrupted())
+                {
+                    Stopped = true;
+                    return 0;
+                }
             }
 
-            var potentialMoves = PossibleMovesService.GetAllPotentialMoves(board);
-            foreach (var potentialMove in potentialMoves)
+            NodesSearched++;
+
+            var isRepetition = IsRepetition(board);
+            if (isRepetition)
             {
+                return 0;
+            }
+
+            if (board.History.Length - board.LastTookPieceHistoryIndex >= 100)
+            {
+                return 0;
+            }
+
+            if (currentDepth >= MaxDepth)
+            {
+                return EvaluationService.Evaluate(board);
+            }
+
+            int score = EvaluationService.Evaluate(board);
+
+            if (score >= beta)
+            {
+                return beta;
+            }
+            if (score > alpha)
+            {
+                alpha = score;
+            }
+
+            var enemyAttacks = PossibleMovesService.AttacksService.GetAllAttacked(board, !board.WhiteToMove);
+            var myKing = board.WhiteToMove ? board.BitBoard[ChessPiece.WhiteKing] : board.BitBoard[ChessPiece.BlackKing];
+            var inCheck = (enemyAttacks & myKing) != 0;
+
+            var potentialMoves = PossibleMovesService.GetAllPotentialMoves(board).Where(x => x.TakesPiece > 0).ToList();
+
+            var oldAlpha = alpha;
+            var validMoves = 0;
+
+            Move? bestMove = null;
+            var bestScore = -Inf;
+            score = -Inf;
+
+            for (var i = 0; i < potentialMoves.Count; i++)
+            {
+                SortNextMove(i, board, potentialMoves, currentDepth, null);
+                var potentialMove = potentialMoves[i];
                 var bbAfter = PossibleMovesService.DoMoveIfKingSafe(board, potentialMove);
-                if (bbAfter != null)
+                if (bbAfter == null)
                 {
-                    score = -ZeroWindowSearch(-alpha, bbAfter, depth, currentDepth + 1);
+                    continue;
+                }
+                validMoves++;
+
+                score = -Quiessence(-beta, -alpha, bbAfter, currentDepth + 1);
+
+                if (Stopped)
+                {
+                    return 0;
                 }
 
-                if (score >= beta)
+                if (score > alpha)
                 {
-                    return score;
+                    if (score >= beta)
+                    {
+#if DEBUG
+                        if (validMoves == 1)
+                        {
+                            FailHighFirst++;
+                        }
+                        FailHigh++;
+#endif
+                        return beta;
+                    }
+                    alpha = score;
                 }
             }
+#if DEBUG
+            if (alpha < oldAlpha)
+            {
+                throw new Exception();
+            }
+#endif
             return alpha;
         }
     }
