@@ -86,10 +86,21 @@ namespace ChessDotNet.Searching
             var allowedForMove = searchParams.Infinite ? int.MaxValue : timeRemaining / 30;
             var maxDepth = searchParams.MaxDepth ?? 64;
             var i = 1;
+            int alpha = -Inf;
+            int beta = Inf;
+            int aspiration = 20;
             for (; i <= maxDepth; i++)
             {
                 sw.Restart();
-                var score = PrincipalVariationSearch(-Inf, Inf, board, i, 0, true);
+                var score = PrincipalVariationSearch(alpha, beta, board, i, 0, true);
+                if (score <= alpha || score >= beta)
+                {
+                    alpha = -Inf;
+                    beta = Inf;
+                    score = PrincipalVariationSearch(alpha, beta, board, i, 0, true);
+                }
+                //alpha = score - aspiration;
+                //beta = score + aspiration;
                 sw.Stop();
 
                 var pvLine = GetPVLine(board);
@@ -237,7 +248,7 @@ namespace ChessDotNet.Searching
             NodesSearched++;
 
             var isRepetition = IsRepetition(board);
-            if (isRepetition)
+            if (isRepetition && currentDepth > 0)
             {
                 return 0;
             }
@@ -408,18 +419,20 @@ namespace ChessDotNet.Searching
             }
 #endif
 
-            if (alpha != oldAlpha)
+            if (bestMove.HasValue)
             {
-                var entry = new TTEntry(board.Key, bestMove.Value, bestScore, TTFlags.Exact, depth);
-                TTable.Add(board.Key, entry);
-                //PVTable[currentDepth] = new PVSResult(alpha, bbsAfter[bestMove], potentialMoves[bestMove]);
+                if (alpha != oldAlpha)
+                {
+                    var entry = new TTEntry(board.Key, bestMove.Value, bestScore, TTFlags.Exact, depth);
+                    TTable.Add(board.Key, entry);
+                    //PVTable[currentDepth] = new PVSResult(alpha, bbsAfter[bestMove], potentialMoves[bestMove]);
+                }
+                else
+                {
+                    var entry = new TTEntry(board.Key, bestMove.Value, alpha, TTFlags.Alpha, depth);
+                    TTable.Add(board.Key, entry);
+                }
             }
-            else
-            {
-                var entry = new TTEntry(board.Key, bestMove.Value, alpha, TTFlags.Alpha, depth);
-                TTable.Add(board.Key, entry);
-            }
-
             return alpha;
         }
 

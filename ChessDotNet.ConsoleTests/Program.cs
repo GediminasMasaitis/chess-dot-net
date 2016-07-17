@@ -63,7 +63,7 @@ namespace ChessDotNet.ConsoleTests
             var fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
             //fen = "3k4/3p4/8/K1P4r/8/8/8/8 b - - 0 50";
             //fen = "8/1kP5/8/K2p3r/8/8/8/8 w - - 1 53 ";
-            fen = "r1b1k2r/ppppnppp/2n2q2/2b5/3NP3/2P1B3/PP3PPP/RN1QKB1R w KQkq - 0 1";
+            //fen = "r1b1k2r/ppppnppp/2n2q2/2b5/3NP3/2P1B3/PP3PPP/RN1QKB1R w KQkq - 0 1";
             //fen = "2k5/8/8/8/8/8/6p1/2K5 w - - 1 1 ";
             //fen = "rnbqkbnr/1ppppppp/8/p7/1P6/P7/2PPPPPP/RNBQKBNR b KQkq b3 0 2 ";
             var fact = new BoardFactory();
@@ -76,7 +76,7 @@ namespace ChessDotNet.ConsoleTests
             {
                 var perftRunner = new PerftRunner(perft, sharperClient, fact);
                 perftRunner.OnOut += Console.Write;
-                perftRunner.Test(fen, 5);
+                perftRunner.Test(fen, 6);
             }
         }
 
