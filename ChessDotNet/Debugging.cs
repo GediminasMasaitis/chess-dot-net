@@ -14,7 +14,9 @@ namespace ChessDotNet
             var dll = Assembly.GetExecutingAssembly().Location;
             var dllPath = Path.GetDirectoryName(dll).Replace(@"\x64", string.Empty);
 
-#if DEBUG
+#if TEST
+            var debugPath = "Test";
+#elif DEBUG
             var debugPath = "Debug";
 #else
             var debugPath = "Release";

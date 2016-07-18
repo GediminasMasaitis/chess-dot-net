@@ -10,6 +10,7 @@ using ChessDotNet.Evaluation;
 using ChessDotNet.Hashing;
 using ChessDotNet.MoveGeneration;
 using ChessDotNet.Protocols;
+using ChessDotNet.Testing;
 
 namespace ChessDotNet.Searching
 {
@@ -225,15 +226,9 @@ namespace ChessDotNet.Searching
 
         public int PrincipalVariationSearch(int alpha, int beta, Board board, int depth, int currentDepth, bool allowNullMoveSearch)
         {
-#if DEBUG
-            if (beta <= alpha)
-            {
-                throw new Exception();
-            }
-            if (depth < 0)
-            {
-                throw new Exception();
-            }
+#if TEST
+            Test.Assert(beta > alpha);
+            Test.Assert(depth >= 0);
             board.CheckBoard();
 #endif
             if ((NodesSearched & 2047) == 0)
@@ -372,11 +367,13 @@ namespace ChessDotNet.Searching
                     {
                         if (score >= beta)
                         {
+#if TEST
                             if (validMoves == 1)
                             {
                                 FailHighFirst++;
                             }
                             FailHigh++;
+#endif
 
                             if (potentialMove.TakesPiece == 0)
                             {
@@ -412,11 +409,8 @@ namespace ChessDotNet.Searching
                 }
             }
 
-#if DEBUG
-            if (alpha < oldAlpha)
-            {
-                throw new Exception();
-            }
+#if TEST
+            Test.Assert(alpha >= oldAlpha);
 #endif
 
             if (bestMove.HasValue)
@@ -438,11 +432,8 @@ namespace ChessDotNet.Searching
 
         public int Quiessence(int alpha, int beta, Board board, int currentDepth)
         {
-#if DEBUG
-            if (beta <= alpha)
-            {
-                throw new Exception();
-            }
+#if TEST
+            Test.Assert(beta > alpha);
             board.CheckBoard();
 #endif
             if ((NodesSearched & 2047) == 0)
@@ -518,7 +509,7 @@ namespace ChessDotNet.Searching
                 {
                     if (score >= beta)
                     {
-#if DEBUG
+#if TEST
                         if (validMoves == 1)
                         {
                             FailHighFirst++;
@@ -530,11 +521,10 @@ namespace ChessDotNet.Searching
                     alpha = score;
                 }
             }
-#if DEBUG
-            if (alpha < oldAlpha)
-            {
-                throw new Exception();
-            }
+#if TEST
+            Test.Assert(alpha >= oldAlpha);
+            Test.Assert(alpha < Inf);
+            Test.Assert(alpha > -Inf);
 #endif
             return alpha;
         }

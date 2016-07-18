@@ -18,7 +18,7 @@ PROTOCOLS
   Implement WinBoard
 
 TESTING
-  Debug-only assertions
+  More test-only assertions
   Loading FEN lists
   Mirrored evaluation tests
   Automate perft on multiple positions

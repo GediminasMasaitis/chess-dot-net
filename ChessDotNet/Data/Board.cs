@@ -294,7 +294,7 @@ namespace ChessDotNet.Data
 
         public Board DoMove(Move move)
         {
-#if DEBUG
+#if TEST
             CheckBoard();
 #endif
             //foreach (var pair in PiecesDict)
@@ -320,7 +320,7 @@ namespace ChessDotNet.Data
             if (move.NullMove)
             {
                 newBoard.SyncExtraBitBoards();
-#if DEBUG
+#if TEST
                 newBoard.CheckBoard();
 #endif
                 return newBoard;
@@ -479,7 +479,7 @@ namespace ChessDotNet.Data
 
             newBoard.SyncExtraBitBoards();
 
-#if DEBUG
+#if TEST
             newBoard.CheckBoard();
 #endif
 

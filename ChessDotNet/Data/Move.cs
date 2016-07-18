@@ -1,5 +1,6 @@
 ﻿using System;
 using ChessDotNet.Evaluation;
+using ChessDotNet.Testing;
 
 namespace ChessDotNet.Data
 {
@@ -17,31 +18,17 @@ namespace ChessDotNet.Data
             Castle = (piece == ChessPiece.WhiteKing || piece == ChessPiece.BlackKing) && Math.Abs(from - to) == 2;
             NullMove = piece == 0;
 
-#if DEBUG
-            if (From < 0 || From >= 64)
-            {
-                throw new Exception();
-            }
-            if (To < 0 || To >= 64)
-            {
-                throw new Exception();
-            }
-            if (Piece < 0 || Piece >= 13)
-            {
-                throw new Exception();
-            }
-            if (TakesPiece < 0 || TakesPiece >= 13)
-            {
-                throw new Exception();
-            }
-            if (TakesPiece == 6)
-            {
-                throw new Exception();
-            }
-            if (TakesPiece == 12)
-            {
-                throw new Exception();
-            }
+#if TEST
+            Test.Assert(From >= 0);
+            Test.Assert(From < 64);
+            Test.Assert(To >= 0);
+            Test.Assert(To < 64);
+            Test.Assert(Piece >= 0);
+            Test.Assert(Piece < 13);
+            Test.Assert(TakesPiece >= 0);
+            Test.Assert(TakesPiece < 13);
+            Test.Assert(TakesPiece != 6);
+            Test.Assert(TakesPiece != 12);
 #endif
         }
 
