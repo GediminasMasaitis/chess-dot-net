@@ -413,20 +413,18 @@ namespace ChessDotNet.Searching
             Test.Assert(alpha >= oldAlpha);
 #endif
 
-            if (bestMove.HasValue)
+            if (alpha != oldAlpha)
             {
-                if (alpha != oldAlpha)
-                {
-                    var entry = new TTEntry(board.Key, bestMove.Value, bestScore, TTFlags.Exact, depth);
-                    TTable.Add(board.Key, entry);
-                    //PVTable[currentDepth] = new PVSResult(alpha, bbsAfter[bestMove], potentialMoves[bestMove]);
-                }
-                else
-                {
-                    var entry = new TTEntry(board.Key, bestMove.Value, alpha, TTFlags.Alpha, depth);
-                    TTable.Add(board.Key, entry);
-                }
+                var entry = new TTEntry(board.Key, bestMove.Value, bestScore, TTFlags.Exact, depth);
+                TTable.Add(board.Key, entry);
+                //PVTable[currentDepth] = new PVSResult(alpha, bbsAfter[bestMove], potentialMoves[bestMove]);
             }
+            else
+            {
+                var entry = new TTEntry(board.Key, bestMove.Value, alpha, TTFlags.Alpha, depth);
+                TTable.Add(board.Key, entry);
+            }
+
             return alpha;
         }
 

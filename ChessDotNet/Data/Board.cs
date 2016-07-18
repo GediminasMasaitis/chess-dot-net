@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using ChessDotNet.Evaluation;
 using ChessDotNet.Hashing;
+using ChessDotNet.Testing;
 
 namespace ChessDotNet.Data
 {
@@ -295,7 +296,7 @@ namespace ChessDotNet.Data
         public Board DoMove(Move move)
         {
 #if TEST
-            CheckBoard();
+            this.CheckBoard();
 #endif
             //foreach (var pair in PiecesDict)
             var newBoard = new Board();
@@ -507,47 +508,6 @@ namespace ChessDotNet.Data
             {
                 var piece = ArrayBoard[i];
                 PieceCounts[piece]++;
-            }
-        }
-
-        public void CheckBoard()
-        {
-            if (PieceCounts[6] != 1)
-            {
-                throw new Exception();
-            }
-            if (PieceCounts[12] != 1)
-            {
-                throw new Exception();
-            }
-
-            if (WhitePieces != (BitBoard[ChessPiece.WhitePawn]
-                | BitBoard[ChessPiece.WhiteKnight]
-                | BitBoard[ChessPiece.WhiteBishop]
-                | BitBoard[ChessPiece.WhiteRook]
-                | BitBoard[ChessPiece.WhiteQueen]
-                | BitBoard[ChessPiece.WhiteKing]))
-            {
-                throw new Exception();
-            }
-
-            if(BlackPieces != (BitBoard[ChessPiece.BlackPawn]
-                | BitBoard[ChessPiece.BlackKnight]
-                | BitBoard[ChessPiece.BlackBishop]
-                | BitBoard[ChessPiece.BlackRook]
-                | BitBoard[ChessPiece.BlackQueen]
-                | BitBoard[ChessPiece.BlackKing]))
-            {
-                throw new Exception();
-            }
-
-            if(AllPieces != (WhitePieces | BlackPieces))
-            {
-                throw new Exception();
-            }
-            if(EmptySquares != ~AllPieces)
-            {
-                throw new Exception();
             }
         }
 
