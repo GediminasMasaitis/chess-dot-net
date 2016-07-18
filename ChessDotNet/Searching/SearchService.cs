@@ -89,19 +89,38 @@ namespace ChessDotNet.Searching
             var i = 1;
             int alpha = -Inf;
             int beta = Inf;
-            int aspiration = 20;
+            const bool aspirationWindows = false;
+            const int initialAspiration = 25;
+            var lowAspiration = initialAspiration;
+            var highAspiration = initialAspiration;
             for (; i <= maxDepth; i++)
             {
                 sw.Restart();
                 var score = PrincipalVariationSearch(alpha, beta, board, i, 0, true);
-                if (score <= alpha || score >= beta)
+                
+                if (aspirationWindows)
                 {
-                    alpha = -Inf;
-                    beta = Inf;
-                    score = PrincipalVariationSearch(alpha, beta, board, i, 0, true);
+                    var lastScore = score;
+                    while (score <= alpha || score >= beta)
+                    {
+                        if (score <= alpha)
+                        {
+                            lowAspiration *= 4;
+                            alpha = lastScore - lowAspiration;
+                            score = PrincipalVariationSearch(alpha, beta, board, i, 0, true);
+                        }
+                        else
+                        {
+                            highAspiration *= 4;
+                            beta = lastScore + highAspiration;
+                            score = PrincipalVariationSearch(alpha, beta, board, i, 0, true);
+                        }
+                    }
+                    lowAspiration = initialAspiration;
+                    highAspiration = initialAspiration;
+                    alpha = score - lowAspiration;
+                    beta = score + highAspiration;
                 }
-                //alpha = score - aspiration;
-                //beta = score + aspiration;
                 sw.Stop();
 
                 var pvLine = GetPVLine(board);

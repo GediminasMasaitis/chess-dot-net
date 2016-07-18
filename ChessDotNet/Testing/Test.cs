@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using ChessDotNet.Data;
+using ChessDotNet.Hashing;
 
 #if TEST
 namespace ChessDotNet.Testing
@@ -21,8 +22,8 @@ namespace ChessDotNet.Testing
 
         public static void CheckBoard(this Board board)
         {
-            Assert(board.PieceCounts[6] == 1);
-            Assert(board.PieceCounts[12] == 1);
+            Assert(board.PieceCounts[ChessPiece.WhiteKing] == 1, "White king count != 1");
+            Assert(board.PieceCounts[ChessPiece.BlackKing] == 1, "Black king count != 1");
 
             Assert(board.WhitePieces == (board.BitBoard[ChessPiece.WhitePawn]
                 | board.BitBoard[ChessPiece.WhiteKnight]
@@ -40,6 +41,7 @@ namespace ChessDotNet.Testing
 
             Assert(board.AllPieces == (board.WhitePieces | board.BlackPieces));
             Assert(board.EmptySquares == ~board.AllPieces);
+            Assert(board.Key == ZobristKeys.CalculateKey(board), "Zobrist key mismatch when checking board");
         }
     }
 }

@@ -308,15 +308,20 @@ namespace ChessDotNet.Data
             newBoard.BlackMaterial = BlackMaterial;
             newBoard.Key = Key;
 
+
             var newHistory = new HistoryEntry[History.Length + 1];
             Array.Copy(History, newHistory, History.Length);
             var newEntry = new HistoryEntry(this, move);
             newHistory[newHistory.Length - 1] = newEntry;
             newBoard.History = newHistory;
 
-            var forWhite = WhiteToMove;
             newBoard.WhiteToMove = !WhiteToMove;
             newBoard.Key ^= ZobristKeys.ZWhiteToMove;
+
+            if (EnPassantFile != 0)
+            {
+                newBoard.Key ^= ZobristKeys.ZEnPassant[EnPassantFileIndex];
+            }
 
             if (move.NullMove)
             {
@@ -339,7 +344,7 @@ namespace ChessDotNet.Data
                 promotedPiece = move.PawnPromoteTo.Value;
                 newBoard.PieceCounts[move.Piece]--;
                 newBoard.PieceCounts[promotedPiece]++;
-                if (forWhite)
+                if (WhiteToMove)
                 {
                     newBoard.WhiteMaterial -= EvaluationService.Weights[ChessPiece.WhitePawn];
                     newBoard.WhiteMaterial += EvaluationService.Weights[promotedPiece];
@@ -367,7 +372,7 @@ namespace ChessDotNet.Data
                 }
                 newBoard.LastTookPieceHistoryIndex = History.Length;
                 newBoard.PieceCounts[move.TakesPiece]--;
-                if (forWhite)
+                if (WhiteToMove)
                 {
                     newBoard.BlackMaterial -= EvaluationService.Weights[move.TakesPiece];
                 }
@@ -397,13 +402,10 @@ namespace ChessDotNet.Data
 
                 newBoard.BitBoard[move.TakesPiece] &= ~killedPawnBitBoard;
                 newBoard.ArrayBoard[killedPawnPos] = ChessPiece.Empty;
-                newBoard.Key ^= ZobristKeys.ZPieces[killedPawnPos, move.Piece];
+                newBoard.Key ^= ZobristKeys.ZPieces[killedPawnPos, move.TakesPiece];
             }
 
-            if (EnPassantFile != 0)
-            {
-                newBoard.Key ^= ZobristKeys.ZEnPassant[EnPassantFileIndex];
-            }
+
             if ((move.Piece == ChessPiece.WhitePawn && move.From + 16 == move.To) || (move.Piece == ChessPiece.BlackPawn && move.From - 16 == move.To))
             {
                 var fileIndex = move.From % 8;
