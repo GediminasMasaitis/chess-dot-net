@@ -491,10 +491,6 @@ namespace ChessDotNet.Searching
                 alpha = score;
             }
 
-            var enemyAttacks = PossibleMovesService.AttacksService.GetAllAttacked(board, !board.WhiteToMove);
-            var myKing = board.WhiteToMove ? board.BitBoard[ChessPiece.WhiteKing] : board.BitBoard[ChessPiece.BlackKing];
-            var inCheck = (enemyAttacks & myKing) != 0;
-
             var potentialMoves = PossibleMovesService.GetAllPotentialMoves(board).Where(x => x.TakesPiece > 0).ToList();
 
             var oldAlpha = alpha;
