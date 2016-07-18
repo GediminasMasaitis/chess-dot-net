@@ -15,6 +15,7 @@ namespace ChessDotNet.BoardVisualizer
         private IList<TextBox> BitboardsTextBoxes { get; }
         private IList<SolidBrush> Brushes { get;}
         private SolidBrush EmptyBrush { get; }
+        private int BitBoardCount { get; }
 
         public MainForm() : this(new ulong[0])
         {
@@ -25,8 +26,11 @@ namespace ChessDotNet.BoardVisualizer
             InitializeComponent();
             var allBitboards = bitboards.ToList();
 
+            BitBoardCount = 13;
+            BitboardsTextBoxes = new TextBox[BitBoardCount];
+            BitboardsTextBoxes[0] = Bitboard0TextBox;
 
-            var colors = new[]
+            var colors = new List<Color>
             {
                 Color.FromArgb(100, 0, 0),
                 Color.FromArgb(0, 100, 0),
@@ -37,24 +41,42 @@ namespace ChessDotNet.BoardVisualizer
                 Color.FromArgb(170, 70, 0),
                 Color.FromArgb(0, 170, 100),
                 Color.FromArgb(70, 30, 0),
-                Color.FromArgb(0, 0, 100),
+                Color.FromArgb(180, 0, 100),
+                Color.FromArgb(180, 150, 50),
+                Color.FromArgb(120, 120, 120),
+                Color.FromArgb(170, 170, 170),
             };
+
+            var rng = new Random(0);
+            while (colors.Count < BitBoardCount)
+            {
+                var red = rng.Next(0, 256);
+                var green = rng.Next(0, 256);
+                var blue = rng.Next(0, 256);
+                var color = Color.FromArgb(red, green, blue);
+                colors.Add(color);
+            }
 
             Brushes = colors.Select(x => new SolidBrush(x)).ToList();
             EmptyBrush = new SolidBrush(Color.FromArgb(80,80,80));
-            BitboardsTextBoxes = new []
+
+
+            var offset = 30;
+
+            for (var i = 1; i < BitBoardCount; i++)
             {
-                Bitboard1TextBox,
-                Bitboard2TextBox,
-                Bitboard3TextBox,
-                Bitboard4TextBox,
-                Bitboard5TextBox,
-                Bitboard6TextBox,
-                Bitboard7TextBox,
-                Bitboard8TextBox,
-                Bitboard9TextBox,
-                Bitboard10TextBox
-            };
+                var newTextBox = new TextBox();
+                newTextBox.Parent = this;
+                newTextBox.Location = new Point(Bitboard0TextBox.Location.X, Bitboard0TextBox.Location.Y + offset * i);
+                newTextBox.Size = Bitboard0TextBox.Size;
+
+                var newLabel = new Label();
+                newLabel.Parent = this;
+                newLabel.Location = new Point(Bitboard0Label.Location.X, Bitboard0Label.Location.Y + offset*i);
+                newLabel.Text = $"Bitboard {i}:";
+
+                BitboardsTextBoxes[i] = newTextBox;
+            }
 
             for (var i = 0; i < BitboardsTextBoxes.Count; i++)
             {
@@ -65,6 +87,15 @@ namespace ChessDotNet.BoardVisualizer
                 //BitboardsTextBoxes[i].BackColor = EmptyBrush.Color;
                 BitboardsTextBoxes[i].ForeColor = Brushes[i].Color;
                 BitboardsTextBoxes[i].Font = new Font(FontFamily.GenericMonospace, 10, FontStyle.Bold);
+            }
+
+            for (var i = 0; i < allBitboards.Count; i++)
+            {
+                if (i >= BitboardsTextBoxes.Count)
+                {
+                    break;
+                }
+                BitboardsTextBoxes[i].Text = allBitboards[i].ToString();
             }
 
             DisplayBitBoards(allBitboards.ToArray());
@@ -106,6 +137,8 @@ namespace ChessDotNet.BoardVisualizer
 
             var font = new Font(Font, FontStyle.Bold);
 
+            var borderIncrement = (cellWidth/2-5)/BitboardsTextBoxes.Count;
+
             using (var graphics = Graphics.FromImage(bmp))
             {
                 for (var i = 0; i < 64; i++)
@@ -121,13 +154,13 @@ namespace ChessDotNet.BoardVisualizer
                         if (cells[j][i])
                         {
                             graphics.FillRectangle(Brushes[j], cellY * cellWidth + borderWidth + 1, cellX * cellHeight + borderWidth + 1, cellWidth - 2*borderWidth - 1, cellHeight - 2*borderWidth - 1);
-                            borderWidth += 3;
+                            borderWidth += borderIncrement;
                         }
                     }
 
                     var text = (char)(65+(cellY)) + (8-cellX).ToString();
-                    graphics.DrawString(text, font, textBrush, cellY * cellWidth + 24, cellX * cellHeight + 20);
-                    graphics.DrawString(i.ToString().PadLeft(2, '0'), font, textBrush, cellY * cellWidth + 24, cellX * cellHeight + 34);
+                    graphics.DrawString(text, font, textBrush, cellY * cellWidth + cellWidth/2 - 8, cellX * cellHeight + cellHeight/2 - 10);
+                    graphics.DrawString(i.ToString().PadLeft(2, '0'), font, textBrush, cellY * cellWidth + cellWidth / 2 - 8, cellX * cellHeight + cellHeight/2 + 2);
                 }
 
                 for (var i = 0; i < 9; i++)

@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using ChessDotNet.Data;
 
 namespace ChessDotNet
 {
@@ -24,6 +25,11 @@ namespace ChessDotNet
             var argsStr = bitBoard.Select(x => x.ToString()).Aggregate((c, n) => c + " " + n);
 
             Process.Start(exePath, argsStr);
+        }
+
+        public static void Dump(this Board board)
+        {
+            ShowBitBoard(board.BitBoard);
         }
 
         public static void Dump(this ulong bitBoard)
