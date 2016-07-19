@@ -17,6 +17,6 @@ namespace ChessDotNet.Searching
             return $"Depth: {Depth}, SelectiveDepth: {SelectiveDepth}, Score: {Score}, MateIn: {MateIn}, NodesSearched: {NodesSearched}, Time: {Time}, PrincipalVariation: {PrincipalVariation.Select(x=>x.Move.ToPositionString()).Aggregate((x,n) => x + " " + n)}";
         }
 
-        public IList<TTEntry> PrincipalVariation { get; set; }
+        public IList<SearchTTEntry> PrincipalVariation { get; set; }
     }
 }

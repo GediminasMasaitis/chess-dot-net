@@ -136,7 +136,8 @@
     <Compile Include="Searching\SearchService.cs" />
     <Compile Include="Hashing\ZobristKeys.cs" />
     <Compile Include="Protocols\ConsoleInterruptor.cs" />
-    <Compile Include="Searching\TTEntry.cs" />
+    <Compile Include="Searching\SearchTTEntry.cs" />
+    <Compile Include="Searching\SearchTTFlags.cs" />
     <Compile Include="Testing\AssertionFailedException.cs" />
     <Compile Include="Testing\Test.cs" />
   </ItemGroup>
