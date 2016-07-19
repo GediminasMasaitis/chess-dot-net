@@ -6,6 +6,11 @@ using ChessDotNet.Evaluation;
 using ChessDotNet.Hashing;
 using ChessDotNet.Testing;
 
+using Bitboard = System.UInt64;
+using Key = System.UInt64;
+using Position = System.Int32;
+using Piece = System.Int32;
+
 namespace ChessDotNet.Data
 {
     public class Board
@@ -14,16 +19,16 @@ namespace ChessDotNet.Data
 
         public bool[] CastlingPermissions { get; set; }
 
-        public ulong WhitePieces { get; private set; }
-        public ulong BlackPieces { get; private set; }
-        public ulong EmptySquares { get; private set; }
-        public ulong AllPieces { get; private set; }
+        public Bitboard WhitePieces { get; private set; }
+        public Bitboard BlackPieces { get; private set; }
+        public Bitboard EmptySquares { get; private set; }
+        public Bitboard AllPieces { get; private set; }
 
-        public ulong[] BitBoard { get; set; }
-        public int[] ArrayBoard { get; set; }
+        public Bitboard[] BitBoard { get; set; }
+        public Piece[] ArrayBoard { get; set; }
         public int EnPassantFileIndex { get; set; }
-        public ulong EnPassantFile { get; set; }
-        public ulong Key { get; set; }
+        public Bitboard EnPassantFile { get; set; }
+        public Key Key { get; set; }
 
         public HistoryEntry[] History { get; set; }
         public int LastTookPieceHistoryIndex { get; set; }
@@ -32,27 +37,27 @@ namespace ChessDotNet.Data
         public int WhiteMaterial { get; set; }
         public int BlackMaterial { get; set; }
 
-        public static ulong AllBoard { get; }
-        public static ulong KnightSpan { get; private set; }
-        public static int KnightSpanPosition { get; private set; }
-        public static ulong KingSpan { get; private set; }
-        public static int KingSpanPosition { get; private set; }
-        public static IReadOnlyList<ulong> Files { get; }
-        public static IReadOnlyList<ulong> Ranks { get; }
-        public static IReadOnlyList<ulong> Diagonals { get; private set; }
-        public static IReadOnlyList<ulong> Antidiagonals { get; private set; }
-        public static ulong KingSide { get; set; }
-        public static ulong QueenSide { get; set; }
+        public static Bitboard AllBoard { get; }
+        public static Bitboard KnightSpan { get; private set; }
+        public static Position KnightSpanPosition { get; private set; }
+        public static Bitboard KingSpan { get; private set; }
+        public static Position KingSpanPosition { get; private set; }
+        public static IReadOnlyList<Bitboard> Files { get; }
+        public static IReadOnlyList<Bitboard> Ranks { get; }
+        public static IReadOnlyList<Bitboard> Diagonals { get; private set; }
+        public static IReadOnlyList<Bitboard> Antidiagonals { get; private set; }
+        public static Bitboard KingSide { get; set; }
+        public static Bitboard QueenSide { get; set; }
 
-        public static ulong WhiteQueenSideCastleMask { get; }
-        public static ulong WhiteKingSideCastleMask { get; }
-        public static ulong BlackQueenSideCastleMask { get; }
-        public static ulong BlackKingSideCastleMask { get; }
+        public static Bitboard WhiteQueenSideCastleMask { get; }
+        public static Bitboard WhiteKingSideCastleMask { get; }
+        public static Bitboard BlackQueenSideCastleMask { get; }
+        public static Bitboard BlackKingSideCastleMask { get; }
 
-        public static ulong WhiteQueenSideCastleAttackMask { get; }
-        public static ulong WhiteKingSideCastleAttackMask { get; }
-        public static ulong BlackKingSideCastleAttackMask { get; }
-        public static ulong BlackQueenSideCastleAttackMask { get; }
+        public static Bitboard WhiteQueenSideCastleAttackMask { get; }
+        public static Bitboard WhiteKingSideCastleAttackMask { get; }
+        public static Bitboard BlackKingSideCastleAttackMask { get; }
+        public static Bitboard BlackQueenSideCastleAttackMask { get; }
 
         public Board()
         {
@@ -70,7 +75,7 @@ namespace ChessDotNet.Data
             KingSpan = 460039UL;
             KingSpanPosition = 9;
 
-            var files = new List<ulong>(8);
+            var files = new List<Bitboard>(8);
             for (var i = 0; i < 8; i++)
             {
                 var file = 0UL;
@@ -85,7 +90,7 @@ namespace ChessDotNet.Data
             QueenSide = Files[0] | Files[1] | Files[2] | Files[3];
             KingSide = ~QueenSide;
 
-            var ranks = new List<ulong>(8);
+            var ranks = new List<Bitboard>(8);
             for (var i = 0; i < 8; i++)
             {
                 var rank = 0UL;
@@ -97,7 +102,7 @@ namespace ChessDotNet.Data
             }
             Ranks = ranks;
 
-            Diagonals = new[]
+            Diagonals = new Bitboard[]
             {
                 0x1UL,
                 0x102UL,
@@ -116,7 +121,7 @@ namespace ChessDotNet.Data
                 0x8000000000000000UL
             };
 
-            Antidiagonals = new[]
+            Antidiagonals = new Bitboard[]
             {
                 0x80UL,
                 0x8040UL,

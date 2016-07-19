@@ -1,12 +1,14 @@
 ﻿using System;
-using ChessDotNet.Evaluation;
 using ChessDotNet.Testing;
+
+using Position = System.Int32;
+using Piece = System.Int32;
 
 namespace ChessDotNet.Data
 {
     public struct Move
     {
-        public Move(int from, int to, int piece, int takesPiece = 0, bool enPassant = false, int? pawnPromoteTo = null)
+        public Move(Position from, Position to, Piece piece, Piece takesPiece = 0, bool enPassant = false, Piece? pawnPromoteTo = null)
         {
             From = from;
             To = to;
@@ -33,17 +35,17 @@ namespace ChessDotNet.Data
         }
 
         public bool NullMove { get; }
-        public int From { get; }
-        public int To { get; }
-        public int Piece { get; }
-        public int TakesPiece { get; }
+        public Position From { get; }
+        public Position To { get; }
+        public Piece Piece { get; }
+        public Piece TakesPiece { get; }
         public bool EnPassant { get; }
-        public int? PawnPromoteTo { get; }
+        public Piece? PawnPromoteTo { get; }
         public bool Castle { get; }
         //public int MVVLVAScore => TakesPiece > 0 ? MVVLVAScoreCalculation.Scores[Piece, TakesPiece] : 0;
         public int Key => (From << 16) + To;
 
-        private static string PositionToText(int position)
+        private static string PositionToText(Position position)
         {
             var rank = position / 8;
             var file = position % 8;
@@ -52,7 +54,7 @@ namespace ChessDotNet.Data
             return str;
         }
 
-        private static int TextToPosition(string text)
+        private static Position TextToPosition(string text)
         {
             var textLower = text.ToLower();
             var file = text[0] - 97;
