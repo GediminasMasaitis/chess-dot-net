@@ -7,16 +7,9 @@ using ChessDotNet.Data;
 
 namespace ChessDotNet.Searching
 {
-    public class TTFlags
+    public class SearchTTEntry
     {
-        public const int Beta = 0;
-        public const int Exact = 1;
-        public const int Alpha = 2;
-    }
-
-    public class TTEntry
-    {
-        public TTEntry(ulong key, Move move, int score, int depth, int flag)
+        public SearchTTEntry(ulong key, Move move, int score, int depth, int flag)
         {
             Key = key;
             Move = move;

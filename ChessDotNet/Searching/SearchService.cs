@@ -26,7 +26,7 @@ namespace ChessDotNet.Searching
         private const int Inf = int.MaxValue;
         private const int MaxDepth = 64;
 
-        private TranspositionTable<TTEntry> TTable { get; set; }
+        private TranspositionTable<SearchTTEntry> TTable { get; set; }
         private int[,] SearchKillers { get; set; }
         private int[,] SearchHistory { get; set; }
 
@@ -44,7 +44,7 @@ namespace ChessDotNet.Searching
             PossibleMovesService = possibleMovesService;
             EvaluationService = evaluationService;
             Interruptor = interruptor;
-            TTable = new TranspositionTable<TTEntry>(26);
+            TTable = new TranspositionTable<SearchTTEntry>(26);
         }
 
         public void Clear()
@@ -59,13 +59,13 @@ namespace ChessDotNet.Searching
             Interruptor.Start();
         }
 
-        public IList<TTEntry> GetPVLine(Board board)
+        public IList<SearchTTEntry> GetPVLine(Board board)
         {
-            var entries = new List<TTEntry>();
+            var entries = new List<SearchTTEntry>();
 
             while (true)
             {
-                TTEntry entry;
+                SearchTTEntry entry;
                 var success = TTable.TryGet(board.Key, out entry);
                 if (!success)
                 {
@@ -76,7 +76,7 @@ namespace ChessDotNet.Searching
             }
         }
 
-        public IList<TTEntry> Search(Board board, SearchParams searchParams = null)
+        public IList<SearchTTEntry> Search(Board board, SearchParams searchParams = null)
         {
             searchParams = searchParams ?? new SearchParams();
             Clear();
@@ -295,7 +295,7 @@ namespace ChessDotNet.Searching
             int score = -Inf;
             Move? pvMove = null;
 
-            TTEntry foundEntry;
+            SearchTTEntry foundEntry;
             var found = TTable.TryGet(board.Key, out foundEntry);
             if (found && foundEntry.Key == board.Key)
             {
@@ -304,13 +304,13 @@ namespace ChessDotNet.Searching
                 {
                     switch (foundEntry.Flag)
                     {
-                        case TTFlags.Beta:
+                        case SearchTTFlags.Beta:
                             return beta;
                             break;
-                        case TTFlags.Exact:
+                        case SearchTTFlags.Exact:
                             return foundEntry.Score;
                             break;
-                        case TTFlags.Alpha:
+                        case SearchTTFlags.Alpha:
                             return alpha;
                             break;
                     }
@@ -400,7 +400,7 @@ namespace ChessDotNet.Searching
                                 SearchKillers[currentDepth, 0] = potentialMove.Key;
                             }
 
-                            var entry = new TTEntry(board.Key, bestMove.Value, beta, TTFlags.Beta, depth);
+                            var entry = new SearchTTEntry(board.Key, bestMove.Value, beta, SearchTTFlags.Beta, depth);
                             TTable.Add(board.Key, entry);
 
                             return beta;
@@ -434,13 +434,13 @@ namespace ChessDotNet.Searching
 
             if (alpha != oldAlpha)
             {
-                var entry = new TTEntry(board.Key, bestMove.Value, bestScore, TTFlags.Exact, depth);
+                var entry = new SearchTTEntry(board.Key, bestMove.Value, bestScore, SearchTTFlags.Exact, depth);
                 TTable.Add(board.Key, entry);
                 //PVTable[currentDepth] = new PVSResult(alpha, bbsAfter[bestMove], potentialMoves[bestMove]);
             }
             else
             {
-                var entry = new TTEntry(board.Key, bestMove.Value, alpha, TTFlags.Alpha, depth);
+                var entry = new SearchTTEntry(board.Key, bestMove.Value, alpha, SearchTTFlags.Alpha, depth);
                 TTable.Add(board.Key, entry);
             }
 
