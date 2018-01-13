@@ -1,13 +1,14 @@
 using System;
+using ChessDotNet.Common;
 using ChessDotNet.Data;
 
 namespace ChessDotNet.MoveGeneration
 {
     public class AttacksService
     {
-        public HyperbolaQuintessence HyperbolaQuintessence { get; set; }
+        public IHyperbolaQuintessence HyperbolaQuintessence { get; set; }
 
-        public AttacksService(HyperbolaQuintessence hyperbolaQuintessence)
+        public AttacksService(IHyperbolaQuintessence hyperbolaQuintessence)
         {
             HyperbolaQuintessence = hyperbolaQuintessence;
         }
@@ -81,13 +82,13 @@ namespace ChessDotNet.MoveGeneration
             return pawnsLeft | pawnsRight;
         }
 
-        private ulong GetAttackedBySlidingPieces(Board board, ulong slidingPieces, Func<Board, int, ulong> slideResolutionFunc)
+        private ulong GetAttackedBySlidingPieces(Board board, ulong slidingPieces, Func<ulong, int, ulong> slideResolutionFunc)
         {
             var allSlide = 0UL;
             while (slidingPieces != 0)
             {
                 var i = slidingPieces.BitScanForward();
-                var slide = slideResolutionFunc.Invoke(board, i);
+                var slide = slideResolutionFunc.Invoke(board.AllPieces, i);
                 allSlide |= slide;
                 slidingPieces &= ~(1UL << i);
             }

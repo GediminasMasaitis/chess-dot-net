@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.24720.0
+# Visual Studio 15
+VisualStudioVersion = 15.0.27130.2020
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChessDotNet", "ChessDotNet\ChessDotNet.csproj", "{ED5B6575-4DFB-48DB-B407-8505B554EC58}"
 EndProject
@@ -16,7 +16,14 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		TODO.txt = TODO.txt
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ChessDotNet.Cpp", "ChessDotNet.Cpp\ChessDotNet.Cpp.vcxproj", "{DB2A20B7-C80D-4F15-83E0-FA46C883BBEC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChessDotNet.Common", "ChessDotNet.Common\ChessDotNet.Common.csproj", "{561AE429-EBD1-4423-AFB2-C6300BC31EEC}"
+EndProject
 Global
+	GlobalSection(Performance) = preSolution
+		HasPerformanceSessions = true
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Debug|x64 = Debug|x64
@@ -101,8 +108,45 @@ Global
 		{9B1C5495-301C-4B20-8930-C943D3256F34}.Test|x64.Build.0 = Test|x64
 		{9B1C5495-301C-4B20-8930-C943D3256F34}.Test|x86.ActiveCfg = Test|x86
 		{9B1C5495-301C-4B20-8930-C943D3256F34}.Test|x86.Build.0 = Test|x86
+		{DB2A20B7-C80D-4F15-83E0-FA46C883BBEC}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{DB2A20B7-C80D-4F15-83E0-FA46C883BBEC}.Debug|x64.ActiveCfg = Debug|x64
+		{DB2A20B7-C80D-4F15-83E0-FA46C883BBEC}.Debug|x64.Build.0 = Debug|x64
+		{DB2A20B7-C80D-4F15-83E0-FA46C883BBEC}.Debug|x86.ActiveCfg = Debug|Win32
+		{DB2A20B7-C80D-4F15-83E0-FA46C883BBEC}.Debug|x86.Build.0 = Debug|Win32
+		{DB2A20B7-C80D-4F15-83E0-FA46C883BBEC}.Release|Any CPU.ActiveCfg = Release|Win32
+		{DB2A20B7-C80D-4F15-83E0-FA46C883BBEC}.Release|x64.ActiveCfg = Release|x64
+		{DB2A20B7-C80D-4F15-83E0-FA46C883BBEC}.Release|x64.Build.0 = Release|x64
+		{DB2A20B7-C80D-4F15-83E0-FA46C883BBEC}.Release|x86.ActiveCfg = Release|Win32
+		{DB2A20B7-C80D-4F15-83E0-FA46C883BBEC}.Release|x86.Build.0 = Release|Win32
+		{DB2A20B7-C80D-4F15-83E0-FA46C883BBEC}.Test|Any CPU.ActiveCfg = Release|x64
+		{DB2A20B7-C80D-4F15-83E0-FA46C883BBEC}.Test|Any CPU.Build.0 = Release|x64
+		{DB2A20B7-C80D-4F15-83E0-FA46C883BBEC}.Test|x64.ActiveCfg = Release|x64
+		{DB2A20B7-C80D-4F15-83E0-FA46C883BBEC}.Test|x64.Build.0 = Release|x64
+		{DB2A20B7-C80D-4F15-83E0-FA46C883BBEC}.Test|x86.ActiveCfg = Release|Win32
+		{DB2A20B7-C80D-4F15-83E0-FA46C883BBEC}.Test|x86.Build.0 = Release|Win32
+		{561AE429-EBD1-4423-AFB2-C6300BC31EEC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{561AE429-EBD1-4423-AFB2-C6300BC31EEC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{561AE429-EBD1-4423-AFB2-C6300BC31EEC}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{561AE429-EBD1-4423-AFB2-C6300BC31EEC}.Debug|x64.Build.0 = Debug|Any CPU
+		{561AE429-EBD1-4423-AFB2-C6300BC31EEC}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{561AE429-EBD1-4423-AFB2-C6300BC31EEC}.Debug|x86.Build.0 = Debug|Any CPU
+		{561AE429-EBD1-4423-AFB2-C6300BC31EEC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{561AE429-EBD1-4423-AFB2-C6300BC31EEC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{561AE429-EBD1-4423-AFB2-C6300BC31EEC}.Release|x64.ActiveCfg = Release|Any CPU
+		{561AE429-EBD1-4423-AFB2-C6300BC31EEC}.Release|x64.Build.0 = Release|Any CPU
+		{561AE429-EBD1-4423-AFB2-C6300BC31EEC}.Release|x86.ActiveCfg = Release|Any CPU
+		{561AE429-EBD1-4423-AFB2-C6300BC31EEC}.Release|x86.Build.0 = Release|Any CPU
+		{561AE429-EBD1-4423-AFB2-C6300BC31EEC}.Test|Any CPU.ActiveCfg = Release|Any CPU
+		{561AE429-EBD1-4423-AFB2-C6300BC31EEC}.Test|Any CPU.Build.0 = Release|Any CPU
+		{561AE429-EBD1-4423-AFB2-C6300BC31EEC}.Test|x64.ActiveCfg = Release|Any CPU
+		{561AE429-EBD1-4423-AFB2-C6300BC31EEC}.Test|x64.Build.0 = Release|Any CPU
+		{561AE429-EBD1-4423-AFB2-C6300BC31EEC}.Test|x86.ActiveCfg = Release|Any CPU
+		{561AE429-EBD1-4423-AFB2-C6300BC31EEC}.Test|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {5772D64D-756C-4591-97E5-60FD5F95E322}
 	EndGlobalSection
 EndGlobal

@@ -59,7 +59,7 @@ namespace ChessDotNet.Searching
             Interruptor.Start();
         }
 
-        public IList<SearchTTEntry> GetPVLine(Board board)
+        public IList<SearchTTEntry>GetPVLine(Board board)
         {
             var entries = new List<SearchTTEntry>();
 
@@ -122,6 +122,7 @@ namespace ChessDotNet.Searching
                     beta = score + highAspiration;
                 }
                 sw.Stop();
+
 
                 var pvLine = GetPVLine(board);
                 if (Stopped)

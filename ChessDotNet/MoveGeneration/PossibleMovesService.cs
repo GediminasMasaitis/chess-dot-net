@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using ChessDotNet.Common;
 using ChessDotNet.Data;
 
 namespace ChessDotNet.MoveGeneration
@@ -8,10 +9,10 @@ namespace ChessDotNet.MoveGeneration
     public class PossibleMovesService
     {
         public AttacksService AttacksService { get; set; }
-        public HyperbolaQuintessence HyperbolaQuintessence { get; set; }
+        public IHyperbolaQuintessence HyperbolaQuintessence { get; set; }
         public bool MultiThreadKingSafety { get; set; }
 
-        public PossibleMovesService(AttacksService attacksService, HyperbolaQuintessence hyperbolaQuintessence)
+        public PossibleMovesService(AttacksService attacksService, IHyperbolaQuintessence hyperbolaQuintessence)
         {
             AttacksService = attacksService;
             HyperbolaQuintessence = hyperbolaQuintessence;
@@ -385,14 +386,14 @@ namespace ChessDotNet.MoveGeneration
             return GetPotentialSlidingPieceMoves(board, bishops, HyperbolaQuintessence.AllSlide, chessPiece);
         }
 
-        private IList<Move> GetPotentialSlidingPieceMoves(Board board, ulong slidingPieces, Func<Board, int, ulong> slideResolutionFunc, int piece)
+        private IList<Move> GetPotentialSlidingPieceMoves(Board board, ulong slidingPieces, Func<ulong, int, ulong> slideResolutionFunc, int piece)
         {
             var ownPieces = board.WhiteToMove ? board.WhitePieces : board.BlackPieces;
             var moves = new List<Move>();
             while (slidingPieces != 0)
             {
                 var i = slidingPieces.BitScanForward();
-                var slide = slideResolutionFunc.Invoke(board, i);
+                var slide = slideResolutionFunc.Invoke(board.AllPieces, i);
                 slide &= ~ownPieces;
                 foreach (var move in BitmaskToMoves(board, slide, i, piece))
                 {

@@ -141,7 +141,16 @@
     <Compile Include="Testing\AssertionFailedException.cs" />
     <Compile Include="Testing\Test.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="..\ChessDotNet.Common\ChessDotNet.Common.csproj">
+      <Project>{561ae429-ebd1-4423-afb2-c6300bc31eec}</Project>
+      <Name>ChessDotNet.Common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\ChessDotNet.Cpp\ChessDotNet.Cpp.vcxproj">
+      <Project>{db2a20b7-c80d-4f15-83e0-fa46c883bbec}</Project>
+      <Name>ChessDotNet.Cpp</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

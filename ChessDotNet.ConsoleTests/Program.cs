@@ -12,6 +12,7 @@ using ChessDotNet.MoveGeneration;
 using ChessDotNet.Perft;
 using ChessDotNet.Protocols;
 using ChessDotNet.Searching;
+using ChessDotNetCpp;
 
 namespace ChessDotNet.ConsoleTests
 {
@@ -20,11 +21,11 @@ namespace ChessDotNet.ConsoleTests
         static void Main(string[] args)
         {
             //DoTimings();
-            //DoPerft();
+            DoPerft();
             //TestMove();
             //TestZobrist();
             //TestRepetitions();
-            DoSearch();
+            //DoSearch();
             //Console.WriteLine(new BoardFactory().ParseFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").Print());
             //var pos = 27;
             //Debugging.ShowBitBoard(EvaluationService.PassedPawnMasksWhite[pos], EvaluationService.PassedPawnMasksBlack[pos], EvaluationService.IsolatedPawnMasks[pos]);
@@ -67,10 +68,12 @@ namespace ChessDotNet.ConsoleTests
             //fen = "2k5/8/8/8/8/8/6p1/2K5 w - - 1 1 ";
             //fen = "rnbqkbnr/1ppppppp/8/p7/1P6/P7/2PPPPPP/RNBQKBNR b KQkq b3 0 2 ";
             var fact = new BoardFactory();
-            var hyperbola = new HyperbolaQuintessence();
+            CppInitializer.Init();
+            var hyperbola = new HyperbolaQuintessenceUnmanaged();
             var attacksService = new AttacksService(hyperbola);
             var movesService = new PossibleMovesService(attacksService, hyperbola);
             var perft = new PerftService(movesService);
+            perft.MultiThreaded = false;
             var results = perft.GetPossibleMoves(fact.ParseFEN(fen), 1);
             using (var sharperClient = new SharperPerftClient(@"C:\sharper\Sharper.exe", fen))
             {
