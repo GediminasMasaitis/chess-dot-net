@@ -1,8 +1,12 @@
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net.Configuration;
 using System.Reflection;
 using ChessDotNet.Data;
+using ChessDotNet.Evaluation;
+using ChessDotNet.Hashing;
 
 namespace ChessDotNet
 {
@@ -37,6 +41,39 @@ namespace ChessDotNet
         public static void Dump(this ulong bitBoard)
         {
             ShowBitBoard(bitBoard);
+        }
+
+        private static Board FromBitBoard(this ulong bitBoard)
+        {
+            var board = new Board();
+            board.ArrayBoard = new int[64];
+            board.BitBoard = new ulong[13];
+            board.CastlingPermissions = new bool[4];
+            board.History = new HistoryEntry[0];
+            board.BitBoard[ChessPiece.WhiteRook] = bitBoard;
+            board.SyncExtraBitBoards();
+            board.SyncBitBoardsToArrayBoard();
+            board.SyncPiecesCount();
+            board.SyncMaterial();
+            board.Key = ZobristKeys.CalculateKey(board);
+            return board;
+        }
+
+        public static void DumpConsole(this Board board, bool evaluate = true)
+        {
+            Console.WriteLine(board.Print(evaluate ? new EvaluationService() : null));
+        }
+
+        public static void DumpConsole(this ulong bitBoard)
+        {
+            var board = FromBitBoard(bitBoard);
+            board.DumpConsole(false);
+        }
+
+        public static void DumpConsole(this MagicBitboardEntry entry)
+        {
+            Console.WriteLine("Blocker mask:");
+            entry.BlockerMask.Dump();
         }
     }
 }

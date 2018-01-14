@@ -12,7 +12,6 @@ using ChessDotNet.MoveGeneration;
 using ChessDotNet.Perft;
 using ChessDotNet.Protocols;
 using ChessDotNet.Searching;
-using ChessDotNetCpp;
 
 namespace ChessDotNet.ConsoleTests
 {
@@ -20,6 +19,10 @@ namespace ChessDotNet.ConsoleTests
     {
         static void Main(string[] args)
         {
+            //Init();
+
+            //DoMagicBitboards();
+
             //DoTimings();
             DoPerft();
             //TestMove();
@@ -32,6 +35,19 @@ namespace ChessDotNet.ConsoleTests
 
             Console.WriteLine("Done");
             Console.ReadLine();
+        }
+
+        private static void Init()
+        {
+            new MagicBitboardsInitializer(new HyperbolaQuintessence()).Init();
+        }
+
+        private static void DoMagicBitboards()
+        {
+            //new BoardFactory().ParseFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").DumpConsole();
+            //new MagicBitboardsInitializer(new HyperbolaQuintessence()).Init();
+            //MagicBitboards.Bishops[27].BlockerMask.DumpConsole();
+            //BitboardConstants.Diagonals[3].DumpConsole();
         }
 
         private static void DoTimings()
@@ -68,8 +84,10 @@ namespace ChessDotNet.ConsoleTests
             //fen = "2k5/8/8/8/8/8/6p1/2K5 w - - 1 1 ";
             //fen = "rnbqkbnr/1ppppppp/8/p7/1P6/P7/2PPPPPP/RNBQKBNR b KQkq b3 0 2 ";
             var fact = new BoardFactory();
-            CppInitializer.Init();
-            var hyperbola = new HyperbolaQuintessenceUnmanaged();
+            //CppInitializer.Init();
+            var hyperbola = new HyperbolaQuintessence();
+            //var hyperbola = new HyperbolaQuintessence();
+            //var hyperbola = new MagicBitboardsService();
             var attacksService = new AttacksService(hyperbola);
             var movesService = new PossibleMovesService(attacksService, hyperbola);
             var perft = new PerftService(movesService);
@@ -87,7 +105,7 @@ namespace ChessDotNet.ConsoleTests
         {
             var fact = new BoardFactory();
             var board = fact.ParseFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -");
-            board.EnPassantFile = Board.Files[3];
+            board.EnPassantFile = BitboardConstants.Files[3];
             var hyperbola = new HyperbolaQuintessence();
             var evaluationService = new EvaluationService();
             Console.WriteLine(evaluationService.Evaluate(board));

@@ -103,11 +103,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Data\BitboardConstants.cs" />
     <Compile Include="Data\Board.cs" />
     <Compile Include="Data\CastlePermission.cs" />
     <Compile Include="Data\ChessPiece.cs" />
     <Compile Include="Data\BoardFactory.cs" />
     <Compile Include="Data\HistoryEntry.cs" />
+    <Compile Include="Data\MagicBitboards.cs" />
     <Compile Include="Data\PieceCounts.cs" />
     <Compile Include="Debugging.cs" />
     <Compile Include="Evaluation\IEvaluationService.cs" />

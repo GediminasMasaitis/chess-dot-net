@@ -41,26 +41,26 @@ namespace ChessDotNet.Evaluation
                     var position = rank*8 + file;
                     if (file > 0)
                     {
-                        PassedPawnMasksWhite[position] |= Board.Files[file - 1];
-                        PassedPawnMasksBlack[position] |= Board.Files[file - 1];
-                        IsolatedPawnMasks[position] |= Board.Files[file - 1];
+                        PassedPawnMasksWhite[position] |= BitboardConstants.Files[file - 1];
+                        PassedPawnMasksBlack[position] |= BitboardConstants.Files[file - 1];
+                        IsolatedPawnMasks[position] |= BitboardConstants.Files[file - 1];
                     }
-                    PassedPawnMasksWhite[position] |= Board.Files[file];
-                    PassedPawnMasksBlack[position] |= Board.Files[file];
+                    PassedPawnMasksWhite[position] |= BitboardConstants.Files[file];
+                    PassedPawnMasksBlack[position] |= BitboardConstants.Files[file];
                     if (file < 7)
                     {
-                        PassedPawnMasksWhite[position] |= Board.Files[file + 1];
-                        PassedPawnMasksBlack[position] |= Board.Files[file + 1];
-                        IsolatedPawnMasks[position] |= Board.Files[file + 1];
+                        PassedPawnMasksWhite[position] |= BitboardConstants.Files[file + 1];
+                        PassedPawnMasksBlack[position] |= BitboardConstants.Files[file + 1];
+                        IsolatedPawnMasks[position] |= BitboardConstants.Files[file + 1];
                     }
 
                     for (var i = 0; i <= rank; i++)
                     {
-                        PassedPawnMasksWhite[position] &= ~Board.Ranks[i];
+                        PassedPawnMasksWhite[position] &= ~BitboardConstants.Ranks[i];
                     }
                     for (var i = 7; i >= rank; i--)
                     {
-                        PassedPawnMasksBlack[position] &= ~Board.Ranks[i];
+                        PassedPawnMasksBlack[position] &= ~BitboardConstants.Ranks[i];
                     }
                 }
             }
@@ -206,9 +206,9 @@ namespace ChessDotNet.Evaluation
 
                         case ChessPiece.WhiteRook:
                             score += RookTable[pos];
-                            if ((board.BitBoard[ChessPiece.BlackPawn] & Board.Files[file]) == 0)
+                            if ((board.BitBoard[ChessPiece.BlackPawn] & BitboardConstants.Files[file]) == 0)
                             {
-                                if ((board.BitBoard[ChessPiece.WhitePawn] & Board.Files[file]) == 0)
+                                if ((board.BitBoard[ChessPiece.WhitePawn] & BitboardConstants.Files[file]) == 0)
                                 {
                                     score += RookOpenScore;
                                 }
@@ -220,9 +220,9 @@ namespace ChessDotNet.Evaluation
                             break;
                         case ChessPiece.BlackRook:
                             score -= RookTable[Mirror[pos]];
-                            if ((board.BitBoard[ChessPiece.WhitePawn] & Board.Files[file]) == 0)
+                            if ((board.BitBoard[ChessPiece.WhitePawn] & BitboardConstants.Files[file]) == 0)
                             {
-                                if ((board.BitBoard[ChessPiece.BlackPawn] & Board.Files[file]) == 0)
+                                if ((board.BitBoard[ChessPiece.BlackPawn] & BitboardConstants.Files[file]) == 0)
                                 {
                                     score -= RookOpenScore;
                                 }
@@ -234,9 +234,9 @@ namespace ChessDotNet.Evaluation
                             break;
 
                         case ChessPiece.WhiteQueen:
-                            if ((board.BitBoard[ChessPiece.BlackPawn] & Board.Files[file]) == 0)
+                            if ((board.BitBoard[ChessPiece.BlackPawn] & BitboardConstants.Files[file]) == 0)
                             {
-                                if ((board.BitBoard[ChessPiece.WhitePawn] & Board.Files[file]) == 0)
+                                if ((board.BitBoard[ChessPiece.WhitePawn] & BitboardConstants.Files[file]) == 0)
                                 {
                                     score += QueenOpenScore;
                                 }
@@ -247,9 +247,9 @@ namespace ChessDotNet.Evaluation
                             }
                             break;
                         case ChessPiece.BlackQueen:
-                            if ((board.BitBoard[ChessPiece.WhitePawn] & Board.Files[file]) == 0)
+                            if ((board.BitBoard[ChessPiece.WhitePawn] & BitboardConstants.Files[file]) == 0)
                             {
-                                if ((board.BitBoard[ChessPiece.BlackPawn] & Board.Files[file]) == 0)
+                                if ((board.BitBoard[ChessPiece.BlackPawn] & BitboardConstants.Files[file]) == 0)
                                 {
                                     score -= QueenOpenScore;
                                 }

@@ -56,13 +56,13 @@ namespace ChessDotNet.MoveGeneration
         public ulong GetAttackedByKings(Board board, bool? byWhite = null)
         {
             var kings = (byWhite ?? board.WhiteToMove) ? board.BitBoard[ChessPiece.WhiteKing] : board.BitBoard[ChessPiece.BlackKing];
-            return GetAttackedByJumpingPieces(board, kings, Board.KingSpan, Board.KingSpanPosition);
+            return GetAttackedByJumpingPieces(board, kings, BitboardConstants.KingSpan, BitboardConstants.KingSpanPosition);
         }
 
         public ulong GetAttackedByKnights(Board board, bool? byWhite = null)
         {
             var knights = (byWhite ?? board.WhiteToMove) ? board.BitBoard[ChessPiece.WhiteKnight] : board.BitBoard[ChessPiece.BlackKnight];
-            return GetAttackedByJumpingPieces(board, knights, Board.KnightSpan, Board.KnightSpanPosition);
+            return GetAttackedByJumpingPieces(board, knights, BitboardConstants.KnightSpan, BitboardConstants.KnightSpanPosition);
         }
 
         public ulong GetAttackedByPawns(Board board, bool? byWhite = null)
@@ -71,13 +71,13 @@ namespace ChessDotNet.MoveGeneration
             ulong pawnsRight;
             if (byWhite ?? board.WhiteToMove)
             {
-                pawnsLeft = (board.BitBoard[ChessPiece.WhitePawn] << 7) & ~Board.Files[7];
-                pawnsRight = (board.BitBoard[ChessPiece.WhitePawn] << 9) & ~Board.Files[0];
+                pawnsLeft = (board.BitBoard[ChessPiece.WhitePawn] << 7) & ~BitboardConstants.Files[7];
+                pawnsRight = (board.BitBoard[ChessPiece.WhitePawn] << 9) & ~BitboardConstants.Files[0];
             }
             else
             {
-                pawnsLeft = (board.BitBoard[ChessPiece.BlackPawn] >> 7) & ~Board.Files[0];
-                pawnsRight = (board.BitBoard[ChessPiece.BlackPawn] >> 9) & ~Board.Files[7];
+                pawnsLeft = (board.BitBoard[ChessPiece.BlackPawn] >> 7) & ~BitboardConstants.Files[0];
+                pawnsRight = (board.BitBoard[ChessPiece.BlackPawn] >> 9) & ~BitboardConstants.Files[7];
             }
             return pawnsLeft | pawnsRight;
         }
@@ -111,7 +111,7 @@ namespace ChessDotNet.MoveGeneration
                     jumps = jumpMask >> (jumpMaskCenter - i);
                 }
 
-                jumps &= ~(i % 8 < 4 ? Board.Files[6] | Board.Files[7] : Board.Files[0] | Board.Files[1]);
+                jumps &= ~(i % 8 < 4 ? BitboardConstants.Files[6] | BitboardConstants.Files[7] : BitboardConstants.Files[0] | BitboardConstants.Files[1]);
                 allJumps |= jumps;
                 jumpingPieces &= ~(1UL << i);
             }

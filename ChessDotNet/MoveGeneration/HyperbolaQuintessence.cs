@@ -15,16 +15,16 @@ namespace ChessDotNet.MoveGeneration
         public ulong HorizontalVerticalSlide(ulong allPieces, int position)
         {
             var pieceBitboard = 1UL << position;
-            var horizontal = MaskedSlide(allPieces, pieceBitboard, Board.Ranks[position / 8]);
-            var vertical = MaskedSlide(allPieces, pieceBitboard, Board.Files[position % 8]);
+            var horizontal = MaskedSlide(allPieces, pieceBitboard, BitboardConstants.Ranks[position / 8]);
+            var vertical = MaskedSlide(allPieces, pieceBitboard, BitboardConstants.Files[position % 8]);
             return horizontal | vertical;
         }
 
         public ulong DiagonalAntidiagonalSlide(ulong allPieces, int position)
         {
             var pieceBitboard = 1UL << position;
-            var horizontal = MaskedSlide(allPieces, pieceBitboard, Board.Diagonals[position / 8 + position % 8]);
-            var vertical = MaskedSlide(allPieces, pieceBitboard, Board.Antidiagonals[position / 8 + 7 - position % 8]);
+            var horizontal = MaskedSlide(allPieces, pieceBitboard, BitboardConstants.Diagonals[position / 8 + position % 8]);
+            var vertical = MaskedSlide(allPieces, pieceBitboard, BitboardConstants.Antidiagonals[position / 8 + 7 - position % 8]);
             return horizontal | vertical;
         }
 

@@ -136,7 +136,6 @@
     <ClInclude Include="Aliases.h" />
     <ClInclude Include="BitboardConstants.h" />
     <ClInclude Include="HyperbolaQuintessence.h" />
-    <ClInclude Include="resource.h" />
     <ClInclude Include="Stdafx.h" />
   </ItemGroup>
   <ItemGroup>

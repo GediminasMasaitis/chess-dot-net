@@ -37,28 +37,6 @@ namespace ChessDotNet.Data
         public int WhiteMaterial { get; set; }
         public int BlackMaterial { get; set; }
 
-        public static Bitboard AllBoard { get; }
-        public static Bitboard KnightSpan { get; private set; }
-        public static Position KnightSpanPosition { get; private set; }
-        public static Bitboard KingSpan { get; private set; }
-        public static Position KingSpanPosition { get; private set; }
-        public static IReadOnlyList<Bitboard> Files { get; }
-        public static IReadOnlyList<Bitboard> Ranks { get; }
-        public static IReadOnlyList<Bitboard> Diagonals { get; private set; }
-        public static IReadOnlyList<Bitboard> Antidiagonals { get; private set; }
-        public static Bitboard KingSide { get; set; }
-        public static Bitboard QueenSide { get; set; }
-
-        public static Bitboard WhiteQueenSideCastleMask { get; }
-        public static Bitboard WhiteKingSideCastleMask { get; }
-        public static Bitboard BlackQueenSideCastleMask { get; }
-        public static Bitboard BlackKingSideCastleMask { get; }
-
-        public static Bitboard WhiteQueenSideCastleAttackMask { get; }
-        public static Bitboard WhiteKingSideCastleAttackMask { get; }
-        public static Bitboard BlackKingSideCastleAttackMask { get; }
-        public static Bitboard BlackQueenSideCastleAttackMask { get; }
-
         public Board()
         {
             //History = new List<HistoryEntry>(128);
@@ -67,93 +45,7 @@ namespace ChessDotNet.Data
             EnPassantFileIndex = -1;
         }
 
-        static Board()
-        {
-            KnightSpan = 43234889994UL;
-            KnightSpanPosition = 18;
 
-            KingSpan = 460039UL;
-            KingSpanPosition = 9;
-
-            var files = new List<Bitboard>(8);
-            for (var i = 0; i < 8; i++)
-            {
-                var file = 0UL;
-                for (var j = 0; j < 8; j++)
-                {
-                    file |= 1UL << i << (j*8);
-                }
-                files.Add(file);
-            }
-            Files = files;
-
-            QueenSide = Files[0] | Files[1] | Files[2] | Files[3];
-            KingSide = ~QueenSide;
-
-            var ranks = new List<Bitboard>(8);
-            for (var i = 0; i < 8; i++)
-            {
-                var rank = 0UL;
-                for (var j = 0; j < 8; j++)
-                {
-                    rank |= 1UL << (i*8) << j;
-                }
-                ranks.Add(rank);
-            }
-            Ranks = ranks;
-
-            Diagonals = new Bitboard[]
-            {
-                0x1UL,
-                0x102UL,
-                0x10204UL,
-                0x1020408UL,
-                0x102040810UL,
-                0x10204081020UL,
-                0x1020408102040UL,
-                0x102040810204080UL,
-                0x204081020408000UL,
-                0x408102040800000UL,
-                0x810204080000000UL,
-                0x1020408000000000UL,
-                0x2040800000000000UL,
-                0x4080000000000000UL,
-                0x8000000000000000UL
-            };
-
-            Antidiagonals = new Bitboard[]
-            {
-                0x80UL,
-                0x8040UL,
-                0x804020UL,
-                0x80402010UL,
-                0x8040201008UL,
-                0x804020100804UL,
-                0x80402010080402UL,
-                0x8040201008040201UL,
-                0x4020100804020100UL,
-                0x2010080402010000UL,
-                0x1008040201000000UL,
-                0x804020100000000UL,
-                0x402010000000000UL,
-                0x201000000000000UL,
-                0x100000000000000UL
-            };
-
-            var queenSideCastleMask = Files[1] | Files[2] | Files[3];
-            var kingSideCastleMask = Files[5] | Files[6];
-            WhiteQueenSideCastleMask = queenSideCastleMask & Ranks[0];
-            WhiteKingSideCastleMask = kingSideCastleMask & Ranks[0];
-            BlackQueenSideCastleMask = queenSideCastleMask & Ranks[7];
-            BlackKingSideCastleMask = kingSideCastleMask & Ranks[7];
-
-            var queenSideCastleAttackMask = Files[2] | Files[3] | Files[4];
-            var kingSideCastleAttackMask = Files[4] | Files[5] | Files[6];
-            WhiteQueenSideCastleAttackMask = queenSideCastleAttackMask & Ranks[0];
-            WhiteKingSideCastleAttackMask = kingSideCastleAttackMask & Ranks[0];
-            BlackQueenSideCastleAttackMask = queenSideCastleAttackMask & Ranks[7];
-            BlackKingSideCastleAttackMask = kingSideCastleAttackMask & Ranks[7];
-        }
 
         public void SyncBitBoardsToArrayBoard()
         {
@@ -414,7 +306,7 @@ namespace ChessDotNet.Data
             if ((move.Piece == ChessPiece.WhitePawn && move.From + 16 == move.To) || (move.Piece == ChessPiece.BlackPawn && move.From - 16 == move.To))
             {
                 var fileIndex = move.From % 8;
-                newBoard.EnPassantFile = Files[fileIndex];
+                newBoard.EnPassantFile = BitboardConstants.Files[fileIndex];
                 newBoard.EnPassantFileIndex = fileIndex;
                 newBoard.Key ^= ZobristKeys.ZEnPassant[fileIndex];
             }
@@ -520,9 +412,18 @@ namespace ChessDotNet.Data
 
         public string Print(IEvaluationService evaluationService = null)
         {
-            const string separators  = "   +---+---+---+---+---+---+---+---+";
-            const string fileMarkers = "     A   B   C   D   E   F   G   H  ";
             const bool useUnicodeSymbols = false;
+            const bool useUnicodeSeparators = true;
+
+             const string separators     = "   +---+---+---+---+---+---+---+---+";
+
+            const string separatorsTop     = "   ┌───┬───┬───┬───┬───┬───┬───┬───┐";
+            const string separatorsMid     = "   ├───┼───┼───┼───┼───┼───┼───┼───┤";
+            const string separatorsBottom  = "   └───┴───┴───┴───┴───┴───┴───┴───┘";
+            const char separator = useUnicodeSeparators ? '│' : '|';;
+
+            const string fileMarkers = "     A   B   C   D   E   F   G   H  ";
+            
 
             var infos = new List<string>();
 
@@ -544,14 +445,22 @@ namespace ChessDotNet.Data
             var sb = new StringBuilder();
             for (var i = 7; i >= 0; i--)
             {
-                sb.AppendLine(separators);
+                if (i == 7)
+                {
+                    sb.AppendLine(useUnicodeSeparators ? separatorsTop : separators);
+                }
+                else
+                {
+                    sb.AppendLine(useUnicodeSeparators ? separatorsMid : separators);
+                }
+                
                 sb.Append(" " + (i+1) + " ");
 
                 for (var j = 0; j < 8; j++)
                 {
                     var piece = ArrayBoard[i*8 + j];
                     var pieceChar = useUnicodeSymbols ? ChessPiece.ChessPieceToSymbol(piece) : ChessPiece.ChessPieceToLetter(piece);
-                    sb.Append($"| {pieceChar} ");
+                    sb.Append($"{separator} {pieceChar} ");
                 }
                 sb.Append("|   ");
                 if (infos.Count > 7-i)
@@ -560,7 +469,7 @@ namespace ChessDotNet.Data
                 }
                 sb.AppendLine();
             }
-            sb.AppendLine(separators);
+            sb.AppendLine(useUnicodeSeparators ? separatorsBottom : separators);
             sb.AppendLine(fileMarkers);
             return sb.ToString();
         }
