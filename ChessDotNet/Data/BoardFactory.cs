@@ -140,7 +140,7 @@ namespace ChessDotNet.Data
 
                 case 'q': piece = ChessPiece.BlackQueen;
                     return true;
-                case 'Q': piece = ChessPiece.WhiteKing;
+                case 'Q': piece = ChessPiece.WhiteQueen;
                     return true;
 
                 case 'k': piece = ChessPiece.BlackKing;
