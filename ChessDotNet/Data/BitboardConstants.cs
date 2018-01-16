@@ -118,7 +118,7 @@ namespace ChessDotNet.Data
             BlackQueenSideCastleMask = queenSideCastleMask & Ranks[7];
             BlackKingSideCastleMask = kingSideCastleMask & Ranks[7];
 
-            var queenSideCastleAttackMask = Files[1] | Files[2] | Files[3] | Files[4];
+            var queenSideCastleAttackMask = Files[2] | Files[3] | Files[4];
             var kingSideCastleAttackMask = Files[4] | Files[5] | Files[6];
             WhiteQueenSideCastleAttackMask = queenSideCastleAttackMask & Ranks[0];
             WhiteKingSideCastleAttackMask = kingSideCastleAttackMask & Ranks[0];
