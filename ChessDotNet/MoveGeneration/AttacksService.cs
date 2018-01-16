@@ -18,7 +18,7 @@ namespace ChessDotNet.MoveGeneration
             HyperbolaQuintessence = hyperbolaQuintessence;
         }
 
-        public ulong GetAllAttacked(Board board, bool? byWhite = null)
+        public Bitboard GetAllAttacked(Board board, bool? byWhite = null)
         {
             byWhite = byWhite ?? board.WhiteToMove;
             var pawnsAttack = GetAttackedByPawns(board, byWhite);

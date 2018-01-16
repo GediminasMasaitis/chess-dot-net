@@ -449,11 +449,11 @@ namespace ChessDotNet.MoveGeneration
 
         public Board DoMoveIfKingSafe(Board board, Move move)
         {
-            var afterMoveBitBoards = board.DoMove(move);
-            var enemyAttackedAfterMove = AttacksService.GetAllAttacked(afterMoveBitBoards);
-            var myKings = board.WhiteToMove ? afterMoveBitBoards.BitBoard[ChessPiece.WhiteKing] : afterMoveBitBoards.BitBoard[ChessPiece.BlackKing];
+            var boardAfterMove = board.DoMove(move);
+            var enemyAttackedAfterMove = AttacksService.GetAllAttacked(boardAfterMove);
+            var myKings = board.WhiteToMove ? boardAfterMove.BitBoard[ChessPiece.WhiteKing] : boardAfterMove.BitBoard[ChessPiece.BlackKing];
             var isSafe = (enemyAttackedAfterMove & myKings) == 0;
-            return isSafe ? afterMoveBitBoards : null;
+            return isSafe ? boardAfterMove : null;
         }
 
         public bool IsKingSafeAfterMove(Board board, Move move)

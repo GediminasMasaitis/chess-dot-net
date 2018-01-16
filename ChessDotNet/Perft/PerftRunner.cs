@@ -37,8 +37,9 @@ namespace ChessDotNet.Perft
                 var engineDivision = PerftService.Divide(bitBoards, i);
                 var engineMoveCount = engineDivision.Sum(x => x.Nodes);
                 sw.Stop();
-                var speed = (engineMoveCount / sw.Elapsed.TotalSeconds / 1000).ToString("0");
-                OutLine($"Engine found {engineMoveCount} possible moves in {sw.Elapsed.TotalMilliseconds} miliseconds ({speed} kN/s)");
+                var speed = engineMoveCount / sw.Elapsed.TotalSeconds;
+                var speedStr = GetSpeedDisplay(speed);
+                OutLine($"Engine found {engineMoveCount} possible moves in {sw.Elapsed.TotalMilliseconds} miliseconds ({speedStr})");
                 OutLine($"Testing client with depth {i}");
                 var clientMoveCount = Client.GetMoveCount(i);
                 OutLine($"Client found {clientMoveCount} possible moves");
@@ -53,6 +54,26 @@ namespace ChessDotNet.Perft
             }
 
             OutLine("Tests completed!");
+        }
+
+        private string GetSpeedDisplay(double speed)
+        {
+            if (speed < 10000)
+            {
+                return $"{speed:0} N/s";
+            }
+            speed /= 1000;
+            if (speed < 10000)
+            {
+                return $"{speed:0} kN/s";
+            }
+            speed /= 1000;
+            if (speed < 10000)
+            {
+                return $"{speed:0} MN/s";
+            }
+            speed /= 1000;
+            return $"{speed:0} GN/s";
         }
 
         private void FindMismatch(Board board, int mismatchDepth, IList<MoveAndNodes> engineResults, IList<string> previousBadMoves = null)
