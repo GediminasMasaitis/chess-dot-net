@@ -13,29 +13,30 @@ namespace ChessDotNet.Data
 {
     public class BitboardConstants
     {
-        public static Bitboard AllBoard { get; }
+        public static Bitboard AllBoard { get; private set; }
         public static Bitboard KnightSpan { get; private set; }
         public static Position KnightSpanPosition { get; private set; }
         public static Bitboard KingSpan { get; private set; }
         public static Position KingSpanPosition { get; private set; }
-        public static IReadOnlyList<Bitboard> Files { get; }
-        public static IReadOnlyList<Bitboard> Ranks { get; }
+        public static IReadOnlyList<Bitboard> Files { get; private set; }
+        public static IReadOnlyList<Bitboard> Ranks { get; private set; }
         public static IReadOnlyList<Bitboard> Diagonals { get; private set; }
         public static IReadOnlyList<Bitboard> Antidiagonals { get; private set; }
-        public static Bitboard KingSide { get; set; }
-        public static Bitboard QueenSide { get; set; }
+        public static Bitboard KingSide { get; private set; }
+        public static Bitboard QueenSide { get; private set; }
 
-        public static Bitboard WhiteQueenSideCastleMask { get; }
-        public static Bitboard WhiteKingSideCastleMask { get; }
-        public static Bitboard BlackQueenSideCastleMask { get; }
-        public static Bitboard BlackKingSideCastleMask { get; }
+        public static Bitboard WhiteQueenSideCastleMask { get; private set; }
+        public static Bitboard WhiteKingSideCastleMask { get; private set; }
+        public static Bitboard BlackQueenSideCastleMask { get; private set; }
+        public static Bitboard BlackKingSideCastleMask { get; private set; }
 
-        public static Bitboard WhiteQueenSideCastleAttackMask { get; }
-        public static Bitboard WhiteKingSideCastleAttackMask { get; }
-        public static Bitboard BlackKingSideCastleAttackMask { get; }
-        public static Bitboard BlackQueenSideCastleAttackMask { get; }
+        public static Bitboard WhiteQueenSideCastleAttackMask { get; private set; }
+        public static Bitboard WhiteKingSideCastleAttackMask { get; private set; }
+        public static Bitboard BlackKingSideCastleAttackMask { get; private set; }
+        public static Bitboard BlackQueenSideCastleAttackMask { get; private set; }
 
-        static BitboardConstants()
+
+        public static void Init()
         {
             KnightSpan = 43234889994UL;
             KnightSpanPosition = 18;

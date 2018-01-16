@@ -1,6 +1,6 @@
 ﻿namespace ChessDotNet.Common
 {
-    public interface IHyperbolaQuintessence
+    public interface ISlideMoveGenerator
     {
         ulong AllSlide(ulong allPieces, int position);
         ulong DiagonalAntidiagonalSlide(ulong allPieces, int position);

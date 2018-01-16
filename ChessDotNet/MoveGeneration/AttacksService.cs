@@ -6,9 +6,9 @@ namespace ChessDotNet.MoveGeneration
 {
     public class AttacksService
     {
-        public IHyperbolaQuintessence HyperbolaQuintessence { get; set; }
+        public ISlideMoveGenerator HyperbolaQuintessence { get; set; }
 
-        public AttacksService(IHyperbolaQuintessence hyperbolaQuintessence)
+        public AttacksService(ISlideMoveGenerator hyperbolaQuintessence)
         {
             HyperbolaQuintessence = hyperbolaQuintessence;
         }

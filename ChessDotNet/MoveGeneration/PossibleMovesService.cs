@@ -9,10 +9,10 @@ namespace ChessDotNet.MoveGeneration
     public class PossibleMovesService
     {
         public AttacksService AttacksService { get; set; }
-        public IHyperbolaQuintessence HyperbolaQuintessence { get; set; }
+        public ISlideMoveGenerator HyperbolaQuintessence { get; set; }
         public bool MultiThreadKingSafety { get; set; }
 
-        public PossibleMovesService(AttacksService attacksService, IHyperbolaQuintessence hyperbolaQuintessence)
+        public PossibleMovesService(AttacksService attacksService, ISlideMoveGenerator hyperbolaQuintessence)
         {
             AttacksService = attacksService;
             HyperbolaQuintessence = hyperbolaQuintessence;

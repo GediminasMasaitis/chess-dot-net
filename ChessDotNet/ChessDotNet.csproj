@@ -109,7 +109,10 @@
     <Compile Include="Data\ChessPiece.cs" />
     <Compile Include="Data\BoardFactory.cs" />
     <Compile Include="Data\HistoryEntry.cs" />
+    <Compile Include="Data\MagicBitboardGenerationEntry.cs" />
     <Compile Include="Data\MagicBitboards.cs" />
+    <Compile Include="Init\MagicBitboardsInitializer.cs" />
+    <Compile Include="MoveGeneration\SlideGeneration\MagicBitboardsService.cs" />
     <Compile Include="Data\PieceCounts.cs" />
     <Compile Include="Debugging.cs" />
     <Compile Include="Evaluation\IEvaluationService.cs" />
@@ -119,7 +122,7 @@
     <Compile Include="Hashing\BoardData.cs" />
     <Compile Include="Hashing\TranspositionTable.cs" />
     <Compile Include="MoveGeneration\AttacksService.cs" />
-    <Compile Include="MoveGeneration\HyperbolaQuintessence.cs" />
+    <Compile Include="MoveGeneration\SlideGeneration\HyperbolaQuintessence.cs" />
     <Compile Include="Evaluation\MVVLVAScoreService.cs" />
     <Compile Include="Perft\IPerftClient.cs" />
     <Compile Include="Perft\MoveAndNodes.cs" />

@@ -7,6 +7,7 @@ using System.Windows.Input;
 using ChessDotNet.Data;
 using ChessDotNet.Evaluation;
 using ChessDotNet.MoveGeneration;
+using ChessDotNet.MoveGeneration.SlideGeneration;
 using ChessDotNet.Protocols;
 using ChessDotNet.Searching;
 

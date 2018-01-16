@@ -8,7 +8,9 @@ using System.Threading.Tasks;
 using ChessDotNet.Data;
 using ChessDotNet.Evaluation;
 using ChessDotNet.Hashing;
+using ChessDotNet.Init;
 using ChessDotNet.MoveGeneration;
+using ChessDotNet.MoveGeneration.SlideGeneration;
 using ChessDotNet.Perft;
 using ChessDotNet.Protocols;
 using ChessDotNet.Searching;
@@ -19,7 +21,7 @@ namespace ChessDotNet.ConsoleTests
     {
         static void Main(string[] args)
         {
-            //Init();
+            Init();
 
             //DoMagicBitboards();
 
@@ -39,13 +41,14 @@ namespace ChessDotNet.ConsoleTests
 
         private static void Init()
         {
+            BitboardConstants.Init();
             new MagicBitboardsInitializer(new HyperbolaQuintessence()).Init();
         }
 
         private static void DoMagicBitboards()
         {
             //new BoardFactory().ParseFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").DumpConsole();
-            //new MagicBitboardsInitializer(new HyperbolaQuintessence()).Init();
+            //new MagicBitboardsInitializer(new OtherGenerator()).Init();
             //MagicBitboards.Bishops[27].BlockerMask.DumpConsole();
             //BitboardConstants.Diagonals[3].DumpConsole();
         }
@@ -86,7 +89,7 @@ namespace ChessDotNet.ConsoleTests
             var fact = new BoardFactory();
             //CppInitializer.Init();
             var hyperbola = new HyperbolaQuintessence();
-            //var hyperbola = new HyperbolaQuintessence();
+            //var hyperbola = new OtherGenerator();
             //var hyperbola = new MagicBitboardsService();
             var attacksService = new AttacksService(hyperbola);
             var movesService = new PossibleMovesService(attacksService, hyperbola);
