@@ -2,6 +2,11 @@
 using System.Collections.Generic;
 using ChessDotNet.Hashing;
 
+using Bitboard = System.UInt64;
+using Key = System.UInt64;
+using Position = System.Int32;
+using Piece = System.Byte;
+
 namespace ChessDotNet.Data
 {
     public class BoardFactory
@@ -10,7 +15,7 @@ namespace ChessDotNet.Data
         {
             fen = fen.Trim();
             var board = new Board();
-            board.ArrayBoard = new int[64];
+            board.ArrayBoard = new Piece[64];
             board.BitBoard = new ulong[13];
             board.CastlingPermissions = new bool[4];
             board.History = new HistoryEntry[0];

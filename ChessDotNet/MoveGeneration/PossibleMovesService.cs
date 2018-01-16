@@ -4,6 +4,8 @@ using System.Linq;
 using ChessDotNet.Common;
 using ChessDotNet.Data;
 
+using Piece = System.Byte;
+
 namespace ChessDotNet.MoveGeneration
 {
     public class PossibleMovesService
@@ -215,7 +217,7 @@ namespace ChessDotNet.MoveGeneration
             return moves;
         }
 
-        private IList<Move> GeneratePromotionMoves(int from, int to, int takesPiece, bool enPassant, bool forWhite)
+        private IList<Move> GeneratePromotionMoves(int from, int to, Piece takesPiece, bool enPassant, bool forWhite)
         {
             var piece = forWhite ? ChessPiece.WhitePawn : ChessPiece.BlackPawn;
             var moves = new List<Move>
@@ -254,7 +256,7 @@ namespace ChessDotNet.MoveGeneration
             ulong kingSideCastleMask;
             ulong queenSideCastleAttackMask;
             ulong kingSideCastleAttackMask;
-            int piece;
+            Piece piece;
             bool castlingPermissionQueenSide;
             bool castlingPermissionKingSide;
 
@@ -314,7 +316,7 @@ namespace ChessDotNet.MoveGeneration
             return GetPotentialJumpingMoves(board, knights, BitboardConstants.KnightSpan, BitboardConstants.KnightSpanPosition, chessPiece);
         }
 
-        private IList<Move> GetPotentialJumpingMoves(Board board, ulong jumpingPieces, ulong jumpMask, int jumpMaskCenter, int piece)
+        private IList<Move> GetPotentialJumpingMoves(Board board, ulong jumpingPieces, ulong jumpMask, int jumpMaskCenter, Piece piece)
         {
             var ownPieces = board.WhiteToMove ? board.WhitePieces : board.BlackPieces;
             var moves = new List<Move>();
@@ -386,7 +388,7 @@ namespace ChessDotNet.MoveGeneration
             return GetPotentialSlidingPieceMoves(board, bishops, HyperbolaQuintessence.AllSlide, chessPiece);
         }
 
-        private IList<Move> GetPotentialSlidingPieceMoves(Board board, ulong slidingPieces, Func<ulong, int, ulong> slideResolutionFunc, int piece)
+        private IList<Move> GetPotentialSlidingPieceMoves(Board board, ulong slidingPieces, Func<ulong, int, ulong> slideResolutionFunc, Piece piece)
         {
             var ownPieces = board.WhiteToMove ? board.WhitePieces : board.BlackPieces;
             var moves = new List<Move>();
@@ -432,7 +434,7 @@ namespace ChessDotNet.MoveGeneration
             return afterMove != null;
         }
 
-        private static IList<Move> BitmaskToMoves(Board board, ulong bitmask, int positionFrom, int piece)
+        private static IList<Move> BitmaskToMoves(Board board, ulong bitmask, int positionFrom, Piece piece)
         {
             var moves = new List<Move>();
             for (var i = 0; i < 64; i++)

@@ -2,7 +2,7 @@
 using ChessDotNet.Testing;
 
 using Position = System.Int32;
-using Piece = System.Int32;
+using Piece = System.Byte;
 
 namespace ChessDotNet.Data
 {
@@ -70,7 +70,7 @@ namespace ChessDotNet.Data
             var piece = board.ArrayBoard[from];
             var takesPiece = board.ArrayBoard[to];
             var enPassant = false;
-            int? pawnPromotesTo = null;
+            Piece? pawnPromotesTo = null;
             var isWhite = board.WhiteToMove;
             if (piece == ChessPiece.WhitePawn || piece == ChessPiece.BlackPawn)
             {

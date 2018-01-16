@@ -11,7 +11,7 @@ using Piece = System.Int32;
 
 namespace ChessDotNet.Data
 {
-    public class BitboardConstants
+    public static class BitboardConstants
     {
         public static Bitboard AllBoard { get; private set; }
         public static Bitboard KnightSpan { get; private set; }
@@ -38,6 +38,8 @@ namespace ChessDotNet.Data
 
         public static void Init()
         {
+            AllBoard = ~0UL;
+
             KnightSpan = 43234889994UL;
             KnightSpanPosition = 18;
 

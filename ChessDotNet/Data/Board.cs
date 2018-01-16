@@ -9,7 +9,7 @@ using ChessDotNet.Testing;
 using Bitboard = System.UInt64;
 using Key = System.UInt64;
 using Position = System.Int32;
-using Piece = System.Int32;
+using Piece = System.Byte;
 
 namespace ChessDotNet.Data
 {
@@ -197,10 +197,22 @@ namespace ChessDotNet.Data
 #endif
             //foreach (var pair in PiecesDict)
             var newBoard = new Board();
-            newBoard.ArrayBoard = ArrayBoard.ToArray();
-            newBoard.BitBoard = BitBoard.ToArray();
-            newBoard.CastlingPermissions = CastlingPermissions.ToArray();
+            newBoard.ArrayBoard = new Piece[ArrayBoard.Length]; //ArrayBoard.ToArray();
+            Buffer.BlockCopy(ArrayBoard, 0, newBoard.ArrayBoard, 0, ArrayBoard.Length * sizeof(Piece));
+            //Array.Copy(ArrayBoard, newBoard.ArrayBoard, ArrayBoard.Length);
+
+            newBoard.BitBoard = new Bitboard[BitBoard.Length];//BitBoard.ToArray();
+            Buffer.BlockCopy(BitBoard, 0, newBoard.BitBoard, 0, BitBoard.Length * sizeof(Bitboard));
+            //Array.Copy(BitBoard, newBoard.BitBoard, BitBoard.Length);
+
+            newBoard.CastlingPermissions = new bool[CastlingPermissions.Length];//CastlingPermissions.ToArray();
+            Buffer.BlockCopy(CastlingPermissions, 0, newBoard.CastlingPermissions, 0, CastlingPermissions.Length * sizeof(bool));
+            //Array.Copy(CastlingPermissions, newBoard.CastlingPermissions, CastlingPermissions.Length);
+
             newBoard.PieceCounts = PieceCounts.ToArray();
+            Buffer.BlockCopy(PieceCounts, 0, newBoard.PieceCounts, 0, PieceCounts.Length * sizeof(int));
+            //Array.Copy(PieceCounts, newBoard.PieceCounts, PieceCounts.Length);
+
             newBoard.WhiteMaterial = WhiteMaterial;
             newBoard.BlackMaterial = BlackMaterial;
             newBoard.Key = Key;
@@ -235,7 +247,7 @@ namespace ChessDotNet.Data
             newBoard.BitBoard[move.Piece] &= ~(1UL << move.From);
             newBoard.Key ^= ZobristKeys.ZPieces[move.From, move.Piece];
 
-            int promotedPiece;
+            Piece promotedPiece;
             if (move.PawnPromoteTo.HasValue)
             {
                 promotedPiece = move.PawnPromoteTo.Value;

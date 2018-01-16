@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 
 using Bitboard = System.UInt64;
-using Piece = System.Int32;
+using Piece = System.Byte;
 
 namespace ChessDotNet.Data
 {

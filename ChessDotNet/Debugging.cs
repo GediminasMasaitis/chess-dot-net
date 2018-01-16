@@ -8,6 +8,8 @@ using ChessDotNet.Data;
 using ChessDotNet.Evaluation;
 using ChessDotNet.Hashing;
 
+using Piece = System.Byte;
+
 namespace ChessDotNet
 {
     public static class Debugging
@@ -46,7 +48,7 @@ namespace ChessDotNet
         private static Board FromBitBoard(this ulong bitBoard)
         {
             var board = new Board();
-            board.ArrayBoard = new int[64];
+            board.ArrayBoard = new Piece[64];
             board.BitBoard = new ulong[13];
             board.CastlingPermissions = new bool[4];
             board.History = new HistoryEntry[0];
