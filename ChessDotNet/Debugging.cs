@@ -45,7 +45,7 @@ namespace ChessDotNet
             ShowBitBoard(bitBoard);
         }
 
-        private static Board FromBitBoard(this ulong bitBoard)
+        public static Board ToDebugRookBoard(this ulong bitBoard)
         {
             var board = new Board();
             board.ArrayBoard = new Piece[64];
@@ -68,8 +68,13 @@ namespace ChessDotNet
 
         public static void DumpConsole(this ulong bitBoard)
         {
-            var board = FromBitBoard(bitBoard);
+            var board = ToDebugRookBoard(bitBoard);
             board.DumpConsole(false);
+        }
+
+        public static string Print(this ulong bitBoard)
+        {
+            return bitBoard.ToDebugRookBoard().Print();
         }
 
         public static void DumpConsole(this MagicBitboardEntry generationEntry)

@@ -13,7 +13,7 @@ namespace ChessDotNet.Data
     {
         public Board ParseFEN(string fen)
         {
-            fen = fen.Trim();
+            fen = fen.Trim().Replace("/",string.Empty);
             var board = new Board();
             board.ArrayBoard = new Piece[64];
             board.BitBoard = new ulong[13];
@@ -27,61 +27,12 @@ namespace ChessDotNet.Data
                 var fixedBoardPosition = (7 - boardPosition/8)*8 + boardPosition%8;
                 var ch = fen[fenPosition];
                 var pieceBitBoard = 1UL << fixedBoardPosition;
-                switch (ch)
+                var success = TryParsePiece(ch, out var piece);
+                if (success)
                 {
-                    case 'p':
-                        board.BitBoard[ChessPiece.BlackPawn] |= pieceBitBoard;
-                        boardPosition++;
-                        continue;
-                    case 'P':
-                        board.BitBoard[ChessPiece.WhitePawn] |= pieceBitBoard;
-                        boardPosition++;
-                        continue;
-
-                    case 'n':
-                        board.BitBoard[ChessPiece.BlackKnight] |= pieceBitBoard;
-                        boardPosition++;
-                        continue;
-                    case 'N':
-                        board.BitBoard[ChessPiece.WhiteKnight] |= pieceBitBoard;
-                        boardPosition++;
-                        continue;
-
-                    case 'b':
-                        board.BitBoard[ChessPiece.BlackBishop] |= pieceBitBoard;
-                        boardPosition++;
-                        continue;
-                    case 'B':
-                        board.BitBoard[ChessPiece.WhiteBishop] |= pieceBitBoard;
-                        boardPosition++;
-                        continue;
-
-                    case 'r':
-                        board.BitBoard[ChessPiece.BlackRook] |= pieceBitBoard;
-                        boardPosition++;
-                        continue;
-                    case 'R':
-                        board.BitBoard[ChessPiece.WhiteRook] |= pieceBitBoard;
-                        boardPosition++;
-                        continue;
-
-                    case 'q':
-                        board.BitBoard[ChessPiece.BlackQueen] |= pieceBitBoard;
-                        boardPosition++;
-                        continue;
-                    case 'Q':
-                        board.BitBoard[ChessPiece.WhiteQueen] |= pieceBitBoard;
-                        boardPosition++;
-                        continue;
-
-                    case 'k':
-                        board.BitBoard[ChessPiece.BlackKing] |= pieceBitBoard;
-                        boardPosition++;
-                        continue;
-                    case 'K':
-                        board.BitBoard[ChessPiece.WhiteKing] |= pieceBitBoard;
-                        boardPosition++;
-                        continue;
+                    board.BitBoard[piece] |= pieceBitBoard;
+                    boardPosition++;
+                    continue;
                 }
 
                 byte emptySpaces;
@@ -110,6 +61,7 @@ namespace ChessDotNet.Data
             {
                 if (fenPosition >= fen.Length)
                     break;
+                bool done = false;
                 switch (fen[fenPosition])
                 {
                     case 'K':
@@ -124,15 +76,91 @@ namespace ChessDotNet.Data
                     case 'q':
                         board.CastlingPermissions[CastlePermission.BlackQueenSide] = true;
                         break;
+                    case ' ':
+                        done = true;
+                        break;
+                    case '-':
+                        fenPosition++;
+                        done = true;
+                        break;
+                    default:
+                        throw new Exception("Unknown charcacter in castling permissions");
                 }
                 fenPosition++;
+                if (done)
+                {
+                    break;
+                }
             }
+
+            if (fenPosition < fen.Length)
+            {
+                var lower = char.ToLowerInvariant(fen[fenPosition]);
+                var file = lower - 0x61;
+                //var rank = fen[fenPosition] - 0x30;
+                if (file >= 0 && file < 8)
+                {
+                    board.EnPassantFileIndex = file;
+                    board.EnPassantFile = BitboardConstants.Files[file];
+                }
+            }
+
             board.SyncExtraBitBoards();
             board.SyncBitBoardsToArrayBoard();
             board.SyncPiecesCount();
             board.SyncMaterial();
             board.Key = ZobristKeys.CalculateKey(board);
             return board;
+        }
+
+        private bool TryParsePiece(char ch, out Piece piece)
+        {
+            piece = default(Piece);
+            switch(ch)
+            {
+                case 'p': piece = ChessPiece.BlackPawn;
+                    return true;
+                case 'P': piece = ChessPiece.WhitePawn;
+                    return true;
+
+                case 'n': piece = ChessPiece.BlackKnight;
+                    return true;
+                case 'N': piece = ChessPiece.WhiteKnight;
+                    return true;
+
+                case 'b': piece = ChessPiece.BlackBishop;
+                    return true;
+                case 'B': piece = ChessPiece.WhiteBishop;
+                    return true;
+
+                case 'r': piece = ChessPiece.BlackRook;
+                    return true;
+                case 'R': piece = ChessPiece.WhiteRook;
+                    return true;
+
+                case 'q': piece = ChessPiece.BlackQueen;
+                    return true;
+                case 'Q': piece = ChessPiece.WhiteKing;
+                    return true;
+
+                case 'k': piece = ChessPiece.BlackKing;
+                    return true;
+                case 'K': piece = ChessPiece.WhiteKing;
+                    return true;
+
+                default:
+                    return false;
+            }
+        }
+
+        private Piece ParsePiece(char ch)
+        {
+            var success = TryParsePiece(ch, out var piece);
+            if (!success)
+            {
+                throw new Exception("Failed to parse piece character");
+            }
+            return piece;
         }
 
         public ulong PiecesToBitBoard(IEnumerable<int> pieces)

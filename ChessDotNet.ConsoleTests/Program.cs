@@ -81,8 +81,8 @@ namespace ChessDotNet.ConsoleTests
 
         private static void DoPerft()
         {
-            var fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-            //fen = "3k4/3p4/8/K1P4r/8/8/8/8 b - - 0 50";
+            //var fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+            var fen = "8/8/1k6/2b5/2pP4/8/5K2/8 b - d3 0 1";
             //fen = "8/1kP5/8/K2p3r/8/8/8/8 w - - 1 53 ";
             //fen = "r1b1k2r/ppppnppp/2n2q2/2b5/3NP3/2P1B3/PP3PPP/RN1QKB1R w KQkq - 0 1";
             //fen = "2k5/8/8/8/8/8/6p1/2K5 w - - 1 1 ";
@@ -95,12 +95,13 @@ namespace ChessDotNet.ConsoleTests
             var movesService = new PossibleMovesService(attacksService, hyperbola);
             var perft = new PerftService(movesService);
             perft.MultiThreaded = false;
-            var results = perft.GetPossibleMoves(fact.ParseFEN(fen), 1);
+            var board = fact.ParseFEN(fen);
+            var results = perft.GetPossibleMoves(board, 1);
             using (var sharperClient = new SharperPerftClient(@"C:\sharper\Sharper.exe"))
             {
                 var perftRunner = new PerftRunner(perft, sharperClient, fact);
                 perftRunner.OnOut += Console.Write;
-                perftRunner.Test(fen, 6);
+                perftRunner.Test(fen, 1);
             }
         }
 
