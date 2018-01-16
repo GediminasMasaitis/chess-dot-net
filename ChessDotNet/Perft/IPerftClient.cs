@@ -7,5 +7,8 @@ namespace ChessDotNet.Perft
     {
         int GetMoveCount(int depth);
         IList<MoveAndNodes> GetMovesAndNodes(int depth, IEnumerable<string> moves);
+
+        void SetBoard(string fen);
+        void SendCommands(IEnumerable<string> commands);
     }
 }

@@ -26,7 +26,8 @@ namespace ChessDotNet.ConsoleTests
             //DoMagicBitboards();
 
             //DoTimings();
-            DoPerft();
+            //DoPerft();
+            DoPerftSuite();
             //TestMove();
             //TestZobrist();
             //TestRepetitions();
@@ -95,11 +96,28 @@ namespace ChessDotNet.ConsoleTests
             var perft = new PerftService(movesService);
             perft.MultiThreaded = false;
             var results = perft.GetPossibleMoves(fact.ParseFEN(fen), 1);
-            using (var sharperClient = new SharperPerftClient(@"C:\sharper\Sharper.exe", fen))
+            using (var sharperClient = new SharperPerftClient(@"C:\sharper\Sharper.exe"))
             {
                 var perftRunner = new PerftRunner(perft, sharperClient, fact);
                 perftRunner.OnOut += Console.Write;
                 perftRunner.Test(fen, 6);
+            }
+        }
+
+        private static void DoPerftSuite()
+        {
+            var fact = new BoardFactory();
+            var hyperbola = new MagicBitboardsService();
+            var attacksService = new AttacksService(hyperbola);
+            var movesService = new PossibleMovesService(attacksService, hyperbola);
+            var perft = new PerftService(movesService);
+            //perft.MultiThreaded = false;
+            using(var sharperClient = new SharperPerftClient(@"C:\sharper\Sharper.exe"))
+            {
+                var perftRunner = new PerftRunner(perft, sharperClient, fact);
+                var suite = new PerftSuite(perftRunner);
+                perftRunner.OnOut += Console.Write;
+                suite.Run();
             }
         }
 

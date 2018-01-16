@@ -130,6 +130,7 @@
     <Compile Include="Perft\MoveAndNodes.cs" />
     <Compile Include="Perft\PerftService.cs" />
     <Compile Include="Perft\PerftRunner.cs" />
+    <Compile Include="Perft\PerftSuite.cs" />
     <Compile Include="Perft\SharperPerftClient.cs" />
     <Compile Include="Data\PieceColor.cs" />
     <Compile Include="MoveGeneration\PossibleMovesService.cs" />

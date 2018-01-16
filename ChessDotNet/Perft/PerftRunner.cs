@@ -26,8 +26,9 @@ namespace ChessDotNet.Perft
 
         public void Test(string fen, int depth)
         {
+            Client.SetBoard(fen);
             var bitBoards = BoardFactory.ParseFEN(fen);
-            OutLine($"Running perft testing, up to depth {depth}");
+            OutLine($"Running perft testing, up to depth {depth}. FEN: {fen}");
             OutLine(string.Empty);
             var sw = new Stopwatch();
             for (var i = 1; i <= depth; i++)
