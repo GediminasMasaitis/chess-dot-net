@@ -6,13 +6,19 @@ using Piece = System.Int32;
 
 namespace ChessDotNet.Data
 {
-    public class MagicBitboardGenerationEntry
+    public class MagicBitboardEntry
     {
-        public int Position { get; set; }
-        public Bitboard BlockerMask { get; set; }
-        public Bitboard MagicNumber { get; set; }
-        public byte BitCount { get; set; }
-        public IReadOnlyList<Bitboard> Occupancies { get; set; }
-        public IReadOnlyList<Bitboard> Moveboards { get; set; }
+        public MagicBitboardEntry(ulong blockerMask, ulong magicNumber, byte offset, IReadOnlyList<ulong> moveboards)
+        {
+            BlockerMask = blockerMask;
+            MagicNumber = magicNumber;
+            Offset = offset;
+            Moveboards = moveboards;
+        }
+
+        public Bitboard BlockerMask { get; }
+        public Bitboard MagicNumber { get; }
+        public byte Offset { get; }
+        public IReadOnlyList<Bitboard> Moveboards { get; }
     }
 }

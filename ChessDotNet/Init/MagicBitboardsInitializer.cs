@@ -1,24 +1,41 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using ChessDotNet.Common;
 using ChessDotNet.Data;
+
+using Bitboard = System.UInt64;
+using Key = System.UInt64;
+using Position = System.Int32;
+using Piece = System.Int32;
 
 namespace ChessDotNet.Init
 {
     public class MagicBitboardsInitializer
     {
-        public ISlideMoveGenerator OtherGenerator { get; }
-        private Random RNG { get; set; }
+        private class MagicBitboardGenerationEntry
+        {
+            public int Position { get; set; }
+            public bool Bishop { get; set; }
+            public Bitboard BlockerMask { get; set; }
+            public Bitboard MagicNumber { get; set; }
+            public byte BitCount { get; set; }
+            public IReadOnlyList<Bitboard> Occupancies { get; set; }
+            public IReadOnlyList<Bitboard> Moveboards { get; set; }
+        }
 
-        public MagicBitboardsInitializer(ISlideMoveGenerator otherGenerator)
+        public ISlideMoveGenerator OtherGenerator { get; }
+        public IMagicNumberCandidateProvider CandidateProvider { get; }
+
+        public MagicBitboardsInitializer(ISlideMoveGenerator otherGenerator, IMagicNumberCandidateProvider candidateProvider)
         {
             OtherGenerator = otherGenerator;
+            CandidateProvider = candidateProvider;
         }
 
         public void Init()
         {
-            RNG = new Random(0);
             var rooks = new MagicBitboardGenerationEntry[64];
             var bishops = new MagicBitboardGenerationEntry[64];
             var positions = Enumerable.Range(0, 64);
@@ -31,7 +48,7 @@ namespace ChessDotNet.Init
                 var antidiagonal = rank - file + 7;
 
 
-                UInt64 rookMask = BitboardConstants.Ranks[rank];
+                Bitboard rookMask = BitboardConstants.Ranks[rank];
                 rookMask |= BitboardConstants.Files[file];
                 if (rank != 0) rookMask &= ~BitboardConstants.Ranks[0];
                 if (rank != 7) rookMask &= ~BitboardConstants.Ranks[7];
@@ -41,7 +58,7 @@ namespace ChessDotNet.Init
                 var rookEntry = InitEntry(rookMask, false, pos);
                 rooks[pos] = rookEntry;
 
-                UInt64 bishopMask = BitboardConstants.Diagonals[diagonal];
+                Bitboard bishopMask = BitboardConstants.Diagonals[diagonal];
                 bishopMask |= BitboardConstants.Antidiagonals[antidiagonal];
                 bishopMask &= ~BitboardConstants.Ranks[0];
                 bishopMask &= ~BitboardConstants.Ranks[7];
@@ -51,15 +68,32 @@ namespace ChessDotNet.Init
                 var bishopEntry = InitEntry(bishopMask, true, pos);
                 bishops[pos] = bishopEntry;
             }//);
-            MagicBitboards.Rooks = rooks;
-            MagicBitboards.Bishops = bishops;
+            MagicBitboards.Rooks = rooks.Select(x => new MagicBitboardEntry(x.BlockerMask, x.MagicNumber, (byte)(64 - x.BitCount), x.Moveboards)).ToArray();
+            MagicBitboards.Bishops = bishops.Select(x => new MagicBitboardEntry(x.BlockerMask, x.MagicNumber, (byte)(64 - x.BitCount), x.Moveboards)).ToArray();
+            //PrintBitboardArray(rooks.Select(x => x.MagicNumber).ToList());
+            //PrintBitboardArray(bishops.Select(x => x.MagicNumber).ToList());
         }
 
-        private MagicBitboardGenerationEntry InitEntry(UInt64 mask, bool bishop, int pos)
+        private void PrintBitboardArray(IReadOnlyList<Bitboard> bitboards)
+        {
+            var sb = new StringBuilder();
+            for (var i = 0; i < bitboards.Count; i++)
+            {
+                if (i % 8 == 0)
+                {
+                    sb.AppendLine();
+                }
+                sb.Append($"0x{bitboards[i]:X8},");
+            }
+            Console.WriteLine(sb);
+        }
+
+        private MagicBitboardGenerationEntry InitEntry(Bitboard mask, bool bishop, int pos)
         {
             var entry = new MagicBitboardGenerationEntry();
             entry.Position = pos;
             entry.BlockerMask = mask;
+            entry.Bishop = bishop;
             var bits = new List<int>();
             for(var i = 0; i < 64; i++)
             {
@@ -71,14 +105,14 @@ namespace ChessDotNet.Init
 
             var permutations = 1 << bits.Count;
             entry.BitCount = (byte)bits.Count;
-            var occupancies = new UInt64[permutations];
+            var occupancies = new Bitboard[permutations];
             entry.Occupancies = occupancies;
-            var moveboards = new UInt64[permutations];
+            var moveboards = new Bitboard[permutations];
             entry.Moveboards = moveboards;
 
             for(var i = 0; i < permutations; i++)
             {
-                UInt64 occMask = 0;
+                Bitboard occMask = 0;
                 for(var j = 0; j < bits.Count; j++)
                 {
                     var shouldSet = (i & (1 << j)) > 0;
@@ -89,16 +123,9 @@ namespace ChessDotNet.Init
                     }
                 }
 
-                //mask.DumpConsole();
-
                 occupancies[i] = occMask;
-                //occMask.DumpConsole();
-
                 var moveboard = bishop ? OtherGenerator.DiagonalAntidiagonalSlide(occMask, pos) : OtherGenerator.HorizontalVerticalSlide(occMask, pos);
                 moveboards[i] = moveboard;
-                //moveboard.DumpConsole();
-
-                //Console.WriteLine("----------------------");
             }
 
             entry.MagicNumber = FindMagicNumber(entry);
@@ -106,58 +133,27 @@ namespace ChessDotNet.Init
             return entry;
         }
 
-        private UInt64 GetRandomBitboard()
+
+        private Bitboard FindMagicNumber(MagicBitboardGenerationEntry generationEntry)
         {
-            var buf = new byte[8];
-            RNG.NextBytes(buf);
-            var bb = BitConverter.ToUInt64(buf,0);
-            return bb;
-        }
+            const Bitboard invalid = ~0UL;
 
-        public UInt64 GetMagicNumberCandidate(MagicBitboardGenerationEntry generationEntry)
-        {
-            var magicNumber = GetRandomBitboard() & GetRandomBitboard() & GetRandomBitboard();
-            return magicNumber;
-        }
-
-        private UInt64 FindMagicNumber(MagicBitboardGenerationEntry generationEntry)
-        {
-            /*for (var i = 0; i < 65; i++)
-            {
-                generationEntry.Occupancies[i].DumpConsole();
-                generationEntry.Moveboards[i].DumpConsole();
-                Console.WriteLine("------");
-            }*/
-
-            const UInt64 invalid = ~0UL;
-
-            UInt64 magicNumber = 0UL;
+            Bitboard magicNumber = 0UL;
             var success = false;
             ulong iterations = 0;
             while (true)
             {
                 var table = Enumerable.Repeat(invalid, 1 << generationEntry.BitCount).ToArray();
                 iterations++;
-                magicNumber = GetMagicNumberCandidate(generationEntry);
-                //magicNumber.DumpConsole();
+                magicNumber = CandidateProvider.GetMagicNumberCandidate(generationEntry.Position, generationEntry.Bishop);
                 success = true;
                 for (var i = 0; i < generationEntry.Occupancies.Count; i++)
                 {
-                    //if (i == 65)
-                    //{
-                    //   Console.WriteLine("Reached " + i);
-                    //}
                     var occupancy = generationEntry.Occupancies[i];
                     var moveboard = generationEntry.Moveboards[i];
                     var multiplied = (occupancy * magicNumber);
-
-                    //multiplied.DumpConsole();
-
                     var magicIndex = multiplied >> (64 - generationEntry.BitCount);
                     var magicIndexInt = (int) magicIndex;
-                    //magicIndex.DumpConsole();
-
-                    //var result = generationEntry.Moveboards[(int)magicIndex];
                     if (table[magicIndexInt] == invalid || table[magicIndexInt] == moveboard)
                     {
                         table[magicIndexInt] = moveboard;
@@ -177,7 +173,7 @@ namespace ChessDotNet.Init
                 }
             }
 
-            Console.WriteLine($"{generationEntry.Position}: success in {iterations} iterations");
+            //Console.WriteLine($"{generationEntry.Position}: success in {iterations} iterations");
             return magicNumber;
         }
     }

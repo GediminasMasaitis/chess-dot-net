@@ -42,7 +42,7 @@ namespace ChessDotNet.ConsoleTests
         private static void Init()
         {
             BitboardConstants.Init();
-            new MagicBitboardsInitializer(new HyperbolaQuintessence()).Init();
+            new MagicBitboardsInitializer(new HyperbolaQuintessence(), new KnownMagicNumberProvider()).Init();
         }
 
         private static void DoMagicBitboards()
@@ -88,9 +88,8 @@ namespace ChessDotNet.ConsoleTests
             //fen = "rnbqkbnr/1ppppppp/8/p7/1P6/P7/2PPPPPP/RNBQKBNR b KQkq b3 0 2 ";
             var fact = new BoardFactory();
             //CppInitializer.Init();
-            var hyperbola = new HyperbolaQuintessence();
-            //var hyperbola = new OtherGenerator();
-            //var hyperbola = new MagicBitboardsService();
+            //var hyperbola = new HyperbolaQuintessence();
+            var hyperbola = new MagicBitboardsService();
             var attacksService = new AttacksService(hyperbola);
             var movesService = new PossibleMovesService(attacksService, hyperbola);
             var perft = new PerftService(movesService);

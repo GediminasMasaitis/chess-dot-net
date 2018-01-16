@@ -24,11 +24,11 @@ namespace ChessDotNet.MoveGeneration.SlideGeneration
             return Foo(allPieces, position, MagicBitboards.Bishops);
         }
 
-        private UInt64 Foo(ulong allPieces, int position, IReadOnlyList<MagicBitboardGenerationEntry> entries)
+        private UInt64 Foo(ulong allPieces, int position, IReadOnlyList<MagicBitboardEntry> entries)
         {
             var entry = entries[position];
             var occupancy = allPieces & entry.BlockerMask;
-            var index = (occupancy * entry.MagicNumber) >> (64 - entry.BitCount);
+            var index = (occupancy * entry.MagicNumber) >> entry.Offset;
             var indexInt = (int) index;
             var moveboard = entry.Moveboards[indexInt];
             return moveboard;

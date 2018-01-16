@@ -7,7 +7,7 @@ namespace ChessDotNet.Data
 {
     public class MagicBitboards
     {
-        public static IReadOnlyList<MagicBitboardGenerationEntry> Rooks { get; set; }
-        public static IReadOnlyList<MagicBitboardGenerationEntry> Bishops { get; set; }
+        public static IReadOnlyList<MagicBitboardEntry> Rooks { get; set; }
+        public static IReadOnlyList<MagicBitboardEntry> Bishops { get; set; }
     }
 }

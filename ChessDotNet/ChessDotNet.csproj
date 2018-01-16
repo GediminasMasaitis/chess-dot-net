@@ -111,6 +111,8 @@
     <Compile Include="Data\HistoryEntry.cs" />
     <Compile Include="Data\MagicBitboardGenerationEntry.cs" />
     <Compile Include="Data\MagicBitboards.cs" />
+    <Compile Include="Init\IMagicNumberCandidateProvider.cs" />
+    <Compile Include="Init\KnownMagicNumberProvider.cs" />
     <Compile Include="Init\MagicBitboardsInitializer.cs" />
     <Compile Include="MoveGeneration\SlideGeneration\MagicBitboardsService.cs" />
     <Compile Include="Data\PieceCounts.cs" />

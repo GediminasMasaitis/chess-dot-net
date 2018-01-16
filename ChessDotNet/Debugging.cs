@@ -70,7 +70,7 @@ namespace ChessDotNet
             board.DumpConsole(false);
         }
 
-        public static void DumpConsole(this MagicBitboardGenerationEntry generationEntry)
+        public static void DumpConsole(this MagicBitboardEntry generationEntry)
         {
             Console.WriteLine("Blocker mask:");
             generationEntry.BlockerMask.Dump();
