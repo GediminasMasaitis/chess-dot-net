@@ -2,6 +2,11 @@ using System;
 using ChessDotNet.Common;
 using ChessDotNet.Data;
 
+using Bitboard = System.UInt64;
+using Key = System.UInt64;
+using Position = System.Int32;
+using Piece = System.Int32;
+
 namespace ChessDotNet.MoveGeneration
 {
     public class AttacksService
@@ -24,10 +29,10 @@ namespace ChessDotNet.MoveGeneration
             //var queensAttack = GetAttackedByQueens(bitBoards, forWhite);
 
             var bq = byWhite.Value ? board.BitBoard[ChessPiece.WhiteBishop] | board.BitBoard[ChessPiece.WhiteQueen] : board.BitBoard[ChessPiece.BlackBishop] | board.BitBoard[ChessPiece.BlackQueen];
-            var bqAttack = GetAttackedBySlidingPieces(board, bq, HyperbolaQuintessence.DiagonalAntidiagonalSlide);
+            var bqAttack = GetAttackedBySlidingPieces(board.AllPieces, bq, true);
 
             var rq = byWhite.Value ? board.BitBoard[ChessPiece.WhiteRook] | board.BitBoard[ChessPiece.WhiteQueen] : board.BitBoard[ChessPiece.BlackRook] | board.BitBoard[ChessPiece.BlackQueen];
-            var rqAttack = GetAttackedBySlidingPieces(board, rq, HyperbolaQuintessence.HorizontalVerticalSlide);
+            var rqAttack = GetAttackedBySlidingPieces(board.AllPieces, rq, false);
 
             var kingsAttack = GetAttackedByKings(board, byWhite);
 
@@ -35,7 +40,7 @@ namespace ChessDotNet.MoveGeneration
             return allAttacked;
         }
 
-        public ulong GetAttackedByBishops(Board board, bool? byWhite = null)
+        /*public ulong GetAttackedByBishops(Board board, bool? byWhite = null)
         {
             var bishops = (byWhite ?? board.WhiteToMove) ? board.BitBoard[ChessPiece.WhiteBishop] : board.BitBoard[ChessPiece.BlackBishop];
             return GetAttackedBySlidingPieces(board, bishops, HyperbolaQuintessence.DiagonalAntidiagonalSlide);
@@ -51,7 +56,7 @@ namespace ChessDotNet.MoveGeneration
         {
             var queens = (byWhite ?? board.WhiteToMove) ? board.BitBoard[ChessPiece.WhiteQueen] : board.BitBoard[ChessPiece.BlackQueen];
             return GetAttackedBySlidingPieces(board, queens, HyperbolaQuintessence.AllSlide);
-        }
+        }*/
 
         public ulong GetAttackedByKings(Board board, bool? byWhite = null)
         {
@@ -82,13 +87,13 @@ namespace ChessDotNet.MoveGeneration
             return pawnsLeft | pawnsRight;
         }
 
-        private ulong GetAttackedBySlidingPieces(Board board, ulong slidingPieces, Func<ulong, int, ulong> slideResolutionFunc)
+        private ulong GetAttackedBySlidingPieces(Bitboard allPieces, ulong slidingPieces, bool diagonal)
         {
             var allSlide = 0UL;
             while (slidingPieces != 0)
             {
                 var i = slidingPieces.BitScanForward();
-                var slide = slideResolutionFunc.Invoke(board.AllPieces, i);
+                var slide = diagonal ? HyperbolaQuintessence.DiagonalAntidiagonalSlide(allPieces, i) : HyperbolaQuintessence.HorizontalVerticalSlide(allPieces, i);
                 allSlide |= slide;
                 slidingPieces &= ~(1UL << i);
             }

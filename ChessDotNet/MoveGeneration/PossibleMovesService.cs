@@ -4,6 +4,7 @@ using System.Linq;
 using ChessDotNet.Common;
 using ChessDotNet.Data;
 
+using Bitboard = System.UInt64;
 using Piece = System.Byte;
 
 namespace ChessDotNet.MoveGeneration
@@ -357,7 +358,7 @@ namespace ChessDotNet.MoveGeneration
         {
             var rooks = board.WhiteToMove ? board.BitBoard[ChessPiece.WhiteRook] : board.BitBoard[ChessPiece.BlackRook];
             var chessPiece = board.WhiteToMove ? ChessPiece.WhiteRook : ChessPiece.BlackRook;
-            return GetPotentialSlidingPieceMoves(board, rooks, HyperbolaQuintessence.HorizontalVerticalSlide, chessPiece);
+            return GetPotentialSlidingPieceMoves(board, rooks, chessPiece);
         }
 
         public IList<Move> GetPossibleBishopMoves(Board board)
@@ -371,7 +372,7 @@ namespace ChessDotNet.MoveGeneration
         {
             var bishops = board.WhiteToMove ? board.BitBoard[ChessPiece.WhiteBishop] : board.BitBoard[ChessPiece.BlackBishop];
             var chessPiece = board.WhiteToMove ? ChessPiece.WhiteBishop : ChessPiece.BlackBishop;
-            return GetPotentialSlidingPieceMoves(board, bishops, HyperbolaQuintessence.DiagonalAntidiagonalSlide, chessPiece);
+            return GetPotentialSlidingPieceMoves(board, bishops, chessPiece);
         }
 
         public IList<Move> GetPossibleQueenMoves(Board board)
@@ -385,17 +386,35 @@ namespace ChessDotNet.MoveGeneration
         {
             var bishops = board.WhiteToMove ? board.BitBoard[ChessPiece.WhiteQueen] : board.BitBoard[ChessPiece.BlackQueen];
             var chessPiece = board.WhiteToMove ? ChessPiece.WhiteQueen : ChessPiece.BlackQueen;
-            return GetPotentialSlidingPieceMoves(board, bishops, HyperbolaQuintessence.AllSlide, chessPiece);
+            return GetPotentialSlidingPieceMoves(board, bishops, chessPiece);
         }
 
-        private IList<Move> GetPotentialSlidingPieceMoves(Board board, ulong slidingPieces, Func<ulong, int, ulong> slideResolutionFunc, Piece piece)
+        private IList<Move> GetPotentialSlidingPieceMoves(Board board, ulong slidingPieces, Piece piece)
         {
             var ownPieces = board.WhiteToMove ? board.WhitePieces : board.BlackPieces;
             var moves = new List<Move>();
             while (slidingPieces != 0)
             {
                 var i = slidingPieces.BitScanForward();
-                var slide = slideResolutionFunc.Invoke(board.AllPieces, i);
+                //var slide = slideResolutionFunc.Invoke(board.AllPieces, i);
+                Bitboard slide;
+                switch (piece)
+                {
+                    case ChessPiece.WhiteRook:
+                    case ChessPiece.BlackRook:
+                        slide = HyperbolaQuintessence.HorizontalVerticalSlide(board.AllPieces, i);
+                        break;
+                    case ChessPiece.WhiteBishop:
+                    case ChessPiece.BlackBishop:
+                        slide = HyperbolaQuintessence.DiagonalAntidiagonalSlide(board.AllPieces, i);
+                        break;
+                    case ChessPiece.WhiteQueen:
+                    case ChessPiece.BlackQueen:
+                        slide = HyperbolaQuintessence.AllSlide(board.AllPieces, i);
+                        break;
+                    default:
+                        throw new Exception($"Attempted to generate slide attacks for a non-sliding piece: {piece}");
+                }
                 slide &= ~ownPieces;
                 foreach (var move in BitmaskToMoves(board, slide, i, piece))
                 {
@@ -444,7 +463,7 @@ namespace ChessDotNet.MoveGeneration
             return afterMove != null;
         }
 
-        private static IList<Move> BitmaskToMoves(Board board, ulong bitmask, int positionFrom, Piece piece)
+        private static IList<Move> BitmaskToMoves(Board board, Bitboard bitmask, int positionFrom, Piece piece)
         {
             var moves = new List<Move>();
             for (var i = 0; i < 64; i++)
