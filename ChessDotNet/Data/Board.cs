@@ -209,7 +209,7 @@ namespace ChessDotNet.Data
             Buffer.BlockCopy(CastlingPermissions, 0, newBoard.CastlingPermissions, 0, CastlingPermissions.Length * sizeof(bool));
             //Array.Copy(CastlingPermissions, newBoard.CastlingPermissions, CastlingPermissions.Length);
 
-            newBoard.PieceCounts = PieceCounts.ToArray();
+            newBoard.PieceCounts = new int[PieceCounts.Length];//PieceCounts.ToArray();
             Buffer.BlockCopy(PieceCounts, 0, newBoard.PieceCounts, 0, PieceCounts.Length * sizeof(int));
             //Array.Copy(PieceCounts, newBoard.PieceCounts, PieceCounts.Length);
 

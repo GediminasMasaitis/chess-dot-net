@@ -406,7 +406,7 @@ namespace ChessDotNet.MoveGeneration
             return moves;
         }
 
-        private IList<Move> FilterMovesByKingSafety(Board board, IEnumerable<Move> moves)
+        private IList<Move> FilterMovesByKingSafety(Board board, IList<Move> moves)
         {
             if (MultiThreadKingSafety)
             {
@@ -414,7 +414,17 @@ namespace ChessDotNet.MoveGeneration
             }
             else
             {
-                return moves.Where(x => IsKingSafeAfterMove(board, x)).ToList();
+                var filteredMoves = new List<Move>(moves.Count);
+                foreach (var move in moves)
+                {
+                    var safe = IsKingSafeAfterMove(board, move);
+                    if (safe)
+                    {
+                        filteredMoves.Add(move);
+                    }
+                }
+                return filteredMoves;
+                //return moves.Where(x => IsKingSafeAfterMove(board, x)).ToList();
             }
         }
 
