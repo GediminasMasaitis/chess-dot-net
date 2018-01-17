@@ -7,9 +7,10 @@ using ChessDotNet.Hashing;
 using ChessDotNet.Testing;
 
 using Bitboard = System.UInt64;
-using Key = System.UInt64;
+using ZobristKey = System.UInt64;
 using Position = System.Byte;
 using Piece = System.Byte;
+using TTFlag = System.Byte;
 
 namespace ChessDotNet.Data
 {
@@ -28,7 +29,7 @@ namespace ChessDotNet.Data
         public Piece[] ArrayBoard { get; set; }
         public int EnPassantFileIndex { get; set; }
         public Bitboard EnPassantFile { get; set; }
-        public Key Key { get; set; }
+        public ZobristKey Key { get; set; }
 
         public HistoryEntry[] History { get; set; }
         public int LastTookPieceHistoryIndex { get; set; }

@@ -139,13 +139,15 @@
     <Compile Include="Protocols\IInterruptor.cs" />
     <Compile Include="Protocols\UCIProtocol.cs" />
     <Compile Include="Evaluation\EvaluationService.cs" />
+    <Compile Include="Searching\ISearchService.cs" />
+    <Compile Include="Searching\NewSearchService.cs" />
     <Compile Include="Searching\SearchInfo.cs" />
     <Compile Include="Searching\SearchParams.cs" />
     <Compile Include="Searching\SearchService.cs" />
     <Compile Include="Hashing\ZobristKeys.cs" />
     <Compile Include="Protocols\ConsoleInterruptor.cs" />
     <Compile Include="Searching\SearchTTEntry.cs" />
-    <Compile Include="Searching\SearchTTFlags.cs" />
+    <Compile Include="Searching\TTFlags.cs" />
     <Compile Include="Testing\AssertionFailedException.cs" />
     <Compile Include="Testing\Test.cs" />
   </ItemGroup>

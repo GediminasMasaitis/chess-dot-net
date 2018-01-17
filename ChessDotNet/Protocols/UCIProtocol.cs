@@ -13,7 +13,7 @@ namespace ChessDotNet.Protocols
         public UCIProtocol(IInterruptor interruptor)
         {
             Game = new Game(interruptor);
-            Game.Search.OnSearchInfo += OnOnSearchInfo;
+            Game.Search.SearchInfo += OnOnSearchInfo;
         }
 
         private void OnOnSearchInfo(SearchInfo searchInfo)

@@ -26,12 +26,12 @@ namespace ChessDotNet.ConsoleTests
             //DoMagicBitboards();
 
             //DoTimings();
-            DoPerft();
+            //DoPerft();
             //DoPerftSuite();
             //TestMove();
             //TestZobrist();
             //TestRepetitions();
-            //DoSearch();
+            DoSearch();
             //Console.WriteLine(new BoardFactory().ParseFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").Print());
             //var pos = 27;
             //Debugging.ShowBitBoard(EvaluationService.PassedPawnMasksWhite[pos], EvaluationService.PassedPawnMasksBlack[pos], EvaluationService.IsolatedPawnMasks[pos]);
@@ -101,7 +101,7 @@ namespace ChessDotNet.ConsoleTests
             {
                 var perftRunner = new PerftRunner(perft, sharperClient, fact);
                 perftRunner.OnOut += Console.Write;
-                perftRunner.Test(fen, 5);
+                perftRunner.Test(fen, 6);
             }
         }
 
@@ -214,8 +214,8 @@ namespace ChessDotNet.ConsoleTests
         {
             var fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"; // Starting pos
             //fen = "2rr3k/pp3pp1/1nnqbN1p/3pN3/2pP4/2P3Q1/PPB4P/R4RK1 w - -"; // Mate in 3
-            fen = "r1b1k2r/ppppnppp/2n2q2/2b5/3NP3/2P1B3/PP3PPP/RN1QKB1R w KQkq - 0 1"; // Developed
-            fen = "r1b1kb1r/2pp1ppp/1np1q3/p3P3/2P5/1P6/PB1NQPPP/R3KB1R b KQkq - 0 1 "; // Midgame
+            //fen = "r1b1k2r/ppppnppp/2n2q2/2b5/3NP3/2P1B3/PP3PPP/RN1QKB1R w KQkq - 0 1"; // Developed
+            //fen = "r1b1kb1r/2pp1ppp/1np1q3/p3P3/2P5/1P6/PB1NQPPP/R3KB1R b KQkq - 0 1 "; // Midgame
             var fact = new BoardFactory();
             var board = fact.ParseFEN(fen);
 
@@ -225,7 +225,7 @@ namespace ChessDotNet.ConsoleTests
             var movesService = new PossibleMovesService(attacksService, hyperbola);
             var interruptor = new ConsoleInterruptor();
             var searchService = new SearchService(movesService, evaluationService, interruptor);
-            searchService.OnSearchInfo += info => Console.WriteLine(info.ToString());
+            searchService.SearchInfo += info => Console.WriteLine(info.ToString());
             var sParams = new SearchParams();
             //sParams.MaxDepth = 5;
             sParams.Infinite = true;

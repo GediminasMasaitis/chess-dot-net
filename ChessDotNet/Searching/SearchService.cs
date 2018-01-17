@@ -12,23 +12,35 @@ using ChessDotNet.MoveGeneration;
 using ChessDotNet.Protocols;
 using ChessDotNet.Testing;
 
+using Bitboard = System.UInt64;
+using ZobristKey = System.UInt64;
+using Position = System.Byte;
+using Piece = System.Byte;
+using TTFlag = System.Byte;
+
 namespace ChessDotNet.Searching
 {
-    public class SearchService
+    public class SearchService : ISearchService
     {
         public PossibleMovesService PossibleMovesService { get; set; }
         public IEvaluationService EvaluationService { get; set; }
         public IInterruptor Interruptor { get; set; }
 
-        public event Action<SearchInfo> OnSearchInfo;
+        public event Action<SearchInfo> SearchInfo;
 
-        private bool Stopped { get; set; }
         private const int Inf = int.MaxValue;
         private const int MaxDepth = 64;
+        private const int MateScore = 50000;
+        private const int MateThereshold = 49000;
+
+        private bool Stopped { get; set; }
 
         private TranspositionTable<SearchTTEntry> TTable { get; set; }
         private int[,] SearchKillers { get; set; }
         private int[,] SearchHistory { get; set; }
+
+
+        // Stats
 
         private long FailHigh { get; set; }
         private long FailHighFirst { get; set; }
@@ -36,8 +48,6 @@ namespace ChessDotNet.Searching
         private long NullMoveCutOffs { get; set; }
         private long NodesSearched { get; set; }
 
-        private const int MateScore = 50000;
-        private const int MateThereshold = 49000;
 
         public SearchService(PossibleMovesService possibleMovesService, IEvaluationService evaluationService, IInterruptor interruptor)
         {
@@ -86,7 +96,7 @@ namespace ChessDotNet.Searching
             var timeRemaining = board.WhiteToMove ? searchParams.WhiteTime : searchParams.BlackTime;
             var allowedForMove = searchParams.Infinite ? int.MaxValue : timeRemaining / 30;
             var maxDepth = searchParams.MaxDepth ?? 64;
-            var i = 1;
+            byte i = 1;
             int alpha = -Inf;
             int beta = Inf;
             const bool aspirationWindows = false;
@@ -144,7 +154,7 @@ namespace ChessDotNet.Searching
                     searchInfo.MateIn = MateScore - score;
                 }
 
-                OnSearchInfo?.Invoke(searchInfo);
+                SearchInfo?.Invoke(searchInfo);
 
                 if (score > MateThereshold)
                 {
@@ -244,7 +254,7 @@ namespace ChessDotNet.Searching
             moves[bestScoreIndex] = temp;
         }
 
-        public int PrincipalVariationSearch(int alpha, int beta, Board board, int depth, int currentDepth, bool allowNullMoveSearch)
+        public int PrincipalVariationSearch(int alpha, int beta, Board board, byte depth, byte currentDepth, bool allowNullMoveSearch)
         {
 #if TEST
             Test.Assert(beta > alpha);
@@ -280,7 +290,6 @@ namespace ChessDotNet.Searching
 
             if (depth <= 0)
             {
-                // quiessence next
                 return Quiessence(alpha, beta, board, currentDepth);
             }
 
@@ -305,20 +314,20 @@ namespace ChessDotNet.Searching
                 {
                     switch (foundEntry.Flag)
                     {
-                        case SearchTTFlags.Beta:
+                        case TTFlags.Beta:
                             return beta;
                             break;
-                        case SearchTTFlags.Exact:
+                        case TTFlags.Exact:
                             return foundEntry.Score;
                             break;
-                        case SearchTTFlags.Alpha:
+                        case TTFlags.Alpha:
                             return alpha;
                             break;
                     }
                 }
             }
 
-            const int nullMoveFactor = 2;
+            const byte nullMoveFactor = 2;
             if (allowNullMoveSearch && !inCheck && currentDepth > 0 && depth >= nullMoveFactor+1)
             {
                 var haveBigPiece = false;
@@ -335,7 +344,7 @@ namespace ChessDotNet.Searching
                 {
                     var nullMove = new Move(0,0,0);
                     var nullBoard = board.DoMove(nullMove);
-                    score = -PrincipalVariationSearch(-beta, -beta + 1, nullBoard, depth - nullMoveFactor - 1, currentDepth + 1, false);
+                    score = -PrincipalVariationSearch(-beta, -beta + 1, nullBoard, (byte)(depth - nullMoveFactor - 1), (byte)(currentDepth + 1), false);
                     if (Stopped)
                     {
                         return 0;
@@ -358,20 +367,20 @@ namespace ChessDotNet.Searching
             var bestScore = -Inf;
             score = -Inf;
 
-            var bbsAfter = new Board[potentialMoves.Count];
+            var boardsAfter = new Board[potentialMoves.Count];
             for (var i = 0; i < potentialMoves.Count; i++)
             {
                 SortNextMove(i, board, potentialMoves, currentDepth, pvMove);
-                var potentialMove = potentialMoves[i];
-                var bbAfter = PossibleMovesService.DoMoveIfKingSafe(board, potentialMove);
-                if (bbAfter == null)
+                var move = potentialMoves[i];
+                var boardAfterMove = PossibleMovesService.DoMoveIfKingSafe(board, move);
+                if (boardAfterMove == null)
                 {
                     continue;
                 }
-                bbsAfter[i] = bbAfter;
+                boardsAfter[i] = boardAfterMove;
                 validMoves++;
 
-                score = -PrincipalVariationSearch(-beta, -alpha, bbAfter, depth-1, currentDepth + 1, true);
+                score = -PrincipalVariationSearch(-beta, -alpha, boardAfterMove, (byte)(depth-1), (byte)(currentDepth + 1), true);
 
                 if (Stopped)
                 {
@@ -381,7 +390,7 @@ namespace ChessDotNet.Searching
                 if (score > bestScore)
                 {
                     bestScore = score;
-                    bestMove = potentialMove;
+                    bestMove = move;
 
                     if (score > alpha)
                     {
@@ -395,22 +404,22 @@ namespace ChessDotNet.Searching
                             FailHigh++;
 #endif
 
-                            if (potentialMove.TakesPiece == 0)
+                            if (move.TakesPiece == 0)
                             {
                                 SearchKillers[currentDepth, 1] = SearchKillers[currentDepth, 0];
-                                SearchKillers[currentDepth, 0] = potentialMove.Key;
+                                SearchKillers[currentDepth, 0] = move.Key;
                             }
 
-                            var entry = new SearchTTEntry(board.Key, bestMove.Value, beta, SearchTTFlags.Beta, depth);
+                            var entry = new SearchTTEntry(board.Key, bestMove.Value, beta, TTFlags.Beta, depth);
                             TTable.Add(board.Key, entry);
 
                             return beta;
                         }
                         alpha = score;
 
-                        if (potentialMove.TakesPiece == 0)
+                        if (move.TakesPiece == 0)
                         {
-                            SearchHistory[potentialMove.Piece, potentialMove.To] += depth;
+                            SearchHistory[move.Piece, move.To] += depth;
                         }
 
                     }
@@ -421,10 +430,12 @@ namespace ChessDotNet.Searching
             {
                 if (inCheck)
                 {
+                    // We're being mated
                     return -MateScore + currentDepth;
                 }
                 else
                 {
+                    // We're being stalemated
                     return 0;
                 }
             }
@@ -435,13 +446,13 @@ namespace ChessDotNet.Searching
 
             if (alpha != oldAlpha)
             {
-                var entry = new SearchTTEntry(board.Key, bestMove.Value, bestScore, SearchTTFlags.Exact, depth);
+                var entry = new SearchTTEntry(board.Key, bestMove.Value, bestScore, TTFlags.Exact, depth);
                 TTable.Add(board.Key, entry);
                 //PVTable[currentDepth] = new PVSResult(alpha, bbsAfter[bestMove], potentialMoves[bestMove]);
             }
             else
             {
-                var entry = new SearchTTEntry(board.Key, bestMove.Value, alpha, SearchTTFlags.Alpha, depth);
+                var entry = new SearchTTEntry(board.Key, bestMove.Value, alpha, TTFlags.Alpha, depth);
                 TTable.Add(board.Key, entry);
             }
 

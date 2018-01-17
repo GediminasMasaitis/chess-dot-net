@@ -451,8 +451,8 @@ namespace ChessDotNet.MoveGeneration
 
         public Board DoMoveIfKingSafe(Board board, Move move)
         {
-            //return DoMoveIfKingSafeNew(board, move);
-            return DoMoveIfKingSafeOld(board, move);
+            return DoMoveIfKingSafeNew(board, move);
+            //return DoMoveIfKingSafeOld(board, move);
         }
 
         private Board DoMoveIfKingSafeOld(Board board, Move move)
