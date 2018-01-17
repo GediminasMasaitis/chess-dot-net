@@ -5,6 +5,8 @@ using ChessDotNet.Common;
 using ChessDotNet.Data;
 
 using Bitboard = System.UInt64;
+using Key = System.UInt64;
+using Position = System.Int32;
 using Piece = System.Byte;
 
 namespace ChessDotNet.MoveGeneration
@@ -12,13 +14,13 @@ namespace ChessDotNet.MoveGeneration
     public class PossibleMovesService
     {
         public AttacksService AttacksService { get; set; }
-        public ISlideMoveGenerator HyperbolaQuintessence { get; set; }
+        public ISlideMoveGenerator SlideMoveGenerator { get; set; }
         public bool MultiThreadKingSafety { get; set; }
 
-        public PossibleMovesService(AttacksService attacksService, ISlideMoveGenerator hyperbolaQuintessence)
+        public PossibleMovesService(AttacksService attacksService, ISlideMoveGenerator slideMoveGenerator)
         {
             AttacksService = attacksService;
-            HyperbolaQuintessence = hyperbolaQuintessence;
+            SlideMoveGenerator = slideMoveGenerator;
             MultiThreadKingSafety = false;
         }
 
@@ -323,8 +325,8 @@ namespace ChessDotNet.MoveGeneration
             var moves = new List<Move>();
             while (jumpingPieces != 0)
             {
-                var i = jumpingPieces.BitScanForward();
-                ulong jumps;
+                Position i = jumpingPieces.BitScanForward();
+                Bitboard jumps;
                 if (i > jumpMaskCenter)
                 {
                     jumps = jumpMask << (i - jumpMaskCenter);
@@ -402,15 +404,15 @@ namespace ChessDotNet.MoveGeneration
                 {
                     case ChessPiece.WhiteRook:
                     case ChessPiece.BlackRook:
-                        slide = HyperbolaQuintessence.HorizontalVerticalSlide(board.AllPieces, i);
+                        slide = SlideMoveGenerator.HorizontalVerticalSlide(board.AllPieces, i);
                         break;
                     case ChessPiece.WhiteBishop:
                     case ChessPiece.BlackBishop:
-                        slide = HyperbolaQuintessence.DiagonalAntidiagonalSlide(board.AllPieces, i);
+                        slide = SlideMoveGenerator.DiagonalAntidiagonalSlide(board.AllPieces, i);
                         break;
                     case ChessPiece.WhiteQueen:
                     case ChessPiece.BlackQueen:
-                        slide = HyperbolaQuintessence.AllSlide(board.AllPieces, i);
+                        slide = SlideMoveGenerator.AllSlide(board.AllPieces, i);
                         break;
                     default:
                         throw new Exception($"Attempted to generate slide attacks for a non-sliding piece: {piece}");
@@ -449,18 +451,76 @@ namespace ChessDotNet.MoveGeneration
 
         public Board DoMoveIfKingSafe(Board board, Move move)
         {
+            //return DoMoveIfKingSafeNew(board, move);
+            return DoMoveIfKingSafeOld(board, move);
+        }
+
+        private Board DoMoveIfKingSafeOld(Board board, Move move)
+        {
             var boardAfterMove = board.DoMove(move);
             var enemyAttackedAfterMove = AttacksService.GetAllAttacked(boardAfterMove);
-            var myKings = board.WhiteToMove ? boardAfterMove.BitBoard[ChessPiece.WhiteKing] : boardAfterMove.BitBoard[ChessPiece.BlackKing];
+            var myKings = board.WhiteToMove
+                ? boardAfterMove.BitBoard[ChessPiece.WhiteKing]
+                : boardAfterMove.BitBoard[ChessPiece.BlackKing];
             var isSafe = (enemyAttackedAfterMove & myKings) == 0;
             return isSafe ? boardAfterMove : null;
+        }
+
+        private Board DoMoveIfKingSafeNew(Board board, Move move)
+        {
+            var isSafe = IsKingSafeAfterMoveNew(board, move);
+            if (isSafe)
+            {
+                var boardAfterMove = board.DoMove(move);
+                return boardAfterMove;
+            }
+            return null;
         }
 
         public bool IsKingSafeAfterMove(Board board, Move move)
         {
             //return true;
-            var afterMove = DoMoveIfKingSafe(board, move);
+            //return IsKingSafeAfterMoveOld(board, move);
+            return IsKingSafeAfterMoveNew(board, move);
+
+            var n = IsKingSafeAfterMoveNew(board, move);
+            var o = IsKingSafeAfterMoveOld(board, move);
+
+            if (n != o)
+            {
+                var n1 = IsKingSafeAfterMoveNew(board, move);
+                var o1 = IsKingSafeAfterMoveOld(board, move);
+            }
+
+            return n;
+        }
+
+        private bool IsKingSafeAfterMoveOld(Board board, Move move)
+        {
+            var afterMove = DoMoveIfKingSafeOld(board, move);
             return afterMove != null;
+        }
+
+        private bool IsKingSafeAfterMoveNew(Board board, Move move)
+        {
+            Bitboard allPieces = board.AllPieces;
+            var frombb = ~(1UL << move.From);
+            var tobb = 1UL << move.To;
+            allPieces &= frombb;
+            allPieces |= tobb;
+            var enemyAttackedAfterMove = AttacksService.GetAllAttacked(board, !board.WhiteToMove, allPieces, ~tobb);
+
+            var myKings = board.WhiteToMove ? board.BitBoard[ChessPiece.WhiteKing] : board.BitBoard[ChessPiece.BlackKing];
+            if ((board.WhiteToMove && move.Piece == ChessPiece.WhiteKing) ||
+                (!board.WhiteToMove && move.Piece == ChessPiece.BlackKing))
+            {
+                myKings &= frombb;
+                myKings |= tobb;
+            }
+
+
+            var isSafe = (enemyAttackedAfterMove & myKings) == 0;
+            return isSafe;
         }
 
         private static IList<Move> BitmaskToMoves(Board board, Bitboard bitmask, int positionFrom, Piece piece)
