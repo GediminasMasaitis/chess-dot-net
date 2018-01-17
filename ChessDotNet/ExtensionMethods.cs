@@ -5,11 +5,16 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
+using Bitboard = System.UInt64;
+using Key = System.UInt64;
+using Position = System.Byte;
+using Piece = System.Byte;
+
 namespace ChessDotNet
 {
     public static class ExtensionMethods
     {
-        private static readonly int[] BitScanTable = {
+        private static readonly byte[] BitScanTable = {
             0, 47,  1, 56, 48, 27,  2, 60,
             57, 49, 41, 37, 28, 16,  3, 61,
             54, 58, 35, 52, 50, 42, 21, 44,
@@ -21,7 +26,7 @@ namespace ChessDotNet
         };
 
         //[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int BitScanForward(this ulong bb)
+        public static Position BitScanForward(this ulong bb)
         {
             const ulong debruijn64 = 0x03f79d71b4cb0a89UL;
             if (bb == 0)

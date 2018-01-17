@@ -1,7 +1,10 @@
-﻿namespace ChessDotNet.Data
-{
-    using Piece = System.Byte;
+﻿using Bitboard = System.UInt64;
+using Key = System.UInt64;
+using Position = System.Byte;
+using Piece = System.Byte;
 
+namespace ChessDotNet.Data
+{
     public static class ChessPiece
     {
         public const Piece Empty = 0;

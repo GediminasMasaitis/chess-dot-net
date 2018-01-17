@@ -8,7 +8,7 @@ using ChessDotNet.Testing;
 
 using Bitboard = System.UInt64;
 using Key = System.UInt64;
-using Position = System.Int32;
+using Position = System.Byte;
 using Piece = System.Byte;
 
 namespace ChessDotNet.Data

@@ -1,7 +1,9 @@
 ﻿using System;
 using ChessDotNet.Testing;
 
-using Position = System.Int32;
+using Bitboard = System.UInt64;
+using Key = System.UInt64;
+using Position = System.Byte;
 using Piece = System.Byte;
 
 namespace ChessDotNet.Data
@@ -59,7 +61,7 @@ namespace ChessDotNet.Data
             var textLower = text.ToLower();
             var file = text[0] - 97;
             var rank = text[1] - 0x31;
-            var position = rank*8 + file;
+            var position = (Position)(rank*8 + file);
             return position;
         }
 

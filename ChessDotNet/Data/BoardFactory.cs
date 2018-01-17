@@ -4,7 +4,7 @@ using ChessDotNet.Hashing;
 
 using Bitboard = System.UInt64;
 using Key = System.UInt64;
-using Position = System.Int32;
+using Position = System.Byte;
 using Piece = System.Byte;
 
 namespace ChessDotNet.Data
@@ -163,10 +163,10 @@ namespace ChessDotNet.Data
             return piece;
         }
 
-        public ulong PiecesToBitBoard(IEnumerable<int> pieces)
+        public Bitboard PositionsToBitBoard(IEnumerable<Position> positions)
         {
             var board = 0UL;
-            foreach (var piece in pieces)
+            foreach (var piece in positions)
             {
                 board |= 1UL << piece;
             }

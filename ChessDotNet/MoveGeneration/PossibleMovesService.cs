@@ -6,7 +6,7 @@ using ChessDotNet.Data;
 
 using Bitboard = System.UInt64;
 using Key = System.UInt64;
-using Position = System.Int32;
+using Position = System.Byte;
 using Piece = System.Byte;
 
 namespace ChessDotNet.MoveGeneration
@@ -77,18 +77,18 @@ namespace ChessDotNet.MoveGeneration
 
             var moves = new List<Move>();
 
-            for (byte i = 0; i < 64; i++)
+            for (Position i = 0; i < 64; i++)
             {
                 if ((takeLeft & (1UL << i)) != 0)
                 {
                     if (i > 55)
                     {
-                        var promotionMoves = GeneratePromotionMoves(i - 7, i, board.ArrayBoard[i], false, true);
+                        var promotionMoves = GeneratePromotionMoves((Position)(i - 7), i, board.ArrayBoard[i], false, true);
                         moves.AddRange(promotionMoves);
                     }
                     else
                     {
-                        var move = new Move(i - 7, i, ChessPiece.WhitePawn, board.ArrayBoard[i]);
+                        var move = new Move((Position)(i - 7), i, ChessPiece.WhitePawn, board.ArrayBoard[i]);
                         moves.Add(move);
                     }
                 }
@@ -97,25 +97,25 @@ namespace ChessDotNet.MoveGeneration
                 {
                     if (i > 55)
                     {
-                        var promotionMoves = GeneratePromotionMoves(i - 9, i, board.ArrayBoard[i], false, true);
+                        var promotionMoves = GeneratePromotionMoves((Position)(i - 9), i, board.ArrayBoard[i], false, true);
                         moves.AddRange(promotionMoves);
                     }
                     else
                     {
-                        var move = new Move(i - 9, i, ChessPiece.WhitePawn, board.ArrayBoard[i]);
+                        var move = new Move((Position)(i - 9), i, ChessPiece.WhitePawn, board.ArrayBoard[i]);
                         moves.Add(move);
                     }
                 }
 
                 if ((enPassantLeft & (1UL << i)) != 0)
                 {
-                    var move = new Move(i - 7, i, ChessPiece.WhitePawn, board.ArrayBoard[i-8], true);
+                    var move = new Move((Position)(i - 7), i, ChessPiece.WhitePawn, board.ArrayBoard[i-8], true);
                     moves.Add(move);
                 }
 
                 if ((enPassantRight & (1UL << i)) != 0)
                 {
-                    var move = new Move(i - 9, i, ChessPiece.WhitePawn, board.ArrayBoard[i-8], true);
+                    var move = new Move((Position)(i - 9), i, ChessPiece.WhitePawn, board.ArrayBoard[i-8], true);
                     moves.Add(move);
                 }
 
@@ -123,19 +123,19 @@ namespace ChessDotNet.MoveGeneration
                 {
                     if (i > 55)
                     {
-                        var promotionMoves = GeneratePromotionMoves(i - 8, i, board.ArrayBoard[i], false, true);
+                        var promotionMoves = GeneratePromotionMoves((Position)(i - 8), i, board.ArrayBoard[i], false, true);
                         moves.AddRange(promotionMoves);
                     }
                     else
                     {
-                        var move = new Move(i - 8, i, ChessPiece.WhitePawn);
+                        var move = new Move((Position)(i - 8), i, ChessPiece.WhitePawn);
                         moves.Add(move);
                     }
                 }
 
                 if ((moveTwo & (1UL << i)) != 0)
                 {
-                    var move = new Move(i - 16, i, ChessPiece.WhitePawn);
+                    var move = new Move((Position)(i - 16), i, ChessPiece.WhitePawn);
                     moves.Add(move);
                 }
             }
@@ -161,12 +161,12 @@ namespace ChessDotNet.MoveGeneration
                 {
                     if (i < 8)
                     {
-                        var promotionMoves = GeneratePromotionMoves(i + 7, i, board.ArrayBoard[i], false, false);
+                        var promotionMoves = GeneratePromotionMoves((Position)(i + 7), i, board.ArrayBoard[i], false, false);
                         moves.AddRange(promotionMoves);
                     }
                     else
                     {
-                        var move = new Move(i + 7, i, ChessPiece.BlackPawn, board.ArrayBoard[i]);
+                        var move = new Move((Position)(i + 7), i, ChessPiece.BlackPawn, board.ArrayBoard[i]);
                         moves.Add(move);
                     }
                 }
@@ -175,25 +175,25 @@ namespace ChessDotNet.MoveGeneration
                 {
                     if (i < 8)
                     {
-                        var promotionMoves = GeneratePromotionMoves(i + 9, i, board.ArrayBoard[i], false, false);
+                        var promotionMoves = GeneratePromotionMoves((Position)(i + 9), i, board.ArrayBoard[i], false, false);
                         moves.AddRange(promotionMoves);
                     }
                     else
                     {
-                        var move = new Move(i + 9, i, ChessPiece.BlackPawn, board.ArrayBoard[i]);
+                        var move = new Move((Position)(i + 9), i, ChessPiece.BlackPawn, board.ArrayBoard[i]);
                         moves.Add(move);
                     }
                 }
 
                 if ((enPassantLeft & (1UL << i)) != 0)
                 {
-                    var move = new Move(i + 7, i, ChessPiece.BlackPawn, board.ArrayBoard[i + 8], true);
+                    var move = new Move((Position)(i + 7), i, ChessPiece.BlackPawn, board.ArrayBoard[i + 8], true);
                     moves.Add(move);
                 }
 
                 if ((enPassantRight & (1UL << i)) != 0)
                 {
-                    var move = new Move(i + 9, i, ChessPiece.BlackPawn, board.ArrayBoard[i + 8], true);
+                    var move = new Move((Position)(i + 9), i, ChessPiece.BlackPawn, board.ArrayBoard[i + 8], true);
                     moves.Add(move);
                 }
 
@@ -201,26 +201,26 @@ namespace ChessDotNet.MoveGeneration
                 {
                     if (i < 8)
                     {
-                        var promotionMoves = GeneratePromotionMoves(i + 8, i, board.ArrayBoard[i], false, false);
+                        var promotionMoves = GeneratePromotionMoves((Position)(i + 8), i, board.ArrayBoard[i], false, false);
                         moves.AddRange(promotionMoves);
                     }
                     else
                     {
-                        var move = new Move(i + 8, i, ChessPiece.BlackPawn);
+                        var move = new Move((Position)(i + 8), i, ChessPiece.BlackPawn);
                         moves.Add(move);
                     }
                 }
 
                 if ((moveTwo & (1UL << i)) != 0)
                 {
-                    var move = new Move(i + 16, i, ChessPiece.BlackPawn);
+                    var move = new Move((Position)(i + 16), i, ChessPiece.BlackPawn);
                     moves.Add(move);
                 }
             }
             return moves;
         }
 
-        private IList<Move> GeneratePromotionMoves(int from, int to, Piece takesPiece, bool enPassant, bool forWhite)
+        private IList<Move> GeneratePromotionMoves(Position from, Position to, Piece takesPiece, bool enPassant, bool forWhite)
         {
             var piece = forWhite ? ChessPiece.WhitePawn : ChessPiece.BlackPawn;
             var moves = new List<Move>
@@ -254,7 +254,7 @@ namespace ChessDotNet.MoveGeneration
         {
             var castlingMoves = new List<Move>();
             var isWhite = board.WhiteToMove;
-            int kingPos;
+            Position kingPos;
             ulong queenSideCastleMask;
             ulong kingSideCastleMask;
             ulong queenSideCastleAttackMask;
@@ -294,11 +294,11 @@ namespace ChessDotNet.MoveGeneration
                 var attackedByEnemy = AttacksService.GetAllAttacked(board, !board.WhiteToMove);
                 if (canMaybeCastleQueenSide && ((attackedByEnemy & queenSideCastleAttackMask) == 0))
                 {
-                    castlingMoves.Add(new Move(kingPos, kingPos - 2, piece));
+                    castlingMoves.Add(new Move(kingPos, (Position)(kingPos - 2), piece));
                 }
                 if (canMaybeCastleKingSide && ((attackedByEnemy & kingSideCastleAttackMask) == 0))
                 {
-                    castlingMoves.Add(new Move(kingPos, kingPos + 2, piece));
+                    castlingMoves.Add(new Move(kingPos, (Position)(kingPos + 2), piece));
                 }
             }
 
@@ -523,10 +523,10 @@ namespace ChessDotNet.MoveGeneration
             return isSafe;
         }
 
-        private static IList<Move> BitmaskToMoves(Board board, Bitboard bitmask, int positionFrom, Piece piece)
+        private static IList<Move> BitmaskToMoves(Board board, Bitboard bitmask, Position positionFrom, Piece piece)
         {
             var moves = new List<Move>();
-            for (var i = 0; i < 64; i++)
+            for (Position i = 0; i < 64; i++)
             {
                 if ((bitmask & (1UL << i)) != 0)
                 {

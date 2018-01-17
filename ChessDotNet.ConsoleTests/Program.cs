@@ -135,7 +135,7 @@ namespace ChessDotNet.ConsoleTests
             var forWhite = true;
             var moves = movesService.GetPossibleKingMoves(board).ToList();
             var dests = moves.Select(x => x.To);
-            var toMoveBoard = fact.PiecesToBitBoard(dests);
+            var toMoveBoard = fact.PositionsToBitBoard(dests);
             var attacked = attacksService.GetAllAttacked(board);
 
             var newMove = new Move(4,2,ChessPiece.WhiteKing);
