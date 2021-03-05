@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using ChessDotNet.Evaluation;
+using ChessDotNet.Fen;
 using ChessDotNet.Hashing;
 using ChessDotNet.Testing;
 
@@ -423,7 +424,7 @@ namespace ChessDotNet.Data
             }
         }
 
-        public string Print(IEvaluationService evaluationService = null)
+        public string Print(IEvaluationService evaluationService = null, FenSerializerService fenService = null)
         {
             const bool useUnicodeSymbols = false;
             const bool useUnicodeSeparators = true;
@@ -445,6 +446,12 @@ namespace ChessDotNet.Data
             infos.Add("Material: " + (WhiteMaterial - BlackMaterial));
             infos.Add("White material: " + WhiteMaterial);
             infos.Add("Black material: " + BlackMaterial);
+            if (fenService != null)
+            {
+                var fen = fenService.SerializeToFen(this);
+                infos.Add($"FEN: {fen}");
+            }
+
             if (evaluationService != null)
             {
                 var score = evaluationService.Evaluate(this);
@@ -454,6 +461,7 @@ namespace ChessDotNet.Data
                 }
                 infos.Add("Evaluation: " + score);
             }
+
 
             var sb = new StringBuilder();
             for (var i = 7; i >= 0; i--)

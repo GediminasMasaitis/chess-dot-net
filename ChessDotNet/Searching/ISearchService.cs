@@ -8,6 +8,6 @@ namespace ChessDotNet.Searching
     {
         event Action<SearchInfo> SearchInfo;
 
-        IList<SearchTTEntry> Search(Board board, SearchParams searchParams = null);
+        IList<SearchTTEntry> Search(Board board, SearchParameters searchParameters = null);
     }
 }

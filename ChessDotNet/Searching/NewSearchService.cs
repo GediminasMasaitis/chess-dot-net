@@ -11,11 +11,11 @@ namespace ChessDotNet.Searching
     {
         public event Action<SearchInfo> SearchInfo;
 
-        public IList<SearchTTEntry> Search(Board board, SearchParams searchParams = null)
+        public IList<SearchTTEntry> Search(Board board, SearchParameters searchParameters = null)
         {
             //throw new NotImplementedException();
-            searchParams = searchParams ?? new SearchParams();
-            var maxDepth = searchParams.MaxDepth ?? 64;
+            searchParameters = searchParameters ?? new SearchParameters();
+            var maxDepth = searchParameters.MaxDepth ?? 64;
 
 
             // Iterative deepening

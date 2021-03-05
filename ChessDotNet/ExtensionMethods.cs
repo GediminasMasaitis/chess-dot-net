@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,6 +15,13 @@ namespace ChessDotNet
 {
     public static class ExtensionMethods
     {
+#if NET5_0
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Position BitScanForward(this ulong bb)
+        {
+            return (Position)BitOperations.TrailingZeroCount(bb);
+        }
+#else
         private static readonly byte[] BitScanTable = {
             0, 47,  1, 56, 48, 27,  2, 60,
             57, 49, 41, 37, 28, 16,  3, 61,
@@ -25,7 +33,7 @@ namespace ChessDotNet
             13, 18,  8, 12,  7,  6,  5, 63
         };
 
-        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Position BitScanForward(this ulong bb)
         {
             const ulong debruijn64 = 0x03f79d71b4cb0a89UL;
@@ -35,6 +43,8 @@ namespace ChessDotNet
             }
             return BitScanTable[((bb ^ (bb - 1)) * debruijn64) >> 58];
         }
+#endif
+
 
         public static IEnumerable<int> GetOnes(this ulong bb)
         {

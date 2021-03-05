@@ -86,16 +86,16 @@ namespace ChessDotNet.Searching
             }
         }
 
-        public IList<SearchTTEntry> Search(Board board, SearchParams searchParams = null)
+        public IList<SearchTTEntry> Search(Board board, SearchParameters searchParameters = null)
         {
-            searchParams = searchParams ?? new SearchParams();
+            searchParameters = searchParameters ?? new SearchParameters();
             Clear();
             var sw = new Stopwatch();
             var totalTimeSpent = 0L;
             var lastIterationSpent = 0L;
-            var timeRemaining = board.WhiteToMove ? searchParams.WhiteTime : searchParams.BlackTime;
-            var allowedForMove = searchParams.Infinite ? int.MaxValue : timeRemaining / 30;
-            var maxDepth = searchParams.MaxDepth ?? 64;
+            var timeRemaining = board.WhiteToMove ? searchParameters.WhiteTime : searchParameters.BlackTime;
+            var allowedForMove = searchParameters.Infinite ? int.MaxValue : timeRemaining / 30;
+            var maxDepth = searchParameters.MaxDepth ?? 64;
             byte i = 1;
             int alpha = -Inf;
             int beta = Inf;
@@ -148,7 +148,7 @@ namespace ChessDotNet.Searching
                 searchInfo.Score = score;
                 searchInfo.NodesSearched = NodesSearched;
                 searchInfo.Time = totalTimeSpent;
-                searchInfo.PrincipalVariation = pvLine;
+                //searchInfo.PrincipalVariation = pvLine;
                 if (score > MateThereshold)
                 {
                     searchInfo.MateIn = MateScore - score;

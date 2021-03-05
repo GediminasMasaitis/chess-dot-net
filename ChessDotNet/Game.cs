@@ -4,11 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using ChessDotNet.Common;
 using ChessDotNet.Data;
 using ChessDotNet.Evaluation;
 using ChessDotNet.MoveGeneration;
 using ChessDotNet.MoveGeneration.SlideGeneration;
 using ChessDotNet.Protocols;
+using ChessDotNet.Search2;
 using ChessDotNet.Searching;
 
 namespace ChessDotNet
@@ -16,25 +18,26 @@ namespace ChessDotNet
     public class Game
     {
         private BoardFactory BoardFact { get; set; }
-        private HyperbolaQuintessence Hyperbola { get; set; }
+        private ISlideMoveGenerator Hyperbola { get; set; }
         private EvaluationService Evaluation { get; set; }
         private AttacksService Attacks { get; set; }
         private PossibleMovesService Moves { get; set; }
-        public SearchService Search { get; set; }
+        public SearchService2 Search { get; set; }
         private Board CurrentBoard { get; set; }
         private IInterruptor Interruptor { get; set; }
 
         public Game(IInterruptor interruptor)
         {
 
-            var hyperbola = new HyperbolaQuintessence();
+            var slideMoveGenerator = new MagicBitboardsService();
             var evaluationService = new EvaluationService();
-            var attacksService = new AttacksService(hyperbola);
-            var movesService = new PossibleMovesService(attacksService, hyperbola);
-            var searchService = new SearchService(movesService, evaluationService, interruptor);
+            var attacksService = new AttacksService(slideMoveGenerator);
+            var movesService = new PossibleMovesService(attacksService, slideMoveGenerator);
+            //var searchService = new SearchService(movesService, evaluationService, interruptor);
+            var searchService = new SearchService2(movesService, evaluationService);
 
             BoardFact = new BoardFactory();
-            Hyperbola = hyperbola;
+            Hyperbola = slideMoveGenerator;
             Evaluation = evaluationService;
             Attacks = attacksService;
             Moves = movesService;
@@ -69,14 +72,14 @@ namespace ChessDotNet
             return CurrentBoard.Print(Evaluation);
         }
 
-        public IList<SearchTTEntry> SearchMove(SearchParams searchParams)
+        public IList<Move> SearchMove(SearchParameters searchParameters)
         {
             if (CurrentBoard == null)
             {
                 SetStartingPos();
             }
-            var searchResult = Search.Search(CurrentBoard, searchParams);
-            CurrentBoard = CurrentBoard.DoMove(searchResult[0].Move);
+            var searchResult = Search.Run(CurrentBoard, searchParameters);
+            CurrentBoard = CurrentBoard.DoMove(searchResult[0]);
             return searchResult;
         }
     }

@@ -4,22 +4,25 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.Versioning;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using ChessDotNet.Data;
 using ChessDotNet.Evaluation;
+using ChessDotNet.Fen;
 using ChessDotNet.Hashing;
 using ChessDotNet.Init;
 using ChessDotNet.MoveGeneration;
 using ChessDotNet.MoveGeneration.SlideGeneration;
 using ChessDotNet.Perft;
 using ChessDotNet.Protocols;
+using ChessDotNet.Search2;
 using ChessDotNet.Searching;
 
 namespace ChessDotNet.ConsoleTests
 {
     class Program
     {
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
             Init();
 
@@ -31,13 +34,50 @@ namespace ChessDotNet.ConsoleTests
             //TestMove();
             //TestZobrist();
             //TestRepetitions();
-            DoSearch();
+            await DoSearch2Async();
             //Console.WriteLine(new BoardFactory().ParseFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").Print());
             //var pos = 27;
             //Debugging.ShowBitBoard(EvaluationService.PassedPawnMasksWhite[pos], EvaluationService.PassedPawnMasksBlack[pos], EvaluationService.IsolatedPawnMasks[pos]);
-
+            //DoEvaluate();
             Console.WriteLine("Done");
-            Console.ReadLine();
+        }
+
+        private static async Task DoSearch2Async()
+        {
+            var fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"; // Starting pos
+            //var fen = "rnbqkbnr/pppppppp/8/8/8/N7/PPPPPPPP/RNBQKBNR w KQkq - 0 1"; // Starting pos
+            //var fen = "rnbqkbnr/pppppppp/7n/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"; // Starting pos
+
+            //var fen = "r4rk1/p2n1ppp/3qp3/6B1/N5P1/3P1b2/PPP1BbP1/R2Q1R1K b - - 0 14"; // Mate in 3
+            //var fen = "r1b1kb1r/2pp1ppp/1np1q3/p3P3/2P5/1P6/PB1NQPPP/R3KB1R b KQkq - 0 1 "; // Midgame
+            //var fen = "r3r1kb/p2bp2p/1q1p1npB/5NQ1/2p1P1P1/2N2P2/PPP5/2KR3R w - - 0 1"; // Midgame 2
+            var fact = new BoardFactory();
+            var board = fact.ParseFEN(fen);
+
+            var fenSerializer = new FenSerializerService();
+            var slideMoveGenerator = new MagicBitboardsService();
+            var evaluationService = new EvaluationService();
+            var attacksService = new AttacksService(slideMoveGenerator);
+            var movesService = new PossibleMovesService(attacksService, slideMoveGenerator);
+            var searchService = new SearchService2(movesService, evaluationService);
+            Console.WriteLine(board.Print(evaluationService, fenSerializer));
+            searchService.SearchInfo += info => Console.WriteLine(info.ToString());
+            var searchParameters = new SearchParameters();
+            searchParameters.Infinite = true;
+
+            var cancellationTokenSource = new CancellationTokenSource();
+            var searchTask = Task.Run(() => searchService.Run(board, searchParameters, cancellationTokenSource.Token));
+            HandleInterrupt(cancellationTokenSource);
+            await searchTask;
+        }
+
+        private static void HandleInterrupt(CancellationTokenSource cancellationTokenSource)
+        {
+            var ch = Console.ReadKey();
+            if (ch.KeyChar == 'x')
+            {
+                cancellationTokenSource.Cancel();
+            }
         }
 
         private static void Init()
@@ -79,6 +119,17 @@ namespace ChessDotNet.ConsoleTests
             Console.WriteLine(sw.Elapsed.TotalMilliseconds + " ms.");
         }
 
+        private static void DoEvaluate()
+        {
+            //var fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+            var fen = "r4rk1/p2n1ppp/3qp3/6B1/N5P1/3P1b2/PPP1BbP1/R2Q1R1K b - - 0 14";
+            var boardFactory = new BoardFactory();
+            var board = boardFactory.ParseFEN(fen);
+            var evaluationService = new EvaluationService();
+            var evaluation = evaluationService.Evaluate(board);
+            Console.WriteLine(evaluation);
+        }
+
         private static void DoPerft()
         {
             var fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
@@ -89,19 +140,20 @@ namespace ChessDotNet.ConsoleTests
             //fen = "rnbqkbnr/1ppppppp/8/p7/1P6/P7/2PPPPPP/RNBQKBNR b KQkq b3 0 2 ";
             var fact = new BoardFactory();
             //CppInitializer.Init();
-            //var hyperbola = new SlideMoveGenerator();
-            var hyperbola = new MagicBitboardsService();
-            var attacksService = new AttacksService(hyperbola);
-            var movesService = new PossibleMovesService(attacksService, hyperbola);
+
+            //var slidingMoveGenerator = new HyperbolaQuintessence();
+            var slidingMoveGenerator = new MagicBitboardsService();
+            var attacksService = new AttacksService(slidingMoveGenerator);
+            var movesService = new PossibleMovesService(attacksService, slidingMoveGenerator);
             var perft = new PerftService(movesService);
             perft.MultiThreaded = false;
             //var board = fact.ParseFEN(fen);
             //var results = perft.GetPossibleMoves(board, 1);
-            using (var sharperClient = new SharperPerftClient(@"C:\sharper\Sharper.exe"))
+            using (var sharperClient = new SharperPerftClient(@"C:\Chess\Sharper\Sharper.exe"))
             {
                 var perftRunner = new PerftRunner(perft, sharperClient, fact);
                 perftRunner.OnOut += Console.Write;
-                perftRunner.Test(fen, 6);
+                perftRunner.Test(fen, 5);
             }
         }
 
@@ -113,7 +165,7 @@ namespace ChessDotNet.ConsoleTests
             var movesService = new PossibleMovesService(attacksService, hyperbola);
             var perft = new PerftService(movesService);
             //perft.MultiThreaded = false;
-            using(var sharperClient = new SharperPerftClient(@"C:\sharper\Sharper.exe"))
+            using(var sharperClient = new SharperPerftClient(@"C:\Chess\Sharper\Sharper.exe"))
             {
                 var perftRunner = new PerftRunner(perft, sharperClient, fact);
                 var suite = new PerftSuite(perftRunner);
@@ -127,11 +179,12 @@ namespace ChessDotNet.ConsoleTests
             var fact = new BoardFactory();
             var board = fact.ParseFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -");
             board.EnPassantFile = BitboardConstants.Files[3];
-            var hyperbola = new HyperbolaQuintessence();
+            var slideMoveGenerator = new MagicBitboardsService();
             var evaluationService = new EvaluationService();
             Console.WriteLine(evaluationService.Evaluate(board));
-            var attacksService = new AttacksService(hyperbola);
-            var movesService = new PossibleMovesService(attacksService, hyperbola);
+
+            var attacksService = new AttacksService(slideMoveGenerator);
+            var movesService = new PossibleMovesService(attacksService, slideMoveGenerator);
             var forWhite = true;
             var moves = movesService.GetPossibleKingMoves(board).ToList();
             var dests = moves.Select(x => x.To);
@@ -171,7 +224,7 @@ namespace ChessDotNet.ConsoleTests
         {
             var fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"; // Starting pos
             //fen = "2rr3k/pp3pp1/1nnqbN1p/3pN3/2pP4/2P3Q1/PPB4P/R4RK1 w - -"; // Mate in 3
-            fen = "r1b1k2r/ppppnppp/2n2q2/2b5/3NP3/2P1B3/PP3PPP/RN1QKB1R w KQkq - 0 1"; // Developed
+            //fen = "r1b1k2r/ppppnppp/2n2q2/2b5/3NP3/2P1B3/PP3PPP/RN1QKB1R w KQkq - 0 1"; // Developed
 
             var fact = new BoardFactory();
             var board = fact.ParseFEN(fen);
@@ -212,7 +265,9 @@ namespace ChessDotNet.ConsoleTests
 
         private static void DoSearch()
         {
-            var fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"; // Starting pos
+            //var fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"; // Starting pos
+            var fen = "r4rk1/p2n1ppp/3qp3/6B1/N5P1/3P1b2/PPP1BbP1/R2Q1R1K b - - 0 14"; // Mate in 3
+
             //fen = "2rr3k/pp3pp1/1nnqbN1p/3pN3/2pP4/2P3Q1/PPB4P/R4RK1 w - -"; // Mate in 3
             //fen = "r1b1k2r/ppppnppp/2n2q2/2b5/3NP3/2P1B3/PP3PPP/RN1QKB1R w KQkq - 0 1"; // Developed
             //fen = "r1b1kb1r/2pp1ppp/1np1q3/p3P3/2P5/1P6/PB1NQPPP/R3KB1R b KQkq - 0 1 "; // Midgame
@@ -226,7 +281,7 @@ namespace ChessDotNet.ConsoleTests
             var interruptor = new ConsoleInterruptor();
             var searchService = new SearchService(movesService, evaluationService, interruptor);
             searchService.SearchInfo += info => Console.WriteLine(info.ToString());
-            var sParams = new SearchParams();
+            var sParams = new SearchParameters();
             //sParams.MaxDepth = 5;
             sParams.Infinite = true;
 

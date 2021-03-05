@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "ChessDotNet.ConsoleTests": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "COMPlus_gcAllowVeryLargeObjects": "1"
+      }
+    }
+  }
+}

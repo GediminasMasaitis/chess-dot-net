@@ -5,6 +5,7 @@ using Bitboard = System.UInt64;
 using Key = System.UInt64;
 using Position = System.Byte;
 using Piece = System.Byte;
+using MoveKey = System.Int32;
 
 namespace ChessDotNet.Data
 {
@@ -36,16 +37,36 @@ namespace ChessDotNet.Data
 #endif
         }
 
-        public bool NullMove { get; }
         public Position From { get; }
         public Position To { get; }
         public Piece Piece { get; }
         public Piece TakesPiece { get; }
-        public bool EnPassant { get; }
         public Piece? PawnPromoteTo { get; }
+        public bool EnPassant { get; }
         public bool Castle { get; }
+        public bool NullMove { get; }
+
         //public int MVVLVAScore => TakesPiece > 0 ? MVVLVAScoreCalculation.Scores[Piece, TakesPiece] : 0;
-        public int Key => (From << 16) + To;
+        public MoveKey Key => (From << 16) + To;
+
+        public ulong Key2
+        {
+            get
+            {
+                var promote = PawnPromoteTo.HasValue ? PawnPromoteTo.Value : ChessPiece.Empty;
+                ulong key = 0;
+                key |= From;
+                key |= (ulong)(To << 8);
+                key |= (ulong)(Piece << 16);
+                key |= (ulong)(TakesPiece << 24);
+                key |= (ulong)(promote << 32);
+                key |= (ulong)(Convert.ToByte(EnPassant) << 40);
+                key |= (ulong)(Convert.ToByte(Castle) << 41);
+                key |= (ulong)(Convert.ToByte(NullMove) << 42);
+                return key;
+            }
+        }
+
 
         private static string PositionToText(Position position)
         {

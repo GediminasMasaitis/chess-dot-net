@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using ChessDotNet.Data;
 using ChessDotNet.Hashing;
@@ -27,7 +28,19 @@ namespace ChessDotNet.Perft
 
         public IList<MoveAndNodes> Divide(Board board, int depth)
         {
-            var moves = PossibleMovesService.GetAllPossibleMoves(board);
+            var allMoves = new ThreadLocal<List<Move>[]>(() =>
+            {
+                var lists = new List<Move>[depth + 1];
+                for (var i = 0; i < lists.Length; i++)
+                {
+                    lists[i] = new List<Move>();
+                }
+                return lists;
+            });
+            
+
+            var moves = allMoves.Value[1];
+            PossibleMovesService.GetAllPossibleMoves(board, moves);
             if (depth == 1)
             {
                 return moves.Select(x => new MoveAndNodes(x.ToPositionString(), 1)).OrderBy(x => x.Move).ToList();
@@ -36,7 +49,7 @@ namespace ChessDotNet.Perft
             Action<Move> act = m =>
             {
                 var moved = board.DoMove(m);
-                var count = GetPossibleMoveCountInner(moved, depth, 2);
+                var count = GetPossibleMoveCountInner(moved, depth, 2, allMoves);
                 var posStr = m.ToPositionString();
                 var man = new MoveAndNodes(posStr, count, m);
                 lock (results)
@@ -59,15 +72,18 @@ namespace ChessDotNet.Perft
             return ordered;
         }
 
-        public int GetPossibleMoveCount(Board board, int depth)
-        {
-            return GetPossibleMoveCountInner(board, depth, 1);
-        }
+        //public int GetPossibleMoveCount(Board board, int depth)
+        //{
+        //    return GetPossibleMoveCountInner(board, depth, 1);
+        //}
 
-        public int GetPossibleMoveCountInner(Board board, int depth, int currentDepth)
+        public int GetPossibleMoveCountInner(Board board, int depth, int currentDepth, ThreadLocal<List<Move>[]> allMoves)
         {
+            var moves = allMoves.Value[currentDepth];
+            moves.Clear();
+            PossibleMovesService.GetAllPossibleMoves(board, moves);
+
             var currentNum = 0;
-            var moves = PossibleMovesService.GetAllPossibleMoves(board);
             if (currentDepth >= depth)
             {
                 currentNum = moves.Count;
@@ -80,7 +96,7 @@ namespace ChessDotNet.Perft
                     Parallel.ForEach(moves, m =>
                     {
                         var movedBoard = board.DoMove(m);
-                        var possibleMoveCountInner = GetPossibleMoveCountInner(movedBoard, depth, currentDepth + 1);
+                        var possibleMoveCountInner = GetPossibleMoveCountInner(movedBoard, depth, currentDepth + 1, allMoves);
                         lock (sync)
                         {
                             currentNum += possibleMoveCountInner;
@@ -92,7 +108,7 @@ namespace ChessDotNet.Perft
                     foreach (var move in moves)
                     {
                         var movedBoard = board.DoMove(move);
-                        var possibleMoveCountInner = GetPossibleMoveCountInner(movedBoard, depth, currentDepth + 1);
+                        var possibleMoveCountInner = GetPossibleMoveCountInner(movedBoard, depth, currentDepth + 1, allMoves);
                         currentNum += possibleMoveCountInner;
                     }
                 }

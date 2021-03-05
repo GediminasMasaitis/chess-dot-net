@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using ChessDotNet.Search2;
 
 namespace ChessDotNet.Searching
 {
@@ -14,9 +15,10 @@ namespace ChessDotNet.Searching
 
         public override string ToString()
         {
-            return $"Depth: {Depth}, SelectiveDepth: {SelectiveDepth}, Score: {Score}, MateIn: {MateIn}, NodesSearched: {NodesSearched}, Time: {Time}, PrincipalVariation: {PrincipalVariation.Select(x=>x.Move.ToPositionString()).Aggregate((x,n) => x + " " + n)}";
+            var principalVariation = string.Join(" ", PrincipalVariation.Select(x=>x.Move.ToPositionString()));
+            return $"Depth: {Depth}, SelectiveDepth: {SelectiveDepth}, Score: {Score}, MateIn: {MateIn}, NodesSearched: {NodesSearched}, Time: {Time}, PrincipalVariation: {principalVariation}";
         }
 
-        public IList<SearchTTEntry> PrincipalVariation { get; set; }
+        public IList<TranspositionTableEntry> PrincipalVariation { get; set; }
     }
 }

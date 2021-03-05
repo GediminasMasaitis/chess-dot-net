@@ -2,16 +2,21 @@
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ChessDotNet.Data;
+using ChessDotNet.Init;
+using ChessDotNet.MoveGeneration.SlideGeneration;
 using ChessDotNet.Searching;
 
 namespace ChessDotNet.Protocols
 {
-    public class UCIProtocol : IChessProtocol
+    public class UciProtocol : IChessProtocol
     {
         private Game Game { get; set; }
 
-        public UCIProtocol(IInterruptor interruptor)
+        public UciProtocol(IInterruptor interruptor)
         {
+            BitboardConstants.Init();
+            new MagicBitboardsInitializer(new HyperbolaQuintessence(), new KnownMagicNumberProvider()).Init();
             Game = new Game(interruptor);
             Game.Search.SearchInfo += OnOnSearchInfo;
         }
@@ -96,8 +101,8 @@ namespace ChessDotNet.Protocols
                     break;
                 case "go":
                 {
-                    var searchParams = new SearchParams();
-                    for (var i = 0; i < words.Length; i++)
+                    var searchParams = new SearchParameters();
+                        for (var i = 0; i < words.Length; i++)
                     {
                         switch (words[i])
                         {
@@ -117,18 +122,19 @@ namespace ChessDotNet.Protocols
                                 searchParams.Infinite = true;
                                 break;
                         }
+
                     }
-
+                    
                     var results = Game.SearchMove(searchParams);
-                    var moveStr = results[0].Move.ToPositionString();
+                    var moveStr = results[0].ToPositionString();
 
-                    if (results.Count == 1 || results[1] == default(SearchTTEntry))
+                    if (results.Count == 1)
                     {
                         Output($"bestmove {moveStr}");
                     }
                     else
                     {
-                        var ponderStr = results[1].Move.ToPositionString();
+                        var ponderStr = results[1].ToPositionString();
                         Output($"bestmove {moveStr} ponder {ponderStr}");
                     }
                 }

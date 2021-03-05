@@ -27,7 +27,7 @@ namespace ChessDotNet.ConsoleRunner
                 }
                 if (protocol == null && line == "uci")
                 {
-                    protocol = new UCIProtocol(interruptor);
+                    protocol = new UciProtocol(interruptor);
                     protocol.OnOutput += Console.WriteLine;
                     protocol.OnExit += Environment.Exit;
                 }

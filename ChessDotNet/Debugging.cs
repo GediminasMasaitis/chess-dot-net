@@ -2,7 +2,6 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Net.Configuration;
 using System.Reflection;
 using ChessDotNet.Data;
 using ChessDotNet.Evaluation;
