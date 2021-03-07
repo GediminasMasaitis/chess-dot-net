@@ -93,6 +93,7 @@ namespace ChessDotNet.Data
                 }
             }
 
+            fenPosition++;
             if (fenPosition < fen.Length)
             {
                 var lower = char.ToLowerInvariant(fen[fenPosition]);

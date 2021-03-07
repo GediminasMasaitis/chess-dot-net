@@ -36,7 +36,7 @@ namespace ChessDotNet.Searching
         private bool Stopped { get; set; }
 
         private TranspositionTable<SearchTTEntry> TTable { get; set; }
-        private int[,] SearchKillers { get; set; }
+        private uint[,] SearchKillers { get; set; }
         private int[,] SearchHistory { get; set; }
 
 
@@ -59,7 +59,7 @@ namespace ChessDotNet.Searching
 
         public void Clear()
         {
-            SearchKillers = new int[MaxDepth, 2];
+            SearchKillers = new uint[MaxDepth, 2];
             SearchHistory = new int[13,64];
             FailHigh = 0;
             FailHighFirst = 0;

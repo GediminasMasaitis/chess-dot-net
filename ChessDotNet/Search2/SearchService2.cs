@@ -1,11 +1,9 @@
-﻿using System;
+﻿//#define LOG
+
+using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Globalization;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Text;
 using System.Threading;
 using System.Xml.Schema;
 using ChessDotNet.Data;
@@ -19,390 +17,9 @@ using ZobristKey = System.UInt64;
 using Position = System.Byte;
 using Piece = System.Byte;
 using TranspositionTableFlag = System.Byte;
-using MoveKey = System.UInt64;
 
 namespace ChessDotNet.Search2
 {
-    public static class TranspositionTableFlags
-    {
-        public const TranspositionTableFlag None = 0;
-        public const TranspositionTableFlag Alpha = 1;
-        public const TranspositionTableFlag Beta = 2;
-        public const TranspositionTableFlag Exact = 3;
-    }
-
-    public struct TranspositionTableEntry
-    {
-        public ZobristKey Key { get; }
-        public Move Move { get; }
-        public int Depth { get; }
-        public int Score { get; }
-        public TranspositionTableFlag Flag { get; }
-
-        public TranspositionTableEntry(ZobristKey key, Move move, int depth, int score, TranspositionTableFlag flag)
-        {
-            Key = key;
-            Move = move;
-            Depth = depth;
-            Score = score;
-            Flag = flag;
-        }
-    }
-
-    public class TranspositionTable
-    {
-        private readonly ulong _size;
-        private readonly TranspositionTableEntry[] _entries;
-
-        public TranspositionTable(ulong size)
-        {
-            _size = size;
-            //var entrySize = Marshal.SizeOf<TranspositionTableEntry>();
-            _entries = new TranspositionTableEntry[size];
-        }
-
-        public void Store(ZobristKey key, Move move, int depth, int score, TranspositionTableFlag flag)
-        {
-            var index = GetTableIndex(key);
-            var existingEntry = _entries[index];
-
-            if (existingEntry.Depth > depth && existingEntry.Key == key)
-            {
-                return;
-            }
-            
-            //if (existingEntry.Key != 0 && existingEntry.Key != key)
-            //{
-            //    return;
-            //}
-
-            if (flag == TranspositionTableFlags.Exact || existingEntry.Key != key || depth > existingEntry.Depth - 4)
-            {
-                var entry = new TranspositionTableEntry(key, move, depth, score, flag);
-                _entries[index] = entry;
-            }
-        }
-
-        public bool TryProbe(ZobristKey key, out TranspositionTableEntry entry)
-        {
-            //entry = default; return false;
-            var index = GetTableIndex(key);
-            entry = _entries[index];
-            var exists = entry.Flag != TranspositionTableFlags.None;
-            //var valid = entry.Key == key;
-            return exists;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private ulong GetTableIndex(ZobristKey key)
-        {
-            var index = key % _size;
-            return index;
-        }
-
-        public void Clear()
-        {
-            Array.Clear(_entries, 0, _entries.Length);
-        }
-    }
-
-    public class SearchStatistics
-    {
-        public long NodesSearched { get; set; }
-
-        public long AspirationSuccess { get; set; }
-        public long AspirationFail { get; set; }
-
-        public long MateAlpha { get; set; }
-        public long MateBeta { get; set; }
-        public long MateCutoff { get; set; }
-
-        public long HashMiss { get; set; }
-        public long HashCollision { get; set; }
-        public long HashInsufficientDepth { get; set; }
-        public long HashAlphaCutoff { get; set; }
-        public long HashAlphaContinue { get; set; }
-        public long HashBetaCutoff { get; set; }
-        public long HashBetaContinue { get; set; }
-        public long HashCutoffExact { get; set; }
-
-        public long StoresBeta { get; set; }
-        public long StoresAlpha { get; set; }
-        public long StoresExact { get; set; }
-
-        public long BetaCutoffs { get; set; }
-
-        public long NullMoveCutoffs { get; set; }
-
-
-        public long PvsScoutSuccess { get; set; }
-        public long PvsScoutFail { get; set; }
-
-        public long Repetitions { get; set; }
-        public long Mates { get; set; }
-        public long Stalemates { get; set; }
-
-
-        public SearchStatistics()
-        {
-            Reset();
-        }
-
-        public void Reset()
-        {
-            NodesSearched = 0;
-        }
-
-        public string TrimNumber(long number, double divisor, string sufffix)
-        {
-            var divided = number / divisor;
-            var str = divided.ToString(CultureInfo.InvariantCulture);
-            if (str.Contains("."))
-            {
-                var newLength = str.Length < 5 ? str.Length : 5;
-                str = str.Substring(0, newLength).TrimEnd('0').TrimEnd('.');
-            }
-            else
-            {
-                var newLength = str.Length < 4 ? str.Length : 4;
-                str = str.Substring(0, newLength);
-            }
-
-            return str + sufffix;
-        }
-
-        public string FormatNumber(long number)
-        {
-            // This doesn't round numbers, just floors them
-            var numberStr = number.ToString();
-            string suffix;
-            switch (numberStr.Length)
-            {
-                case 1:
-                case 2:
-                case 3:
-                    return numberStr;
-                case 4:
-                case 5:
-                case 6:
-                    return TrimNumber(number, 1000, "k");
-                case 7:
-                case 8:
-                case 9:
-                    return TrimNumber(number, 1000000, "M");
-                case 10:
-                case 11:
-                case 12:
-                    return TrimNumber(number, 1000000000, "B");
-                case 13:
-                case 14:
-                case 15:
-                    return TrimNumber(number, 1000000000000, "T");
-                default:
-                    return numberStr;
-            }
-        }
-
-        private void AppendStatistic(StringBuilder builder, string name, long value, string units = null)
-        {
-            var valueStr = FormatNumber(value);
-            builder.Append($"{name}: {valueStr}");
-            if (units != null)
-            {
-                builder.Append($" {units}");
-            }
-            builder.Append(", ");
-        }
-
-        public override string ToString()
-        {
-            var builder = new StringBuilder();
-            AppendStatistic(builder, nameof(NodesSearched), NodesSearched);
-            AppendStatistic(builder, nameof(AspirationSuccess), AspirationSuccess);
-            AppendStatistic(builder, nameof(AspirationFail), AspirationFail);
-            AppendStatistic(builder, nameof(MateAlpha), MateAlpha);
-            AppendStatistic(builder, nameof(MateBeta), MateBeta);
-            AppendStatistic(builder, nameof(MateCutoff), MateCutoff);
-            AppendStatistic(builder, nameof(HashMiss), HashMiss);
-            AppendStatistic(builder, nameof(HashCollision), HashCollision);
-            AppendStatistic(builder, nameof(HashInsufficientDepth), HashInsufficientDepth);
-            AppendStatistic(builder, nameof(HashAlphaCutoff), HashAlphaCutoff);
-            AppendStatistic(builder, nameof(HashAlphaContinue), HashAlphaContinue);
-            AppendStatistic(builder, nameof(HashBetaCutoff), HashBetaCutoff);
-            AppendStatistic(builder, nameof(HashBetaContinue), HashBetaContinue);
-            AppendStatistic(builder, nameof(HashCutoffExact), HashCutoffExact);
-            AppendStatistic(builder, nameof(StoresBeta), StoresBeta);
-            AppendStatistic(builder, nameof(StoresAlpha), StoresAlpha);
-            AppendStatistic(builder, nameof(StoresExact), StoresExact);
-            AppendStatistic(builder, nameof(BetaCutoffs), BetaCutoffs);
-            AppendStatistic(builder, nameof(NullMoveCutoffs), NullMoveCutoffs);
-            AppendStatistic(builder, nameof(PvsScoutSuccess), PvsScoutSuccess);
-            AppendStatistic(builder, nameof(PvsScoutFail), PvsScoutFail);
-            AppendStatistic(builder, nameof(Repetitions), Repetitions);
-            AppendStatistic(builder, nameof(Mates), Mates);
-            AppendStatistic(builder, nameof(Stalemates), Stalemates);
-
-            return builder.ToString(0, builder.Length - 2);
-        }
-    }
-
-    public static class SearchConstants
-    {
-        public const int MaxDepth = 255;
-        public const int MateScore = 50000;
-        public const int MateThereshold = 49000;
-        public const int Inf = int.MaxValue;
-
-        public const int EndgameMaterial = 51300;
-    }
-
-    public class MoveOrderingService
-    {
-        public void OrderNextMove(int currentIndex, IList<Move> moves, int ply, Move? pvMove, MoveKey[,] killers, int[,] history)
-        {
-            var bestScore = -SearchConstants.Inf;
-            var bestScoreIndex = -1;
-            for (var i = currentIndex; i < moves.Count; i++)
-            {
-                var score = CalculateMoveScore(moves[i], ply, pvMove, killers, history);
-                if (score > bestScore)
-                {
-                    bestScore = score;
-                    bestScoreIndex = i;
-                }
-            }
-
-            var temp = moves[currentIndex];
-            moves[currentIndex] = moves[bestScoreIndex];
-            moves[bestScoreIndex] = temp;
-        }
-
-        private int CalculateMoveScore(Move move, int ply, Move? principalVariationMove, MoveKey[,] killers, int[,] history)
-        {
-            //return 0;
-            MoveKey moveKey = move.Key2;
-            var isPrincipalVariation = principalVariationMove.HasValue && principalVariationMove.Value.Key2 == moveKey;
-            if (isPrincipalVariation)
-            {
-                return 2000000;
-            }
-
-            var mvvLvaScore = MVVLVAScoreCalculation.Scores[move.Piece, move.TakesPiece];
-            if (mvvLvaScore > 0)
-            {
-                return mvvLvaScore + 1000000;
-            }
-
-            if (killers[ply, 0] == moveKey)
-            {
-                return 9000000;
-            }
-            if (killers[ply, 1] == moveKey)
-            {
-                return 8000000;
-            }
-
-            var historyScore = history[move.From, move.To];
-            return historyScore;
-        }
-    }
-
-    public class SearchState
-    {
-        public TranspositionTable Table { get; }
-        public MoveKey[,] Killers { get; }
-        public int[,] History { get; }
-
-
-        public SearchState()
-        {
-            Table = new TranspositionTable(1024 * 1024 * 32);
-            Killers = new MoveKey[SearchConstants.MaxDepth, 2]; // Non-captures causing beta cutoffs
-            History = new int[64, 64];
-        }
-
-        public void OnNewSearch()
-        {
-            Array.Clear(Killers, 0, Killers.Length);
-            Array.Clear(History, 0, History.Length);
-        }
-
-        public void OnIterativeDeepen()
-        {
-            Array.Clear(Killers, 0, Killers.Length);
-            Array.Clear(History, 0, History.Length);
-
-            //Table.Clear();
-        }
-    }
-
-    public class SearchStopper
-    {
-        private readonly Stopwatch _stopwatch;
-
-        private CancellationTokenSource _cancellationTokenSource;
-        private SearchParameters _parameters;
-        private long _minTime;
-        private long _maxTime;
-
-        public SearchStopper()
-        {
-            _stopwatch = new Stopwatch();
-        }
-
-        public void NewSearch(SearchParameters parameters, bool whiteToMove, CancellationToken externalToken)
-        {
-            _stopwatch.Restart();
-            _parameters = parameters;
-
-            var time = whiteToMove ? parameters.WhiteTime : parameters.BlackTime;
-            var increment = whiteToMove ? parameters.WhiteTimeIncrement : parameters.BlackTimeIncrement;
-
-            // Need to adjust this
-            _minTime = parameters.Infinite ? long.MaxValue : time / 60 + increment / 3;
-            _maxTime = parameters.Infinite ? long.MaxValue : time / 20 + increment;
-            
-            _cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(externalToken);
-        }
-
-        public bool ShouldStopOnDepthIncrease(int depthReached)
-        {
-            if (_parameters.MaxDepth.HasValue && depthReached >= _parameters.MaxDepth.Value)
-            {
-                _cancellationTokenSource.Cancel();
-                return true;
-            }
-
-            var elapsed = GetSearchedTime();
-            if (elapsed >= _minTime)
-            {
-                _cancellationTokenSource.Cancel();
-                return true;
-            }
-
-            var cancellationRequested = _cancellationTokenSource.IsCancellationRequested;
-            return cancellationRequested;
-        }
-
-        public bool ShouldStop()
-        {
-            var elapsed = GetSearchedTime();
-            if (elapsed >= _maxTime)
-            {
-                _cancellationTokenSource.Cancel();
-                return true;
-            }
-
-            return _cancellationTokenSource.IsCancellationRequested;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public double GetSearchedTime()
-        {
-            return _stopwatch.Elapsed.TotalMilliseconds;
-        }
-    }
-
     public class SearchService2
     {
         private readonly PossibleMovesService _possibleMoves;
@@ -410,14 +27,14 @@ namespace ChessDotNet.Search2
         private readonly SearchState _state;
         private readonly SearchStopper _stopper;
         private readonly MoveOrderingService _moveOrdering;
-
         private readonly SearchStatistics _statistics;
-
-
-
         public event Action<SearchInfo> SearchInfo;
 
-        public SearchService2(PossibleMovesService possibleMoves, EvaluationService evaluation)
+        public SearchService2
+        (
+            PossibleMovesService possibleMoves,
+            EvaluationService evaluation
+        )
         {
             _possibleMoves = possibleMoves;
             _evaluation = evaluation;
@@ -427,11 +44,18 @@ namespace ChessDotNet.Search2
             _statistics = new SearchStatistics();
         }
 
-        public IList<Move> Run(Board board, SearchParameters parameters, CancellationToken token = default)
+        public IList<Move> Run
+        (
+            Board board,
+            SearchParameters parameters,
+            CancellationToken token = default
+        )
         {
             _stopper.NewSearch(parameters, board.WhiteToMove, token);
             _state.OnNewSearch();
-            RunIterativeDeepening(board);
+            var log = SearchLog.New();
+            RunIterativeDeepening(board, log);
+            log.PrintLastChild();
             var principalVariation = GetPrincipalVariation(board);
             var moves = principalVariation.Select(entry => entry.Move).ToList();
             return moves;
@@ -458,34 +82,23 @@ namespace ChessDotNet.Search2
         }
 
 
-        private void RunIterativeDeepening(Board board)
+        private void RunIterativeDeepening(Board board, SearchLog log)
         {
             const int initialDepth = 1;
-            var score = SearchToDepth(board, initialDepth, 0, -SearchConstants.Inf, SearchConstants.Inf, true, true);
+            var initialSearchLog = SearchLog.New();
+            var score = SearchToDepth(board, initialDepth, 0, -SearchConstants.Inf, SearchConstants.Inf, true, true, initialSearchLog);
+            log.AddChild(initialSearchLog);
+
 
             for (var depth = initialDepth + 1; depth < SearchConstants.MaxDepth; depth++)
             {
                 _state.OnIterativeDeepen();
-                //score = SearchToDepth(board, depth, 0, -SearchConstants.Inf, SearchConstants.Inf, true, true);
-                score = SearchAspirationWindow(board, depth, score);
-                
-                var principalVariation = GetPrincipalVariation(board);
-
-                var searchInfo = new SearchInfo();
-                searchInfo.Depth = depth;
-                searchInfo.Score = score;
-                searchInfo.NodesSearched = _statistics.NodesSearched;
-                searchInfo.Time = (long)_stopper.GetSearchedTime();
-                searchInfo.PrincipalVariation = principalVariation;
-                if (score > SearchConstants.MateThereshold)
-                {
-                    searchInfo.MateIn = SearchConstants.MateScore - score;
-                }
-                SearchInfo?.Invoke(searchInfo);
-
-                Console.WriteLine($"{_statistics}");
-                Console.WriteLine();
-
+                var iterativeLog = SearchLog.New();
+                //score = SearchToDepth(board, depth, 0, -SearchConstants.Inf, SearchConstants.Inf, true, true, iterativeLog);
+                score = SearchAspirationWindow(board, depth, score, iterativeLog);
+                log.AddChild(iterativeLog);
+                ReportSearchInfo(board, depth, score);
+                ReportCurrentState();
                 if (_stopper.ShouldStopOnDepthIncrease(depth))
                 {
                     return;
@@ -493,21 +106,46 @@ namespace ChessDotNet.Search2
             }
         }
 
-        private int SearchAspirationWindow(Board board, int depth, int previousScore)
+        private void ReportSearchInfo(Board board, int depth, int score)
+        {
+            var principalVariation = GetPrincipalVariation(board);
+            var searchInfo = new SearchInfo();
+            searchInfo.Depth = depth;
+            searchInfo.Score = score;
+            searchInfo.NodesSearched = _statistics.NodesSearched;
+            searchInfo.Time = (long)_stopper.GetSearchedTime();
+            searchInfo.PrincipalVariation = principalVariation;
+            if (score > SearchConstants.MateThereshold)
+            {
+                searchInfo.MateIn = SearchConstants.MateScore - score;
+            }
+            SearchInfo?.Invoke(searchInfo);
+        }
+
+        private void ReportCurrentState()
+        {
+            Console.WriteLine($"{_statistics}");
+            Console.WriteLine();
+        }
+
+        private int SearchAspirationWindow(Board board, int depth, int previousScore, SearchLog log)
         {
             const int window = 50;
             var alpha = previousScore - window;
             var beta = previousScore + window;
-
-            var windowScore = SearchToDepth(board, depth, 0, alpha, beta, true, true);
+            var windowLog = SearchLog.New();
+            var windowScore = SearchToDepth(board, depth, 0, alpha, beta, true, true, windowLog);
             if (windowScore <= alpha || windowScore >= beta)
             {
                 _statistics.AspirationFail++;
-                var fullSearchScore = SearchToDepth(board, depth, 0, -SearchConstants.Inf, SearchConstants.Inf, true, true);
+                var fullSearchLog = SearchLog.New();
+                var fullSearchScore = SearchToDepth(board, depth, 0, -SearchConstants.Inf, SearchConstants.Inf, true, true, fullSearchLog);
+                log.AddChild(fullSearchLog);
                 return fullSearchScore;
             }
             else
             {
+                log.AddChild(windowLog);
                 _statistics.AspirationSuccess++;
                 return windowScore;
             }
@@ -544,12 +182,16 @@ namespace ChessDotNet.Search2
 
         //}
 
-        private int SearchToDepth(Board board, int depth, int ply, int alpha, int beta, bool nullMoveAllowed, bool isPrincipalVariation)
+        private int SearchToDepth(Board board, int depth, int ply, int alpha, int beta, bool nullMoveAllowed, bool isPrincipalVariation, SearchLog log)
         {
+            log.AddMessage("Starting search", depth, alpha, beta);
+
             // STOP CHECK
             if (_stopper.ShouldStop())
             {
-                return 0;
+                var score = 0;
+                log.AddMessage("Stop requested", depth, alpha, beta, score);
+                return score;
             }
 
             // REPETITION DETECTION
@@ -559,7 +201,9 @@ namespace ChessDotNet.Search2
                 if (isRepetition)
                 {
                     _statistics.Repetitions++;
-                    return 0;
+                    var score = 0;
+                    log.AddMessage("Repetition detected", depth, alpha, beta, score);
+                    return score;
                 }
             }
 
@@ -571,17 +215,20 @@ namespace ChessDotNet.Search2
                 {
                     _statistics.MateAlpha++;
                     alpha = -currentMateScore;
+                    log.AddMessage("Mate alpha update", depth, alpha, beta);
                 }
 
                 if (beta > currentMateScore - 1)
                 {
                     _statistics.MateBeta++;
                     beta = currentMateScore - 1;
+                    log.AddMessage("Mate beta update", depth, alpha, beta);
                 }
 
                 if (alpha >= beta)
                 {
                     _statistics.MateCutoff++;
+                    log.AddMessage("Mate cutoff", depth, alpha, beta, alpha);
                     return alpha;
                 }
             }
@@ -594,6 +241,7 @@ namespace ChessDotNet.Search2
             if (inCheck)
             {
                 depth++;
+                log.AddMessage("Check depth extension", depth, alpha, beta);
             }
 
             // QUIESCENCE
@@ -601,8 +249,9 @@ namespace ChessDotNet.Search2
             {
                 //var evaluatedScore = _evaluation.Evaluate(board);
                 //_statistics.NodesSearched++;
-                var evaluatedScore = Quiescence(board, depth, ply, alpha, beta);
-
+                log.AddMessage("Start quiescence search", depth, alpha, beta);
+                var evaluatedScore = Quiescence(board, depth, ply, alpha, beta, log);
+                log.AddMessage("End quiescence search", depth, alpha, beta, evaluatedScore);
                 return evaluatedScore;
             }
 
@@ -612,6 +261,7 @@ namespace ChessDotNet.Search2
             switch (probeResult)
             {
                 case TranspositionTableProbeResult.HitCutoff:
+                    //log.AddMessage("Start quiescence search", depth, alpha, beta);
                     return tableEntry.Score;
                 case TranspositionTableProbeResult.HitContinue:
                     principalVariationMove = tableEntry.Move;
@@ -631,9 +281,14 @@ namespace ChessDotNet.Search2
                 {
                     var nullMove = new Move(0, 0, 0);
                     var nullBoard = board.DoMove(nullMove);
-                    var nullMoveScore = SearchToDepth(nullBoard, depth - nullDepthReduction - 1, ply + 1, -beta, -beta + 1, false, false);
+                    var nullLog = SearchLog.New(nullMove);
+                    log.AddMessage($"Start null move search, R={nullDepthReduction}", depth, alpha, beta);
+                    var nullMoveScore = -SearchToDepth(nullBoard, depth - nullDepthReduction - 1, ply + 1, -beta, -beta + 1, false, false, nullLog);
+                    log.AddMessage($"End null move search, R={nullDepthReduction}, S={nullMoveScore}", depth);
                     if (nullMoveScore >= beta)
                     {
+                        log.AddMessage("Null move cutoff");
+                        log.AddChild(nullLog);
                         _statistics.NullMoveCutoffs++;
                         return beta;
                     }
@@ -654,11 +309,14 @@ namespace ChessDotNet.Search2
 
             var bestScore = -SearchConstants.Inf;
             Move bestMove = default;
+            SearchLog bestLog = default;
 
 
             // CHILD SEARCH
             var initialAlpha = alpha;
-            var potentialMoves = _possibleMoves.GetAllPotentialMoves(board);
+            var potentialMoves = _state.Moves[ply];
+            potentialMoves.Clear();
+            _possibleMoves.GetAllPotentialMoves(board, potentialMoves);
             var movesEvaluated = 0;
             var raisedAlpha = false;
 
@@ -671,6 +329,8 @@ namespace ChessDotNet.Search2
                 {
                     continue;
                 }
+
+                var childLog = SearchLog.New(move);
 
                 //futilityPruning = true;
                 //if (futilityPruning && movesEvaluated > 0 && move.TakesPiece != ChessPiece.Empty && move.PawnPromoteTo != 0)
@@ -687,10 +347,10 @@ namespace ChessDotNet.Search2
                 int childScore;
                 if (raisedAlpha)
                 {
-                    childScore = -SearchToDepth(childBoard, depth - 1, ply + 1, -alpha - 1, -alpha, true, false);
+                    childScore = -SearchToDepth(childBoard, depth - 1, ply + 1, -alpha - 1, -alpha, true, false, childLog);
                     if (childScore > alpha)
                     {
-                        childScore = -SearchToDepth(childBoard, depth - 1, ply + 1, -beta, -alpha, true, isPrincipalVariation);
+                        childScore = -SearchToDepth(childBoard, depth - 1, ply + 1, -beta, -alpha, true, isPrincipalVariation, childLog);
                         _statistics.PvsScoutFail++;
                     }
                     else
@@ -700,7 +360,7 @@ namespace ChessDotNet.Search2
                 }
                 else
                 {
-                    childScore = -SearchToDepth(childBoard, depth - 1, ply + 1, -beta, -alpha, true, isPrincipalVariation);
+                    childScore = -SearchToDepth(childBoard, depth - 1, ply + 1, -beta, -alpha, true, isPrincipalVariation, childLog);
                 }
 
                 movesEvaluated++;
@@ -709,6 +369,7 @@ namespace ChessDotNet.Search2
                 {
                     bestScore = childScore;
                     bestMove = move;
+                    bestLog = childLog;
 
                     if (childScore > alpha)
                     {
@@ -724,7 +385,7 @@ namespace ChessDotNet.Search2
                                 _state.Killers[ply, 1] = _state.Killers[ply, 0];
                                 _state.Killers[ply, 0] = move.Key2;
                             }
-
+                            log.AddChild(childLog);
                             return beta;
                         }
 
@@ -765,6 +426,7 @@ namespace ChessDotNet.Search2
                 StoreTranspositionTable(board.Key, bestMove, depth, bestScore, TranspositionTableFlags.Exact);
             }
 
+            log.AddChild(bestLog);
             return alpha;
         }
 
@@ -781,7 +443,7 @@ namespace ChessDotNet.Search2
             return false;
         }
 
-        private int Quiescence(Board board, int depth, int ply, int alpha, int beta)
+        private int Quiescence(Board board, int depth, int ply, int alpha, int beta, SearchLog log)
         {
             var evaluatedScore = _evaluation.Evaluate(board);
             _statistics.NodesSearched++;
@@ -815,9 +477,12 @@ namespace ChessDotNet.Search2
 
             var bestScore = -SearchConstants.Inf;
             Move bestMove = default;
+            SearchLog bestLog = default;
 
             var initialAlpha = alpha;
-            var potentialMoves = _possibleMoves.GetAllPotentialMoves(board);
+            var potentialMoves = _state.Moves[ply];
+            potentialMoves.Clear();
+            _possibleMoves.GetAllPotentialCaptures(board, potentialMoves);
             var movesEvaluated = 0;
             for (var moveIndex = 0; moveIndex < potentialMoves.Count; moveIndex++)
             {
@@ -835,13 +500,15 @@ namespace ChessDotNet.Search2
                     continue;
                 }
 
-                var childScore = -Quiescence(childBoard, depth - 1, ply + 1, -beta, -alpha);
+                var childLog = SearchLog.New(move);
+                var childScore = -Quiescence(childBoard, depth - 1, ply + 1, -beta, -alpha ,childLog);
                 movesEvaluated++;
 
                 if (childScore > bestScore)
                 {
                     bestScore = childScore;
                     bestMove = move;
+                    bestLog = childLog;
 
                     if (childScore > alpha)
                     {
@@ -850,7 +517,7 @@ namespace ChessDotNet.Search2
                             _statistics.StoresBeta++;
                             _statistics.BetaCutoffs++;
                             _state.Table.Store(board.Key, move, depth, childScore, TranspositionTableFlags.Beta);
-
+                            log.AddChild(childLog);
                             return beta;
                         }
                         alpha = childScore;
@@ -873,7 +540,7 @@ namespace ChessDotNet.Search2
                 _statistics.StoresExact++;
                 _state.Table.Store(board.Key, bestMove, depth, bestScore, TranspositionTableFlags.Exact);
             }
-
+            log.AddChild(bestLog);
             return alpha;
         }
 
@@ -892,8 +559,7 @@ namespace ChessDotNet.Search2
             }
             _state.Table.Store(key, move, depth, score, flag);
         }
-
-
+        
         private TranspositionTableProbeResult ProbeTranspositionTable(ZobristKey key, int depth, int alpha, int beta, bool isPrincipalVariation, out TranspositionTableEntry entry)
         {
             var found = _state.Table.TryProbe(key, out entry);

@@ -39,8 +39,19 @@ namespace ChessDotNet.MoveGeneration
         public List<Move> GetAllPotentialMoves(Board board, List<Move> moves = null)
         {
             moves ??= new List<Move>();
-            GetPotentialPawnMoves(board, moves);
-            GetPotentialKnightMoves(board, moves);
+
+            if (board.WhiteToMove)
+            {
+                GetPotentialWhiteCaptures(board, moves);
+                GetPotentialWhitePawnMoves(board, moves);
+            }
+            else
+            {
+                GetPotentialBlackPawnCaptures(board, moves);
+                GetPotentialBlackPawnMoves(board, moves);
+            }
+
+            GetPotentialKnightMoves(board, false, moves);
             GetPotentialBishopMoves(board, moves);
             GetPotentialRookMoves(board, moves);
             GetPotentialQueenMoves(board, moves);
@@ -49,37 +60,37 @@ namespace ChessDotNet.MoveGeneration
             return moves;
         }
 
-        public List<Move> GetPossiblePawnMoves(Board board, List<Move> moves)
+        public List<Move> GetAllPotentialCaptures(Board board, List<Move> moves = null)
         {
-            GetPotentialPawnMoves(board, moves);
-            var validMoves = FilterMovesByKingSafety(board, moves);
-            return validMoves;
-        }
+            moves ??= new List<Move>();
 
-        public void GetPotentialPawnMoves(Board board, List<Move> moves)
-        {
             if (board.WhiteToMove)
             {
-                GetPotentialWhitePawnMoves(board, moves);
+                GetPotentialWhiteCaptures(board, moves);
             }
             else
             {
-                GetPotentialBlackPawnMoves(board, moves);
+                GetPotentialBlackPawnCaptures(board, moves);
             }
+
+            GetPotentialKnightMoves(board, true, moves);
+            GetPotentialBishopMoves(board, moves);
+            GetPotentialRookMoves(board, moves);
+            GetPotentialQueenMoves(board, moves);
+            GetPotentialKingCaptures(board, moves);
+
+            moves.RemoveAll(m => m.TakesPiece == 0);
+
+            return moves;
         }
 
-        private void GetPotentialWhitePawnMoves(Board board, List<Move> moves)
+        private void GetPotentialWhiteCaptures(Board board, List<Move> moves)
         {
             var takeLeft = (board.BitBoard[ChessPiece.WhitePawn] << 7) & ~BitboardConstants.Files[7] & board.BlackPieces;
             var takeRight = (board.BitBoard[ChessPiece.WhitePawn] << 9) & ~BitboardConstants.Files[0] & board.BlackPieces;
 
             var enPassantLeft = (board.BitBoard[ChessPiece.WhitePawn] << 7) & ~BitboardConstants.Files[7] & board.EnPassantFile & BitboardConstants.Ranks[5] & board.BitBoard[ChessPiece.BlackPawn] << 8;
             var enPassantRight = (board.BitBoard[ChessPiece.WhitePawn] << 9) & ~BitboardConstants.Files[0] & board.EnPassantFile & BitboardConstants.Ranks[5] & board.BitBoard[ChessPiece.BlackPawn] << 8;
-
-            var moveOne = (board.BitBoard[ChessPiece.WhitePawn] << 8) & board.EmptySquares;
-            var moveTwo = (board.BitBoard[ChessPiece.WhitePawn] << 16) & board.EmptySquares & board.EmptySquares << 8 & BitboardConstants.Ranks[3];
-
-            //var moves = new List<Move>();
 
             for (Position i = 0; i < 64; i++)
             {
@@ -120,12 +131,23 @@ namespace ChessDotNet.MoveGeneration
                     var move = new Move((Position)(i - 9), i, ChessPiece.WhitePawn, board.ArrayBoard[i - 8], true);
                     moves.Add(move);
                 }
+            }
+        }
 
+        private void GetPotentialWhitePawnMoves(Board board, List<Move> moves)
+        {
+            var moveOne = (board.BitBoard[ChessPiece.WhitePawn] << 8) & board.EmptySquares;
+            var moveTwo = (board.BitBoard[ChessPiece.WhitePawn] << 16) & board.EmptySquares & board.EmptySquares << 8 & BitboardConstants.Ranks[3];
+
+            //var moves = new List<Move>();
+
+            for (Position i = 0; i < 64; i++)
+            {
                 if ((moveOne & (1UL << i)) != 0)
                 {
                     if (i > 55)
                     {
-                        GeneratePromotionMoves((Position)(i - 8), i, board.ArrayBoard[i], false, true, moves);
+                        GeneratePromotionMoves((Position)(i - 8), i, ChessPiece.Empty, false, true, moves);
                     }
                     else
                     {
@@ -142,18 +164,13 @@ namespace ChessDotNet.MoveGeneration
             }
         }
 
-        private void GetPotentialBlackPawnMoves(Board board, List<Move> moves)
+        private void GetPotentialBlackPawnCaptures(Board board, List<Move> moves)
         {
             var takeLeft = (board.BitBoard[ChessPiece.BlackPawn] >> 7) & ~BitboardConstants.Files[0] & board.WhitePieces;
             var takeRight = (board.BitBoard[ChessPiece.BlackPawn] >> 9) & ~BitboardConstants.Files[7] & board.WhitePieces;
 
             var enPassantLeft = (board.BitBoard[ChessPiece.BlackPawn] >> 7) & ~BitboardConstants.Files[0] & board.EnPassantFile & BitboardConstants.Ranks[2] & board.BitBoard[ChessPiece.WhitePawn] >> 8;
             var enPassantRight = (board.BitBoard[ChessPiece.BlackPawn] >> 9) & ~BitboardConstants.Files[7] & board.EnPassantFile & BitboardConstants.Ranks[2] & board.BitBoard[ChessPiece.WhitePawn] >> 8;
-
-            var moveOne = (board.BitBoard[ChessPiece.BlackPawn] >> 8) & board.EmptySquares;
-            var moveTwo = (board.BitBoard[ChessPiece.BlackPawn] >> 16) & board.EmptySquares & board.EmptySquares >> 8 & BitboardConstants.Ranks[4];
-
-            //var moves = new List<Move>();
 
             for (byte i = 0; i < 64; i++)
             {
@@ -194,7 +211,16 @@ namespace ChessDotNet.MoveGeneration
                     var move = new Move((Position)(i + 9), i, ChessPiece.BlackPawn, board.ArrayBoard[i + 8], true);
                     moves.Add(move);
                 }
+            }
+        }
 
+        private void GetPotentialBlackPawnMoves(Board board, List<Move> moves)
+        {
+            var moveOne = (board.BitBoard[ChessPiece.BlackPawn] >> 8) & board.EmptySquares;
+            var moveTwo = (board.BitBoard[ChessPiece.BlackPawn] >> 16) & board.EmptySquares & board.EmptySquares >> 8 & BitboardConstants.Ranks[4];
+
+            for (byte i = 0; i < 64; i++)
+            {
                 if ((moveOne & (1UL << i)) != 0)
                 {
                     if (i < 8)
@@ -240,13 +266,19 @@ namespace ChessDotNet.MoveGeneration
             return validMoves;
         }
 
+        public void GetPotentialKingCaptures(Board board, List<Move> moves)
+        {
+            var kings = board.WhiteToMove ? board.BitBoard[ChessPiece.WhiteKing] : board.BitBoard[ChessPiece.BlackKing];
+            var chessPiece = board.WhiteToMove ? ChessPiece.WhiteKing : ChessPiece.BlackKing;
+            GetPotentialJumpingMoves(board, true, kings, BitboardConstants.KingSpan, BitboardConstants.KingSpanPosition, chessPiece, moves);
+        }
+
         public void GetPotentialKingMoves(Board board, List<Move> moves)
         {
             var kings = board.WhiteToMove ? board.BitBoard[ChessPiece.WhiteKing] : board.BitBoard[ChessPiece.BlackKing];
             var chessPiece = board.WhiteToMove ? ChessPiece.WhiteKing : ChessPiece.BlackKing;
-            GetPotentialJumpingMoves(board, kings, BitboardConstants.KingSpan, BitboardConstants.KingSpanPosition, chessPiece, moves);
+            GetPotentialJumpingMoves(board, false, kings, BitboardConstants.KingSpan, BitboardConstants.KingSpanPosition, chessPiece, moves);
             GetPotentialCastlingMoves(board, moves);
-            //var allMoves = normalMoves.Union(castlingMoves).ToList();
         }
 
         public void GetPotentialCastlingMoves(Board board, List<Move> moves)
@@ -301,21 +333,21 @@ namespace ChessDotNet.MoveGeneration
             }
         }
 
-        public List<Move> GetPossibleKnightMoves(Board board, List<Move> moves)
+        public List<Move> GetPossibleKnightMoves(Board board, bool capturesOnly, List<Move> moves)
         {
-            GetPotentialKnightMoves(board, moves);
+            GetPotentialKnightMoves(board, capturesOnly, moves);
             var validMoves = FilterMovesByKingSafety(board, moves);
             return validMoves;
         }
 
-        public void GetPotentialKnightMoves(Board board, List<Move> moves)
+        public void GetPotentialKnightMoves(Board board, bool capturesOnly, List<Move> moves)
         {
             var knights = board.WhiteToMove ? board.BitBoard[ChessPiece.WhiteKnight] : board.BitBoard[ChessPiece.BlackKnight];
             var chessPiece = board.WhiteToMove ? ChessPiece.WhiteKnight : ChessPiece.BlackKnight;
-            GetPotentialJumpingMoves(board, knights, BitboardConstants.KnightSpan, BitboardConstants.KnightSpanPosition, chessPiece, moves);
+            GetPotentialJumpingMoves(board, capturesOnly, knights, BitboardConstants.KnightSpan, BitboardConstants.KnightSpanPosition, chessPiece, moves);
         }
 
-        private void GetPotentialJumpingMoves(Board board, ulong jumpingPieces, ulong jumpMask, int jumpMaskCenter, Piece piece, List<Move> moves)
+        private void GetPotentialJumpingMoves(Board board, bool capturesOnly, ulong jumpingPieces, ulong jumpMask, int jumpMaskCenter, Piece piece, List<Move> moves)
         {
             var ownPieces = board.WhiteToMove ? board.WhitePieces : board.BlackPieces;
             while (jumpingPieces != 0)
@@ -333,6 +365,11 @@ namespace ChessDotNet.MoveGeneration
 
                 jumps &= ~(i % 8 < 4 ? BitboardConstants.Files[6] | BitboardConstants.Files[7] : BitboardConstants.Files[0] | BitboardConstants.Files[1]);
                 jumps &= ~ownPieces;
+                if (capturesOnly)
+                {
+                    var enemyPieces = board.WhiteToMove ? board.BlackPieces : board.WhitePieces;
+                    jumps &= ~enemyPieces;
+                }
 
                 BitmaskToMoves(board, jumps, i, piece, moves);
 
