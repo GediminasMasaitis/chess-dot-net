@@ -17,7 +17,7 @@ namespace ChessDotNet.Data
             var board = new Board();
             board.ArrayBoard = new Piece[64];
             board.BitBoard = new ulong[13];
-            board.CastlingPermissions = new bool[4];
+            board.CastlingPermissions = new bool[CastlePermission.Length];
             board.History = new HistoryEntry[0];
 
             var boardPosition = 0;

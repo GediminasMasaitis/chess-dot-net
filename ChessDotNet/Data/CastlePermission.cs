@@ -2,6 +2,8 @@
 {
     public static class CastlePermission
     {
+        public const int Length = 4;
+
         public const int WhiteQueenSide = 0;
         public const int WhiteKingSide = 1;
         public const int BlackQueenSide = 2;
