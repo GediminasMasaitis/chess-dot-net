@@ -530,18 +530,23 @@ namespace ChessDotNet.MoveGeneration
         private bool IsKingSafeAfterMove(Board board, Move move)
         {
             Bitboard allPieces = board.AllPieces;
-            var frombb = ~(1UL << move.From);
-            var tobb = 1UL << move.To;
-            allPieces &= frombb;
-            allPieces |= tobb;
-            var enemyAttackedAfterMove = AttacksService.GetAllAttacked(board, !board.WhiteToMove, allPieces, ~tobb);
+            var inverseFromBitboard = ~(1UL << move.From);
+            var toBitboard = 1UL << move.To;
+            allPieces &= inverseFromBitboard;
+            allPieces |= toBitboard;
+            if (move.EnPassant)
+            {
+                var enPassantedBitboard = board.WhiteToMove ? toBitboard >> 8 : toBitboard << 8;
+                allPieces &= ~enPassantedBitboard;
+            }
+            var enemyAttackedAfterMove = AttacksService.GetAllAttacked(board, !board.WhiteToMove, allPieces, ~toBitboard);
 
             var myKings = board.WhiteToMove ? board.BitBoard[ChessPiece.WhiteKing] : board.BitBoard[ChessPiece.BlackKing];
             if ((board.WhiteToMove && move.Piece == ChessPiece.WhiteKing) ||
                 (!board.WhiteToMove && move.Piece == ChessPiece.BlackKing))
             {
-                myKings &= frombb;
-                myKings |= tobb;
+                myKings &= inverseFromBitboard;
+                myKings |= toBitboard;
             }
 
 

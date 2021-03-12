@@ -30,7 +30,7 @@ namespace ChessDotNet.MoveGeneration
             Bitboard rq;
             if (whiteToMove)
             {
-                pawns = board.BitBoard[ChessPiece.WhitePawn];
+                pawns = board.BitBoard[ChessPiece.WhitePawn] & allPieces;
                 bq = board.BitBoard[ChessPiece.WhiteBishop] | board.BitBoard[ChessPiece.WhiteQueen];
                 rq = board.BitBoard[ChessPiece.WhiteRook] | board.BitBoard[ChessPiece.WhiteQueen];
                 knights = board.BitBoard[ChessPiece.WhiteKnight];
@@ -38,7 +38,7 @@ namespace ChessDotNet.MoveGeneration
             }
             else
             {
-                pawns = board.BitBoard[ChessPiece.BlackPawn];
+                pawns = board.BitBoard[ChessPiece.BlackPawn] & allPieces;
                 bq = board.BitBoard[ChessPiece.BlackBishop] | board.BitBoard[ChessPiece.BlackQueen];
                 rq = board.BitBoard[ChessPiece.BlackRook] | board.BitBoard[ChessPiece.BlackQueen];
                 knights = board.BitBoard[ChessPiece.BlackKnight];

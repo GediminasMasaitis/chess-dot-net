@@ -71,6 +71,7 @@ namespace ChessDotNet.Perft
             }
 
             var faultyMoves = string.Join(" ", faultyResults.Select(result => result.PerftResult.Move));
+            OutLine($"Faulty FEN: {fen}");
             OutLine($"Faulty line: {faultyMoves}");
         }
 
