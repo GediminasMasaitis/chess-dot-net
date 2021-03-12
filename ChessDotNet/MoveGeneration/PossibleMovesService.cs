@@ -512,7 +512,7 @@ namespace ChessDotNet.MoveGeneration
 
         private Board DoMoveIfKingSafeNew(Board board, Move move)
         {
-            var isSafe = IsKingSafeAfterMoveNew(board, move);
+            var isSafe = IsKingSafeAfterMove(board, move);
             if (isSafe)
             {
                 var boardAfterMove = board.DoMove(move);
@@ -521,31 +521,13 @@ namespace ChessDotNet.MoveGeneration
             return null;
         }
 
-        public bool IsKingSafeAfterMove(Board board, Move move)
-        {
-            //return true;
-            //return IsKingSafeAfterMoveOld(board, move);
-            return IsKingSafeAfterMoveNew(board, move);
-
-            var n = IsKingSafeAfterMoveNew(board, move);
-            var o = IsKingSafeAfterMoveOld(board, move);
-
-            if (n != o)
-            {
-                var n1 = IsKingSafeAfterMoveNew(board, move);
-                var o1 = IsKingSafeAfterMoveOld(board, move);
-            }
-
-            return n;
-        }
-
         private bool IsKingSafeAfterMoveOld(Board board, Move move)
         {
             var afterMove = DoMoveIfKingSafeOld(board, move);
             return afterMove != null;
         }
 
-        private bool IsKingSafeAfterMoveNew(Board board, Move move)
+        private bool IsKingSafeAfterMove(Board board, Move move)
         {
             Bitboard allPieces = board.AllPieces;
             var frombb = ~(1UL << move.From);

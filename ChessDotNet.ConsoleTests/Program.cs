@@ -15,6 +15,7 @@ using ChessDotNet.Init;
 using ChessDotNet.MoveGeneration;
 using ChessDotNet.MoveGeneration.SlideGeneration;
 using ChessDotNet.Perft;
+using ChessDotNet.Perft.External;
 using ChessDotNet.Protocols;
 using ChessDotNet.Search2;
 using ChessDotNet.Searching;
@@ -31,12 +32,13 @@ namespace ChessDotNet.ConsoleTests
 
             //DoTimings();
 
-            //DoPerftSuite();
+            DoPerftSuite();
             //TestMove();
             //TestZobrist();
             //TestRepetitions();
 
-            DoPerft();
+            //DoPerftClient();
+            //DoPerft();
             //await DoSearch2Async();
 
             //Console.WriteLine(new BoardFactory().ParseFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").Print());
@@ -44,6 +46,45 @@ namespace ChessDotNet.ConsoleTests
             //Debugging.ShowBitBoard(EvaluationService.PassedPawnMasksWhite[pos], EvaluationService.PassedPawnMasksBlack[pos], EvaluationService.IsolatedPawnMasks[pos]);
             //DoEvaluate();
             Console.WriteLine("Done");
+            Console.ReadLine();
+        }
+
+        public static void DoPerftClient()
+        {
+            var slidingMoveGenerator = new MagicBitboardsService();
+            var attacksService = new AttacksService(slidingMoveGenerator);
+            var movesService = new PossibleMovesService(attacksService, slidingMoveGenerator);
+            var boardFactory = new BoardFactory();
+            using var testClient = new InternalPerftClient(movesService, boardFactory);
+            //using var verificationClient = new SharperPerftClient(@"C:\Chess\Sharper\Sharper.exe");
+            using var verificationClient = new StockfishPerftClient(@"C:\Chess\stockfish_13_win_x64_avx2\stockfish_13_win_x64_avx2.exe");
+        }
+
+        private static void DoPerft()
+        {
+            //var fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+            //var fen = "rnbqkbnr/2pppppp/p7/Pp6/8/8/1PPPPPPP/RNBQKBNR w KQkq b6 0 3 ";
+
+            var fen = "8/8/4k3/8/2p5/8/B2P2K1/8 w - - 0 1";
+
+            //var fen = "8/8/1k6/2b5/2pP4/8/5K2/8 b - d3 0 1";
+            //fen = "8/1kP5/8/K2p3r/8/8/8/8 w - - 1 53 ";
+            //fen = "r1b1k2r/ppppnppp/2n2q2/2b5/3NP3/2P1B3/PP3PPP/RN1QKB1R w KQkq - 0 1";
+            //fen = "2k5/8/8/8/8/8/6p1/2K5 w - - 1 1 ";
+            //fen = "rnbqkbnr/1ppppppp/8/p7/1P6/P7/2PPPPPP/RNBQKBNR b KQkq b3 0 2 ";
+            
+            var slidingMoveGenerator = new MagicBitboardsService();
+            var attacksService = new AttacksService(slidingMoveGenerator);
+            var movesService = new PossibleMovesService(attacksService, slidingMoveGenerator);
+            var boardFactory = new BoardFactory();
+            using var testClient = new InternalPerftClient(movesService, boardFactory);
+            //using var verificationClient = new SharperPerftClient(@"C:\Chess\Sharper\Sharper.exe");
+            using var verificationClient = new StockfishPerftClient(@"C:\Chess\stockfish_13_win_x64_avx2\stockfish_13_win_x64_avx2.exe");
+
+            var fenSerializer = new FenSerializerService();
+            var perftRunner = new PerftRunner(testClient, verificationClient, boardFactory, fenSerializer);
+            perftRunner.OnOut += Console.Write;
+            perftRunner.Test(fen, 6);
         }
 
         private static async Task DoSearch2Async()
@@ -136,50 +177,23 @@ namespace ChessDotNet.ConsoleTests
             Console.WriteLine(evaluation);
         }
 
-        private static void DoPerft()
-        {
-            var fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-            //var fen = "rnbqkbnr/2pppppp/p7/Pp6/8/8/1PPPPPPP/RNBQKBNR w KQkq b6 0 3 ";
 
-            //var fen = "8/8/1k6/2b5/2pP4/8/5K2/8 b - d3 0 1";
-            //fen = "8/1kP5/8/K2p3r/8/8/8/8 w - - 1 53 ";
-            //fen = "r1b1k2r/ppppnppp/2n2q2/2b5/3NP3/2P1B3/PP3PPP/RN1QKB1R w KQkq - 0 1";
-            //fen = "2k5/8/8/8/8/8/6p1/2K5 w - - 1 1 ";
-            //fen = "rnbqkbnr/1ppppppp/8/p7/1P6/P7/2PPPPPP/RNBQKBNR b KQkq b3 0 2 ";
-            var fact = new BoardFactory();
-            //CppInitializer.Init();
-
-            //var slidingMoveGenerator = new HyperbolaQuintessence();
-            var slidingMoveGenerator = new MagicBitboardsService();
-            var attacksService = new AttacksService(slidingMoveGenerator);
-            var movesService = new PossibleMovesService(attacksService, slidingMoveGenerator);
-            var perft = new PerftService(movesService);
-            perft.MultiThreaded = false;
-            var board = fact.ParseFEN(fen);
-            //var results = perft.GetPossibleMoves(board, 1);
-            using (var sharperClient = new SharperPerftClient(@"C:\Chess\Sharper\Sharper.exe"))
-            {
-                var perftRunner = new PerftRunner(perft, sharperClient, fact);
-                perftRunner.OnOut += Console.Write;
-                perftRunner.Test(fen, 7);
-            }
-        }
 
         private static void DoPerftSuite()
         {
-            var fact = new BoardFactory();
-            var hyperbola = new MagicBitboardsService();
-            var attacksService = new AttacksService(hyperbola);
-            var movesService = new PossibleMovesService(attacksService, hyperbola);
-            var perft = new PerftService(movesService);
-            //perft.MultiThreaded = false;
-            using(var sharperClient = new SharperPerftClient(@"C:\Chess\Sharper\Sharper.exe"))
-            {
-                var perftRunner = new PerftRunner(perft, sharperClient, fact);
-                var suite = new PerftSuite(perftRunner);
-                perftRunner.OnOut += Console.Write;
-                suite.Run();
-            }
+            var slidingMoveGenerator = new MagicBitboardsService();
+            var attacksService = new AttacksService(slidingMoveGenerator);
+            var movesService = new PossibleMovesService(attacksService, slidingMoveGenerator);
+            var boardFactory = new BoardFactory();
+            using var testClient = new InternalPerftClient(movesService, boardFactory);
+            //using var verificationClient = new SharperPerftClient(@"C:\Chess\Sharper\Sharper.exe");
+            using var verificationClient = new StockfishPerftClient(@"C:\Chess\stockfish_13_win_x64_avx2\stockfish_13_win_x64_avx2.exe");
+
+            var fenSerializer = new FenSerializerService();
+            var perftRunner = new PerftRunner(testClient, verificationClient, boardFactory, fenSerializer);
+            perftRunner.OnOut += Console.Write;
+            var suite = new PerftSuite(perftRunner);
+            suite.Run();
         }
 
         private static void TestMove()

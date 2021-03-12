@@ -3,58 +3,140 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using ChessDotNet.Data;
+using ChessDotNet.Fen;
 
 namespace ChessDotNet.Perft
 {
     public class PerftRunner
     {
-        public PerftService PerftService { get; set; }
-        public IPerftClient Client { get; set; }
-        public BoardFactory BoardFactory { get; set; }
-
+        private readonly IPerftClient _testClient;
+        private readonly IPerftClient _verificationClient;
+        private readonly BoardFactory _boardFactory;
+        private readonly FenSerializerService _fenSerializer;
 
         public event Action<string> OnOut;
-        private void Out(string msg) => OnOut?.Invoke(msg);
-        private void OutLine(string msg) => OnOut?.Invoke(msg + Environment.NewLine);
 
-        public PerftRunner(PerftService perftService, IPerftClient client, BoardFactory boardFactory)
+        public PerftRunner(IPerftClient testClient, IPerftClient verificationClient, BoardFactory boardFactory, FenSerializerService fenSerializer)
         {
-            PerftService = perftService;
-            Client = client;
-            BoardFactory = boardFactory;
+            _testClient = testClient;
+            _verificationClient = verificationClient;
+            _boardFactory = boardFactory;
+            _fenSerializer = fenSerializer;
         }
+
+        private void Out(string msg) => OnOut?.Invoke(msg);
+        private void OutLine(string msg = null) => OnOut?.Invoke((msg ?? string.Empty) + Environment.NewLine);
 
         public void Test(string fen, int depth)
         {
-            Client.SetBoard(fen);
-            var bitBoards = BoardFactory.ParseFEN(fen);
-            OutLine($"Running perft testing, up to depth {depth}. FEN: {fen}");
-            OutLine(string.Empty);
-            var sw = new Stopwatch();
+            if (depth == 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(depth), depth, null);
+            }
+            OutLine($"Running perft up to depth {depth} for position {fen}");
+            IterativeDeepen(fen, depth);
+        }
+
+        private void IterativeDeepen(string fen, int depth)
+        {
             for (var i = 1; i <= depth; i++)
             {
-                OutLine($"Testing engine with depth {i}");
-                sw.Restart();
-                var engineDivision = PerftService.Divide(bitBoards, i);
-                var engineMoveCount = engineDivision.Sum(x => x.Nodes);
-                sw.Stop();
-                var speed = engineMoveCount / sw.Elapsed.TotalSeconds;
-                var speedStr = GetSpeedDisplay(speed);
-                OutLine($"Engine found {engineMoveCount} possible moves in {sw.Elapsed.TotalMilliseconds} miliseconds ({speedStr})");
-                OutLine($"Testing client with depth {i}");
-                var clientMoveCount = Client.GetMoveCount(i);
-                OutLine($"Client found {clientMoveCount} possible moves");
-                OutLine("");
-
-                if (engineMoveCount != clientMoveCount)
+                var result = RunComparison(fen, i);
+                if (!result.Correct)
                 {
-                    OutLine("Mismatch detected");
-                    FindMismatch(bitBoards, i, engineDivision);
-                    return;
+                    RunFaultyLineSearch(fen, i, result);
+                    break;
+                }
+            }
+            OutLine();
+        }
+
+        private void RunFaultyLineSearch(string fen, int depth, PerftComparisonResult faultyResult)
+        {
+            var faultyResults = new List<PerftComparisonResult> {faultyResult};
+            var board = _boardFactory.ParseFEN(fen);
+            while (faultyResult.CorrectMove && depth > 0)
+            {
+                board = board.DoMove(faultyResult.PerftResult.EngineMove.Value);
+                fen = _fenSerializer.SerializeToFen(board);
+                depth--;
+                faultyResult = RunComparison(fen, depth);
+                if (faultyResult.Correct)
+                {
+                    var faultyMovesFail = string.Join(" ", faultyResults.Select(result => result.PerftResult.Move));
+                    OutLine($"Faulty line: {faultyMovesFail}");
+                    throw new Exception();
+                }
+                faultyResults.Add(faultyResult);
+            }
+
+            var faultyMoves = string.Join(" ", faultyResults.Select(result => result.PerftResult.Move));
+            OutLine($"Faulty line: {faultyMoves}");
+        }
+
+        private class PerftComparisonResult
+        {
+            public bool CorrectMove { get; }
+            public bool CorrectNodes { get; }
+            public MoveAndNodes PerftResult { get; }
+            public bool Correct => CorrectMove && CorrectNodes;
+
+            public PerftComparisonResult(bool correctMove, bool correctNodes, MoveAndNodes perftResult = default)
+            {
+                CorrectMove = correctMove;
+                CorrectNodes = correctNodes;
+                PerftResult = perftResult;
+            }
+        }
+
+        private PerftComparisonResult RunComparison(string fen, int depth)
+        {
+            Out($"Depth: {depth}");
+            var testResults = GetResults(_testClient, fen, depth);
+            var testNodes = testResults.Sum(entry => entry.Value.Nodes);
+            Out($", Perft nodes: {testNodes}");
+            var verificationResults = GetResults(_verificationClient, fen, depth);
+            var verificationNodes = verificationResults.Sum(entry => entry.Value.Nodes);
+            OutLine($", Verification nodes: {verificationNodes}");
+            
+            foreach (var testResult in testResults.Values)
+            {
+                if (!verificationResults.TryGetValue(testResult.Move, out var verificationResult))
+                {
+                    OutLine($"Found result {testResult.Move} with {testResult.Nodes} nodes that it shouldn't have");
+                    return new PerftComparisonResult(false, false, testResult);
+                }
+
+                if (testResult.Nodes != verificationResult.Nodes)
+                {
+                    OutLine($"Move {testResult.Move} had {testResult.Nodes} nodes, {verificationResult.Nodes} nodes expected");
+                    return new PerftComparisonResult(true, false, testResult);
                 }
             }
 
-            OutLine("Tests completed!");
+            foreach (var verificationResult in verificationResults.Values)
+            {
+                if (!testResults.ContainsKey(verificationResult.Move))
+                {
+                    OutLine($"Didn't find result {verificationResult.Move}, {verificationResult.Nodes} nodes expected");
+                    return new PerftComparisonResult(false, false, verificationResult);
+                }
+            }
+
+            return new PerftComparisonResult(true, true);
+        }
+
+        private IDictionary<string, MoveAndNodes> GetResults(IPerftClient client, string fen, int depth, IEnumerable<string> filter = null)
+        {
+            client.SetBoard(fen);
+            var results = client.GetMovesAndNodes(depth);
+            if (filter != null)
+            {
+                var filterMap = filter as HashSet<string> ?? new HashSet<string>(filter);
+                results = results.Where(result => filterMap.Contains(result.Move)).ToList();
+            }
+            var dictionary = results.ToDictionary(result => result.Move);
+            return dictionary;
         }
 
         private string GetSpeedDisplay(double speed)
@@ -76,58 +158,5 @@ namespace ChessDotNet.Perft
             speed /= 1000;
             return $"{speed:0} GN/s";
         }
-
-        private void FindMismatch(Board board, int mismatchDepth, IList<MoveAndNodes> engineResults, IList<string> previousBadMoves = null)
-        {
-            previousBadMoves = previousBadMoves ?? new List<string>();
-            var allBadMoves = previousBadMoves.Aggregate("", (c, n) => c + " " + n);
-            var clientMan = Client.GetMovesAndNodes(mismatchDepth, previousBadMoves);
-
-            var biggerCount = Math.Max(engineResults.Count, clientMan.Count);
-
-            for (var i = 0; i < biggerCount; i++)
-            {
-                if (i >= engineResults.Count)
-                {
-                    OutLine($"Engine didn't find result {allBadMoves} {clientMan[i].Move} (index out)");
-                    return;
-                }
-                if (i >= clientMan.Count)
-                {
-                    OutLine($"Engine found result {allBadMoves} {engineResults[i].Move} that it shouldn't have found (index out)");
-                    return;
-                }
-
-                if (engineResults[i].Move != clientMan[i].Move)
-                {
-                    if (engineResults.All(x => x.Move != clientMan[i].Move))
-                    {
-                        OutLine($"Engine didn't find result {allBadMoves} {clientMan[i].Move}");
-                    }
-                    else
-                    {
-                        OutLine($"Engine found result {allBadMoves} {engineResults[i].Move} that it shouldn't have found");
-                    }
-                    OutLine("Mismatch found!");
-                    return;
-                }
-                var ok = engineResults[i].Nodes == clientMan[i].Nodes;
-                var okWord = ok ? "OK" : "WRONG";
-                OutLine($"{allBadMoves} {engineResults[i].Move}; Engine: {engineResults[i].Nodes}, client: {clientMan[i].Nodes}; {okWord}");
-
-                if (!ok)
-                {
-                    var badmove = engineResults[i].Move;
-                    previousBadMoves.Add(badmove);
-
-                    var boardAfterBadMove = board.DoMove(engineResults[i].EngineMove.Value);
-                    var newResults = PerftService.Divide(boardAfterBadMove, mismatchDepth - 1);
-
-                    FindMismatch(boardAfterBadMove, mismatchDepth - 1, newResults, previousBadMoves);
-                    return;
-                }
-            }
-        }
-
     }
 }

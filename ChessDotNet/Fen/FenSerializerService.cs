@@ -50,6 +50,41 @@ namespace ChessDotNet.Fen
 
             builder.Append(" ");
             builder.Append(board.WhiteToMove ? 'w' : 'b');
+            builder.Append(" ");
+            if (board.CastlingPermissions2 == CastlingPermission2.None)
+            {
+                builder.Append("-");
+            }
+            else
+            {
+                if ((board.CastlingPermissions2 & CastlingPermission2.WhiteKing) != CastlingPermission2.None)
+                {
+                    builder.Append("K");
+                }
+                if ((board.CastlingPermissions2 & CastlingPermission2.WhiteQueen) != CastlingPermission2.None)
+                {
+                    builder.Append("Q");
+                }
+                if ((board.CastlingPermissions2 & CastlingPermission2.BlackKing) != CastlingPermission2.None)
+                {
+                    builder.Append("k");
+                }
+                if ((board.CastlingPermissions2 & CastlingPermission2.BlackQueen) != CastlingPermission2.None)
+                {
+                    builder.Append("q");
+                }
+            }
+            builder.Append(" ");
+            if (board.EnPassantFileIndex == -1)
+            {
+                builder.Append("-");
+            }
+            else
+            {
+                var fileLetter = (char)('a' + board.EnPassantFileIndex);
+                builder.Append(fileLetter);
+                builder.Append(board.EnPassantRankIndex + 1);
+            }
 
             var fen = builder.ToString();
             return fen;

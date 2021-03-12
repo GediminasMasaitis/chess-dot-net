@@ -35,7 +35,8 @@ namespace ChessDotNet.Data
         public Move Move { get; set; }
         public CastlingPermission2 CastlingPermission { get; set; }
         public int EnPassantFileIndex { get; set; }
-        //int fiftyMove;
+        public int EnPassantRankIndex { get; set; }
+        public int FiftyMoveRule { get; set; }
         public ZobristKey Key { get; set; }
 
         //public UndoMove(Move move, CastlingPermission2 castlingPermission, int enPassantFileIndex, ulong key)
@@ -65,6 +66,7 @@ namespace ChessDotNet.Data
         public Bitboard[] BitBoard { get; set; }
         public Piece[] ArrayBoard { get; set; }
         public int EnPassantFileIndex { get; set; }
+        public int EnPassantRankIndex { get; set; }
         public Bitboard EnPassantFile { get; set; }
         public ZobristKey Key { get; set; }
 
@@ -83,10 +85,10 @@ namespace ChessDotNet.Data
             //ArrayBoard = new int[64];
             //BitBoard = new ulong[13];
             EnPassantFileIndex = -1;
+            EnPassantRankIndex = -1;
             History2 = new UndoMove[20];
             HistoryDepth = 0;
-
-
+            CastlingPermissions2 = CastlingPermission2.None;
         }
 
         static Board()
@@ -272,6 +274,8 @@ namespace ChessDotNet.Data
             var move = history.Move;
 
             EnPassantFileIndex = history.EnPassantFileIndex;
+            EnPassantRankIndex = history.EnPassantRankIndex;
+            EnPassantFile = EnPassantFileIndex >= 0 ? BitboardConstants.Files[history.EnPassantFileIndex] : 0;
             CastlingPermissions2 = history.CastlingPermission;
             Key = history.Key;
 
@@ -372,9 +376,6 @@ namespace ChessDotNet.Data
                 //Key ^= ZobristKeys.ZPieces[killedPawnPos, move.TakesPiece];
             }
 
-            EnPassantFileIndex = history.EnPassantFileIndex;
-            EnPassantFile = EnPassantFileIndex >= 0 ? BitboardConstants.Files[history.EnPassantFileIndex] : 0;
-
             if (move.Castle)
             {
                 var kingSide = move.To % 8 > 3;
@@ -431,6 +432,7 @@ namespace ChessDotNet.Data
             History2[HistoryDepth].Key = Key;
             History2[HistoryDepth].CastlingPermission = CastlingPermissions2;
             History2[HistoryDepth].EnPassantFileIndex = EnPassantFileIndex;
+            History2[HistoryDepth].EnPassantRankIndex = EnPassantRankIndex;
             HistoryDepth++;
             
             var whiteToMove = WhiteToMove;
@@ -534,14 +536,17 @@ namespace ChessDotNet.Data
             if ((move.Piece == ChessPiece.WhitePawn && move.From + 16 == move.To) || (move.Piece == ChessPiece.BlackPawn && move.From - 16 == move.To))
             {
                 var fileIndex = move.From % 8;
+                var rankIndex = (move.To >> 3) + (whiteToMove ? -1 : 1);
                 EnPassantFile = BitboardConstants.Files[fileIndex];
                 EnPassantFileIndex = fileIndex;
+                EnPassantRankIndex = rankIndex;
                 Key ^= ZobristKeys.ZEnPassant[fileIndex];
             }
             else
             {
                 EnPassantFile = 0;
                 EnPassantFileIndex = -1;
+                EnPassantRankIndex = -1;
             }
 
             // CASTLING
@@ -669,6 +674,7 @@ namespace ChessDotNet.Data
             clone.BitBoard = (Bitboard[])BitBoard.Clone();
             clone.ArrayBoard = (Piece[])ArrayBoard.Clone();
             clone.EnPassantFileIndex = EnPassantFileIndex;
+            clone.EnPassantRankIndex = EnPassantRankIndex;
             clone.EnPassantFile = EnPassantFile;
             clone.Key = Key;
             //clone.History = board.History; // TODO
@@ -749,6 +755,11 @@ namespace ChessDotNet.Data
                 return false;
             }
 
+            if (clone.EnPassantRankIndex != EnPassantRankIndex)
+            {
+                return false;
+            }
+
             if (clone.EnPassantFile != EnPassantFile)
             {
                 return false;
@@ -784,7 +795,7 @@ namespace ChessDotNet.Data
                 return false;
             }
 
-            for (var i = 0; i < 4; i++)
+            for (var i = 0; i < CastlingPermissions.Length; i++)
             {
                 var hasPermission = CastlingPermissions[i];
                 var hasPermission2 = (clone.CastlingPermissions2 & (CastlingPermission2)(1 << i)) != CastlingPermission2.None;
@@ -794,17 +805,27 @@ namespace ChessDotNet.Data
                 }
             }
 
-            //if (!board.History2.SequenceEqual(History2))
+            //if (!clone.History2.SequenceEqual(History2))
             //{
             //    return false;
             //}
 
-            //if (board.HistoryDepth != HistoryDepth)
+            //for (var i = 0; i < History2.Length; i++)
+            //{
+            //    var history1 = History2[i];
+            //    var history2 = clone.History2[i];
+            //    if (history1 != history2)
+            //    {
+            //        return false;
+            //    }
+            //}
+
+            //if (clone.HistoryDepth != HistoryDepth)
             //{
             //    return false;
             //}
 
-            //if (board.CastlingPermissions2 != CastlingPermissions2)
+            //if (clone.CastlingPermissions2 != CastlingPermissions2)
             //{
             //    return false;
             //}
@@ -812,7 +833,7 @@ namespace ChessDotNet.Data
             return true;
         }
 
-        public Board DoMove(Move move)
+        public Board DoMove(Move move, bool allowNull = true)
         {
 #if TEST
             this.CheckBoard();
@@ -941,8 +962,10 @@ namespace ChessDotNet.Data
             if ((move.Piece == ChessPiece.WhitePawn && move.From + 16 == move.To) || (move.Piece == ChessPiece.BlackPawn && move.From - 16 == move.To))
             {
                 var fileIndex = move.From % 8;
+                var rankIndex = (move.From >> 3) + (WhiteToMove ? 1 : -1);
                 newBoard.EnPassantFile = BitboardConstants.Files[fileIndex];
                 newBoard.EnPassantFileIndex = fileIndex;
+                newBoard.EnPassantRankIndex = rankIndex;
                 newBoard.Key ^= ZobristKeys.ZEnPassant[fileIndex];
             }
             else
@@ -1055,6 +1078,34 @@ namespace ChessDotNet.Data
                 Console.WriteLine($"Fuck2 {Key}");
                 Debugger.Break();
             }
+
+            //if (allowNull)
+            //{
+            //    move = new Move(0, 0, 0);
+            //    newBoard = DoMove(move, false);
+            //    newBoard.SyncCastleTo2();
+            //    clone.DoMove2(move);
+
+            //    if (!newBoard.ExactlyEquals(clone))
+            //    {
+            //        Console.WriteLine($"Fuck {Key}");
+            //        Debugger.Break();
+            //    }
+
+            //    if (!clone.ExactlyEquals(newBoard))
+            //    {
+            //        Console.WriteLine($"Fuck {Key}");
+            //        Debugger.Break();
+            //    }
+
+            //    clone.UndoMove();
+            //    if (!ExactlyEquals(clone))
+            //    {
+            //        Console.WriteLine($"Fuck2 {Key}");
+            //        Debugger.Break();
+            //    }
+            //}
+            
 
             return newBoard;
         }

@@ -87,6 +87,7 @@ namespace ChessDotNet.Data
 
         public static Move FromPositionString(Board board, string moveText)
         {
+            moveText = moveText.ToLower();
             var from = TextToPosition(moveText.Substring(0, 2));
             var to = TextToPosition(moveText.Substring(2, 2));
             var piece = board.ArrayBoard[from];
@@ -110,16 +111,16 @@ namespace ChessDotNet.Data
             {
                 switch (moveText[4])
                 {
-                    case 'Q':
+                    case 'q':
                         pawnPromotesTo = isWhite ? ChessPiece.WhiteQueen : ChessPiece.BlackQueen;
                         break;
-                    case 'N':
+                    case 'n':
                         pawnPromotesTo = isWhite ? ChessPiece.WhiteKnight : ChessPiece.BlackKnight;
                         break;
-                    case 'B':
+                    case 'b':
                         pawnPromotesTo = isWhite ? ChessPiece.WhitePawn : ChessPiece.BlackPawn;
                         break;
-                    case 'R':
+                    case 'r':
                         pawnPromotesTo = isWhite ? ChessPiece.WhiteRook : ChessPiece.BlackRook;
                         break;
                 }
@@ -140,19 +141,19 @@ namespace ChessDotNet.Data
                 {
                     case ChessPiece.WhiteKnight:
                     case ChessPiece.BlackKnight:
-                        promotionLetter = 'N';
+                        promotionLetter = 'n';
                         break;
                     case ChessPiece.WhiteBishop:
                     case ChessPiece.BlackBishop:
-                        promotionLetter = 'B';
+                        promotionLetter = 'b';
                         break;
                     case ChessPiece.WhiteRook:
                     case ChessPiece.BlackRook:
-                        promotionLetter = 'R';
+                        promotionLetter = 'r';
                         break;
                     case ChessPiece.WhiteQueen:
                     case ChessPiece.BlackQueen:
-                        promotionLetter = 'Q';
+                        promotionLetter = 'q';
                         break;
                     default:
                         throw new ArgumentOutOfRangeException(nameof(PawnPromoteTo), PawnPromoteTo, "Invalid pawn promotion");
@@ -306,19 +307,19 @@ namespace ChessDotNet.Data
                 {
                     case ChessPiece.WhiteKnight:
                     case ChessPiece.BlackKnight:
-                        promotionLetter = 'N';
+                        promotionLetter = 'n';
                         break;
                     case ChessPiece.WhiteBishop:
                     case ChessPiece.BlackBishop:
-                        promotionLetter = 'B';
+                        promotionLetter = 'b';
                         break;
                     case ChessPiece.WhiteRook:
                     case ChessPiece.BlackRook:
-                        promotionLetter = 'R';
+                        promotionLetter = 'r';
                         break;
                     case ChessPiece.WhiteQueen:
                     case ChessPiece.BlackQueen:
-                        promotionLetter = 'Q';
+                        promotionLetter = 'q';
                         break;
                     default:
                         throw new ArgumentOutOfRangeException(nameof(PawnPromoteTo), PawnPromoteTo, "Invalid pawn promotion");

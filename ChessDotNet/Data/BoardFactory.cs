@@ -19,6 +19,7 @@ namespace ChessDotNet.Data
             board.BitBoard = new ulong[13];
             board.CastlingPermissions = new bool[CastlePermission.Length];
             board.History = new HistoryEntry[0];
+            board.History2 = new UndoMove[2048]; // TODO
 
             var boardPosition = 0;
             var fenPosition = 0;
@@ -66,15 +67,19 @@ namespace ChessDotNet.Data
                 {
                     case 'K':
                         board.CastlingPermissions[CastlePermission.WhiteKingSide] = true;
+                        board.CastlingPermissions2 |= CastlingPermission2.WhiteKing;
                         break;
                     case 'Q':
                         board.CastlingPermissions[CastlePermission.WhiteQueenSide] = true;
+                        board.CastlingPermissions2 |= CastlingPermission2.WhiteQueen;
                         break;
                     case 'k':
                         board.CastlingPermissions[CastlePermission.BlackKingSide] = true;
+                        board.CastlingPermissions2 |= CastlingPermission2.BlackKing;
                         break;
                     case 'q':
                         board.CastlingPermissions[CastlePermission.BlackQueenSide] = true;
+                        board.CastlingPermissions2 |= CastlingPermission2.BlackKing;
                         break;
                     case ' ':
                         done = true;
@@ -93,7 +98,6 @@ namespace ChessDotNet.Data
                 }
             }
 
-            fenPosition++;
             if (fenPosition < fen.Length)
             {
                 var lower = char.ToLowerInvariant(fen[fenPosition]);
@@ -173,8 +177,5 @@ namespace ChessDotNet.Data
             }
             return board;
         }
-
-
-        
     }
 }
