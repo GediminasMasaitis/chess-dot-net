@@ -79,17 +79,17 @@ namespace ChessDotNet.Data
                         break;
                     case 'q':
                         board.CastlingPermissions[CastlePermission.BlackQueenSide] = true;
-                        board.CastlingPermissions2 |= CastlingPermission2.BlackKing;
+                        board.CastlingPermissions2 |= CastlingPermission2.BlackQueen;
                         break;
                     case ' ':
+                        fenPosition--;
                         done = true;
                         break;
                     case '-':
-                        fenPosition++;
                         done = true;
                         break;
                     default:
-                        throw new Exception("Unknown charcacter in castling permissions");
+                        throw new Exception("Unknown character in castling permissions");
                 }
                 fenPosition++;
                 if (done)
@@ -98,7 +98,8 @@ namespace ChessDotNet.Data
                 }
             }
 
-            if (fenPosition < fen.Length)
+            fenPosition++;
+            if (fenPosition < fen.Length && fen[fenPosition] != '-')
             {
                 var lower = char.ToLowerInvariant(fen[fenPosition]);
                 var file = lower - 0x61;
@@ -108,7 +109,10 @@ namespace ChessDotNet.Data
                     board.EnPassantFileIndex = file;
                     board.EnPassantFile = BitboardConstants.Files[file];
                 }
+                fenPosition++;
+                board.EnPassantRankIndex = fen[fenPosition] - '0' - 1;
             }
+            
 
             board.SyncExtraBitBoards();
             board.SyncBitBoardsToArrayBoard();

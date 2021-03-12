@@ -55,10 +55,15 @@ namespace ChessDotNet.Perft
         {
             var faultyResults = new List<PerftComparisonResult> {faultyResult};
             var board = _boardFactory.ParseFEN(fen);
+            Console.WriteLine(board.Print(null, _fenSerializer));
             while (faultyResult.CorrectMove && depth > 0)
             {
-                board = board.DoMove(faultyResult.PerftResult.EngineMove.Value);
+                board.DoMove2(faultyResult.PerftResult.EngineMove.Value);
+                Console.WriteLine(board.Print(null, _fenSerializer));
                 fen = _fenSerializer.SerializeToFen(board);
+                var newBoard = _boardFactory.ParseFEN(fen);
+                board.ExactlyEquals(newBoard);
+                newBoard.ExactlyEquals(board);
                 depth--;
                 faultyResult = RunComparison(fen, depth);
                 if (faultyResult.Correct)
@@ -93,12 +98,19 @@ namespace ChessDotNet.Perft
         private PerftComparisonResult RunComparison(string fen, int depth)
         {
             Out($"Depth: {depth}");
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
             var testResults = GetResults(_testClient, fen, depth);
+            stopwatch.Stop();
             var testNodes = testResults.Sum(entry => entry.Value.Nodes);
             Out($", Perft nodes: {testNodes}");
             var verificationResults = GetResults(_verificationClient, fen, depth);
             var verificationNodes = verificationResults.Sum(entry => entry.Value.Nodes);
-            OutLine($", Verification nodes: {verificationNodes}");
+            Out($", Verification nodes: {verificationNodes}");
+            var speed = testNodes / stopwatch.Elapsed.TotalSeconds;
+            var speedDisplay = GetSpeedDisplay(speed);
+            Out($", {stopwatch.Elapsed.TotalMilliseconds} ms ({speedDisplay})");
+            OutLine();
             
             foreach (var testResult in testResults.Values)
             {
@@ -126,6 +138,7 @@ namespace ChessDotNet.Perft
 
             return new PerftComparisonResult(true, true);
         }
+
 
         private IDictionary<string, MoveAndNodes> GetResults(IPerftClient client, string fen, int depth, IEnumerable<string> filter = null)
         {

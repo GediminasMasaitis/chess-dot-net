@@ -271,6 +271,7 @@ namespace ChessDotNet.Data
         public void UndoMove()
         {
             var history = History2[HistoryDepth - 1];
+            HistoryDepth--;
             var move = history.Move;
 
             EnPassantFileIndex = history.EnPassantFileIndex;
@@ -278,6 +279,7 @@ namespace ChessDotNet.Data
             EnPassantFile = EnPassantFileIndex >= 0 ? BitboardConstants.Files[history.EnPassantFileIndex] : 0;
             CastlingPermissions2 = history.CastlingPermission;
             Key = history.Key;
+            LastTookPieceHistoryIndex = history.FiftyMoveRule;
 
             //var whiteToMove = WhiteToMove;
             WhiteToMove = !WhiteToMove;
@@ -337,7 +339,6 @@ namespace ChessDotNet.Data
                 {
                     BitBoard[move.TakesPiece] |= toPosBitBoard;
                 }
-                //LastTookPieceHistoryIndex = History.Length; // TODO
                 PieceCounts[move.TakesPiece]++;
                 if (WhiteToMove)
                 {
@@ -347,10 +348,6 @@ namespace ChessDotNet.Data
                 {
                     WhiteMaterial += EvaluationService.Weights[move.TakesPiece];
                 }
-            }
-            else
-            {
-                LastTookPieceHistoryIndex = LastTookPieceHistoryIndex;
             }
 
             // EN PASSANT
@@ -425,14 +422,36 @@ namespace ChessDotNet.Data
             CastlingPermissions[CastlePermission.BlackKingSide] = (CastlingPermissions2 & CastlingPermission2.BlackKing) != CastlingPermission2.None;
         }
 
+        public void TestMove(Move move)
+        {
+            var clone = Clone();
+            var clone2 = Clone();
+            var newBoard = DoMove(move);
+            clone.DoMove2(move);
+            Debug.Assert(newBoard.ExactlyEquals(clone));
+            Debug.Assert(clone.ExactlyEquals(newBoard));
+            clone.UndoMove();
+            Debug.Assert(ExactlyEquals(clone));
+            Debug.Assert(clone.ExactlyEquals(this));
+
+            //DoMove2(move);
+            //UndoMove();
+            //ExactlyEquals(clone2);
+            //clone2.ExactlyEquals(this);
+        }
+
         public void DoMove2(Move move)
         {
+            //var clone = Clone();
+            //var newBoard = DoMove(move);
+
             // history
             History2[HistoryDepth].Move = move;
             History2[HistoryDepth].Key = Key;
             History2[HistoryDepth].CastlingPermission = CastlingPermissions2;
             History2[HistoryDepth].EnPassantFileIndex = EnPassantFileIndex;
             History2[HistoryDepth].EnPassantRankIndex = EnPassantRankIndex;
+            History2[HistoryDepth].FiftyMoveRule = LastTookPieceHistoryIndex;
             HistoryDepth++;
             
             var whiteToMove = WhiteToMove;
@@ -496,7 +515,7 @@ namespace ChessDotNet.Data
                     BitBoard[move.TakesPiece] &= ~toPosBitBoard;
                     Key ^= ZobristKeys.ZPieces[move.To, move.TakesPiece];
                 }
-                //LastTookPieceHistoryIndex = History.Length; // TODO
+                LastTookPieceHistoryIndex = HistoryDepth - 1;
                 PieceCounts[move.TakesPiece]--;
                 if (whiteToMove)
                 {
@@ -506,10 +525,6 @@ namespace ChessDotNet.Data
                 {
                     WhiteMaterial -= EvaluationService.Weights[move.TakesPiece];
                 }
-            }
-            else
-            {
-                LastTookPieceHistoryIndex = LastTookPieceHistoryIndex;
             }
 
             // EN PASSANT
@@ -660,9 +675,36 @@ namespace ChessDotNet.Data
 
             SyncCastleTo1();
             SyncExtraBitBoards();
+
+            //if (!newBoard.ExactlyEquals(this))
+            //{
+            //    var foo = clone.DoMove(move);
+            //    Console.WriteLine($"Fuck {Key}");
+            //    Debugger.Break();
+            //}
+
+            //if (!this.ExactlyEquals(newBoard))
+            //{
+            //    Console.WriteLine($"Fuck {Key}");
+            //    Debugger.Break();
+            //}
+
+            //UndoMove();
+
+            //if (!ExactlyEquals(clone))
+            //{
+            //    Console.WriteLine($"Fuck2 {Key}");
+            //    Debugger.Break();
+            //}
+
+            //if (!clone.ExactlyEquals(this))
+            //{
+            //    Console.WriteLine($"Fuck2 {Key}");
+            //    Debugger.Break();
+            //}
         }
 
-        private Board Clone()
+        public Board Clone()
         {
             var clone = new Board();
             clone.WhiteToMove = WhiteToMove;
@@ -683,6 +725,7 @@ namespace ChessDotNet.Data
             clone.WhiteMaterial = WhiteMaterial;
             clone.BlackMaterial = BlackMaterial;
 
+            clone.History = History.ToArray();
             clone.History2 = (UndoMove[])History2.Clone();
             clone.HistoryDepth = HistoryDepth;
             clone.CastlingPermissions2 = CastlingPermissions2;
@@ -691,7 +734,7 @@ namespace ChessDotNet.Data
             return clone;
         }
 
-        private bool ExactlyEquals(Board clone)
+        public bool ExactlyEquals(Board clone, bool testHistory = false)
         {
             if (clone.WhiteToMove != WhiteToMove)
             {
@@ -745,10 +788,10 @@ namespace ChessDotNet.Data
 
             }
 
-            //if (!clone.ArrayBoard.SequenceEqual(ArrayBoard))
-            //{
-            //    return false;
-            //}
+            if (!clone.ArrayBoard.SequenceEqual(ArrayBoard))
+            {
+                return false;
+            }
 
             if (clone.EnPassantFileIndex != EnPassantFileIndex)
             {
@@ -770,7 +813,7 @@ namespace ChessDotNet.Data
                 return false;
             }
 
-            //if (board.LastTookPieceHistoryIndex != LastTookPieceHistoryIndex)
+            //if (clone.LastTookPieceHistoryIndex != LastTookPieceHistoryIndex)
             //{
             //    return false;
             //}
@@ -805,11 +848,6 @@ namespace ChessDotNet.Data
                 }
             }
 
-            //if (!clone.History2.SequenceEqual(History2))
-            //{
-            //    return false;
-            //}
-
             //for (var i = 0; i < History2.Length; i++)
             //{
             //    var history1 = History2[i];
@@ -820,15 +858,10 @@ namespace ChessDotNet.Data
             //    }
             //}
 
-            //if (clone.HistoryDepth != HistoryDepth)
-            //{
-            //    return false;
-            //}
-
-            //if (clone.CastlingPermissions2 != CastlingPermissions2)
-            //{
-            //    return false;
-            //}
+            if (clone.HistoryDepth != HistoryDepth)
+            {
+                return false;
+            }
 
             return true;
         }
@@ -860,7 +893,7 @@ namespace ChessDotNet.Data
             newBoard.BlackMaterial = BlackMaterial;
             newBoard.Key = Key;
 
-
+            newBoard.HistoryDepth = HistoryDepth + 1;
             var newHistory = new HistoryEntry[History.Length + 1];
             Array.Copy(History, newHistory, History.Length);
             var newEntry = new HistoryEntry(this, move);
@@ -962,7 +995,7 @@ namespace ChessDotNet.Data
             if ((move.Piece == ChessPiece.WhitePawn && move.From + 16 == move.To) || (move.Piece == ChessPiece.BlackPawn && move.From - 16 == move.To))
             {
                 var fileIndex = move.From % 8;
-                var rankIndex = (move.From >> 3) + (WhiteToMove ? 1 : -1);
+                var rankIndex = (move.To >> 3) + (WhiteToMove ? -1 : 1);
                 newBoard.EnPassantFile = BitboardConstants.Files[fileIndex];
                 newBoard.EnPassantFileIndex = fileIndex;
                 newBoard.EnPassantRankIndex = rankIndex;
@@ -1057,27 +1090,27 @@ namespace ChessDotNet.Data
             //    var a = 123;
             //}
 
-            var clone = Clone();
-            clone.DoMove2(move);
+            //var clone = Clone();
+            //clone.DoMove2(move);
 
-            if (!newBoard.ExactlyEquals(clone))
-            {
-                Console.WriteLine($"Fuck {Key}");
-                Debugger.Break();
-            }
+            //if (!newBoard.ExactlyEquals(clone))
+            //{
+            //    Console.WriteLine($"Fuck {Key}");
+            //    Debugger.Break();
+            //}
 
-            if (!clone.ExactlyEquals(newBoard))
-            {
-                Console.WriteLine($"Fuck {Key}");
-                Debugger.Break();
-            }
+            //if (!clone.ExactlyEquals(newBoard))
+            //{
+            //    Console.WriteLine($"Fuck {Key}");
+            //    Debugger.Break();
+            //}
 
-            clone.UndoMove();
-            if (!ExactlyEquals(clone))
-            {
-                Console.WriteLine($"Fuck2 {Key}");
-                Debugger.Break();
-            }
+            //clone.UndoMove();
+            //if (!ExactlyEquals(clone))
+            //{
+            //    Console.WriteLine($"Fuck2 {Key}");
+            //    Debugger.Break();
+            //}
 
             //if (allowNull)
             //{

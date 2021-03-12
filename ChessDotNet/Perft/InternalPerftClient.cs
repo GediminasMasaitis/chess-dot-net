@@ -46,10 +46,14 @@ namespace ChessDotNet.Perft
             }
 
             var possibleMoves = _possibleMovesService.GetAllPossibleMoves(_currentBoard);
-            foreach (var move in possibleMoves)
+            for (var i = 0; i < possibleMoves.Count; i++)
             {
-                var childBoard = _currentBoard.DoMove(move);
-                var nodes = GetNodesInner(childBoard, depth - 1);
+                var move = possibleMoves[i];
+                //_currentBoard.TestMove(move);
+                _currentBoard.DoMove2(move);
+                var nodes = GetNodesInner(_currentBoard, depth - 1);
+                //var nodes = 1;
+                _currentBoard.UndoMove();
                 var moveStr = move.ToPositionString();
                 var moveAndNodes = new MoveAndNodes(moveStr, nodes, move);
                 yield return moveAndNodes;
@@ -72,8 +76,10 @@ namespace ChessDotNet.Perft
             var nodes = 0;
             foreach (var move in possibleMoves)
             {
-                var childBoard = board.DoMove(move);
-                var childNodes = GetNodesInner(childBoard, depth - 1);
+                //board.TestMove(move);
+                board.DoMove2(move);
+                var childNodes = GetNodesInner(board, depth - 1);
+                board.UndoMove();
                 nodes += childNodes;
             }
             return nodes;

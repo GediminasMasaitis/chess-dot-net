@@ -32,13 +32,13 @@ namespace ChessDotNet.ConsoleTests
 
             //DoTimings();
 
-            DoPerftSuite();
+            //DoPerftSuite();
             //TestMove();
             //TestZobrist();
             //TestRepetitions();
 
             //DoPerftClient();
-            //DoPerft();
+            DoPerft();
             //await DoSearch2Async();
 
             //Console.WriteLine(new BoardFactory().ParseFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").Print());
@@ -62,10 +62,10 @@ namespace ChessDotNet.ConsoleTests
 
         private static void DoPerft()
         {
-            //var fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+            var fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
             //var fen = "rnbqkbnr/2pppppp/p7/Pp6/8/8/1PPPPPPP/RNBQKBNR w KQkq b6 0 3 ";
 
-            var fen = "8/1k6/8/2Pp3r/2K5/8/8/8 w - d6";
+            //var fen = "8/1k6/8/2Pp3r/2K5/8/8/8 w - d6";
             //var fen = "8/8/4k3/8/2p5/8/B2P2K1/8 w - - 0 1";
 
             //var fen = "8/8/1k6/2b5/2pP4/8/5K2/8 b - d3 0 1";
