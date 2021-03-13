@@ -38,8 +38,8 @@ namespace ChessDotNet.ConsoleTests
             //TestRepetitions();
 
             //DoPerftClient();
-            DoPerft();
-            //await DoSearch2Async();
+            //DoPerft();
+            await DoSearch2Async();
 
             //Console.WriteLine(new BoardFactory().ParseFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").Print());
             //var pos = 27;
@@ -178,8 +178,6 @@ namespace ChessDotNet.ConsoleTests
             Console.WriteLine(evaluation);
         }
 
-
-
         private static void DoPerftSuite()
         {
             var slidingMoveGenerator = new MagicBitboardsService();
@@ -215,9 +213,9 @@ namespace ChessDotNet.ConsoleTests
             var attacked = attacksService.GetAllAttacked(board);
 
             var newMove = new Move(4,2,ChessPiece.WhiteKing);
-            var movedBoard = board.DoMove(newMove);
+            board.DoMove2(newMove);
 
-            Debugging.ShowBitBoard(movedBoard.BitBoard[ChessPiece.WhiteKing], movedBoard.BitBoard[ChessPiece.WhiteRook]);
+            Debugging.ShowBitBoard(board.BitBoard[ChessPiece.WhiteKing], board.BitBoard[ChessPiece.WhiteRook]);
         }
 
         private static void TestZobrist()
@@ -231,9 +229,10 @@ namespace ChessDotNet.ConsoleTests
             Console.WriteLine(keySame ? "Initial keys match" : "Initial keys are different");
 
             var move = new Move(8, 16, ChessPiece.WhitePawn);
-            var boardAfterMove = board.DoMove(move);
-            var keyAfterMove = ZobristKeys.CalculateKey(boardAfterMove);
-            var keySameAfterMove = boardAfterMove.Key == keyAfterMove;
+            board.DoMove2(move);
+            var keyAfterMove = ZobristKeys.CalculateKey(board);
+            board.UndoMove();
+            var keySameAfterMove = board.Key == keyAfterMove;
 
             var manualKey = board.Key;
             manualKey ^= ZobristKeys.ZPieces[8, ChessPiece.WhitePawn];
@@ -241,74 +240,6 @@ namespace ChessDotNet.ConsoleTests
             manualKey ^= ZobristKeys.ZWhiteToMove;
 
             Console.WriteLine(keySameAfterMove ? "Keys after move match" : "Keys after move are different");
-        }
-
-        private static void TestRepetitions()
-        {
-            var fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"; // Starting pos
-            //fen = "2rr3k/pp3pp1/1nnqbN1p/3pN3/2pP4/2P3Q1/PPB4P/R4RK1 w - -"; // Mate in 3
-            //fen = "r1b1k2r/ppppnppp/2n2q2/2b5/3NP3/2P1B3/PP3PPP/RN1QKB1R w KQkq - 0 1"; // Developed
-
-            var fact = new BoardFactory();
-            var board = fact.ParseFEN(fen);
-
-            var hyperbola = new HyperbolaQuintessence();
-            var evaluationService = new EvaluationService();
-            var attacksService = new AttacksService(hyperbola);
-            var movesService = new PossibleMovesService(attacksService, hyperbola);
-            var interruptor = new ConsoleInterruptor();
-            var searchService = new SearchService(movesService, evaluationService, interruptor);
-
-            Console.WriteLine(searchService.IsRepetition(board));
-
-            var move = new Move(1, 18, ChessPiece.WhiteKnight);
-            board = board.DoMove(move);
-            Console.WriteLine(move.ToPositionString() + " " + searchService.IsRepetition(board));
-
-            move = new Move(57, 42, ChessPiece.BlackKnight);
-            board = board.DoMove(move);
-            Console.WriteLine(move.ToPositionString() + " " + searchService.IsRepetition(board));
-
-            move = new Move(18, 1, ChessPiece.WhiteKnight);
-            board = board.DoMove(move);
-            Console.WriteLine(move.ToPositionString() + " " + searchService.IsRepetition(board));
-
-            move = new Move(42, 57, ChessPiece.BlackKnight);
-            board = board.DoMove(move);
-            Console.WriteLine(move.ToPositionString() + " " + searchService.IsRepetition(board));
-
-            move = new Move(1, 18, ChessPiece.WhiteKnight);
-            board = board.DoMove(move);
-            Console.WriteLine(move.ToPositionString() + " " + searchService.IsRepetition(board));
-
-            move = new Move(57, 40, ChessPiece.BlackKnight);
-            board = board.DoMove(move);
-            Console.WriteLine(move.ToPositionString() + " " + searchService.IsRepetition(board));
-        }
-
-        private static void DoSearch()
-        {
-            var fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"; // Starting pos
-            //var fen = "r4rk1/p2n1ppp/3qp3/6B1/N5P1/3P1b2/PPP1BbP1/R2Q1R1K b - - 0 14"; // Mate in 3
-
-            //fen = "2rr3k/pp3pp1/1nnqbN1p/3pN3/2pP4/2P3Q1/PPB4P/R4RK1 w - -"; // Mate in 3
-            //fen = "r1b1k2r/ppppnppp/2n2q2/2b5/3NP3/2P1B3/PP3PPP/RN1QKB1R w KQkq - 0 1"; // Developed
-            //fen = "r1b1kb1r/2pp1ppp/1np1q3/p3P3/2P5/1P6/PB1NQPPP/R3KB1R b KQkq - 0 1 "; // Midgame
-            var fact = new BoardFactory();
-            var board = fact.ParseFEN(fen);
-
-            var hyperbola = new HyperbolaQuintessence();
-            var evaluationService = new EvaluationService();
-            var attacksService = new AttacksService(hyperbola);
-            var movesService = new PossibleMovesService(attacksService, hyperbola);
-            var interruptor = new ConsoleInterruptor();
-            var searchService = new SearchService(movesService, evaluationService, interruptor);
-            searchService.SearchInfo += info => Console.WriteLine(info.ToString());
-            var sParams = new SearchParameters();
-            //sParams.MaxDepth = 5;
-            sParams.Infinite = true;
-
-            var move = searchService.Search(board, sParams);
         }
     }
 }

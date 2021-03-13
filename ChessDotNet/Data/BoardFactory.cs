@@ -17,7 +17,7 @@ namespace ChessDotNet.Data
             var board = new Board();
             board.ArrayBoard = new Piece[64];
             board.BitBoard = new ulong[13];
-            board.CastlingPermissions = new bool[CastlePermission.Length];
+            board.CastlingPermissions = CastlingPermission.None;
             board.History = new HistoryEntry[0];
             board.History2 = new UndoMove[2048]; // TODO
 
@@ -66,20 +66,16 @@ namespace ChessDotNet.Data
                 switch (fen[fenPosition])
                 {
                     case 'K':
-                        board.CastlingPermissions[CastlePermission.WhiteKingSide] = true;
-                        board.CastlingPermissions2 |= CastlingPermission2.WhiteKing;
+                        board.CastlingPermissions |= CastlingPermission.WhiteKing;
                         break;
                     case 'Q':
-                        board.CastlingPermissions[CastlePermission.WhiteQueenSide] = true;
-                        board.CastlingPermissions2 |= CastlingPermission2.WhiteQueen;
+                        board.CastlingPermissions |= CastlingPermission.WhiteQueen;
                         break;
                     case 'k':
-                        board.CastlingPermissions[CastlePermission.BlackKingSide] = true;
-                        board.CastlingPermissions2 |= CastlingPermission2.BlackKing;
+                        board.CastlingPermissions |= CastlingPermission.BlackKing;
                         break;
                     case 'q':
-                        board.CastlingPermissions[CastlePermission.BlackQueenSide] = true;
-                        board.CastlingPermissions2 |= CastlingPermission2.BlackQueen;
+                        board.CastlingPermissions |= CastlingPermission.BlackQueen;
                         break;
                     case ' ':
                         fenPosition--;

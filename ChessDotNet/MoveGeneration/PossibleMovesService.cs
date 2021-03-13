@@ -295,8 +295,8 @@ namespace ChessDotNet.MoveGeneration
 
             if (isWhite)
             {
-                castlingPermissionQueenSide = board.CastlingPermissions[CastlePermission.WhiteQueenSide];
-                castlingPermissionKingSide = board.CastlingPermissions[CastlePermission.WhiteKingSide];
+                castlingPermissionQueenSide = (board.CastlingPermissions & CastlingPermission.WhiteQueen) != CastlingPermission.None;
+                castlingPermissionKingSide = (board.CastlingPermissions & CastlingPermission.WhiteKing) != CastlingPermission.None;
                 kingPos = board.BitBoard[ChessPiece.WhiteKing].BitScanForward();
                 queenSideCastleMask = BitboardConstants.WhiteQueenSideCastleMask;
                 kingSideCastleMask = BitboardConstants.WhiteKingSideCastleMask;
@@ -306,8 +306,8 @@ namespace ChessDotNet.MoveGeneration
             }
             else
             {
-                castlingPermissionQueenSide = board.CastlingPermissions[CastlePermission.BlackQueenSide];
-                castlingPermissionKingSide = board.CastlingPermissions[CastlePermission.BlackKingSide];
+                castlingPermissionQueenSide = (board.CastlingPermissions & CastlingPermission.BlackQueen) != CastlingPermission.None;
+                castlingPermissionKingSide = (board.CastlingPermissions & CastlingPermission.BlackKing) != CastlingPermission.None;
                 kingPos = board.BitBoard[ChessPiece.BlackKing].BitScanForward();
                 queenSideCastleMask = BitboardConstants.BlackQueenSideCastleMask;
                 kingSideCastleMask = BitboardConstants.BlackKingSideCastleMask;
@@ -476,41 +476,9 @@ namespace ChessDotNet.MoveGeneration
             }
 
             return moves;
-
-
-            moves.RemoveAll(move => !IsKingSafeAfterMove(board, move));
-            return moves;
-
-            var filteredMoves = new List<Move>(moves.Count);
-            foreach (var move in moves)
-            {
-                var safe = IsKingSafeAfterMove(board, move);
-                if (safe)
-                {
-                    filteredMoves.Add(move);
-                }
-            }
-            return filteredMoves;
         }
 
         public Board DoMoveIfKingSafe(Board board, Move move)
-        {
-            return DoMoveIfKingSafeNew(board, move);
-            //return DoMoveIfKingSafeOld(board, move);
-        }
-
-        private Board DoMoveIfKingSafeOld(Board board, Move move)
-        {
-            var boardAfterMove = board.DoMove(move);
-            var enemyAttackedAfterMove = AttacksService.GetAllAttacked(boardAfterMove);
-            var myKings = board.WhiteToMove
-                ? boardAfterMove.BitBoard[ChessPiece.WhiteKing]
-                : boardAfterMove.BitBoard[ChessPiece.BlackKing];
-            var isSafe = (enemyAttackedAfterMove & myKings) == 0;
-            return isSafe ? boardAfterMove : null;
-        }
-
-        private Board DoMoveIfKingSafeNew(Board board, Move move)
         {
             var isSafe = IsKingSafeAfterMove(board, move);
             if (isSafe)
@@ -521,13 +489,7 @@ namespace ChessDotNet.MoveGeneration
             return null;
         }
 
-        private bool IsKingSafeAfterMoveOld(Board board, Move move)
-        {
-            var afterMove = DoMoveIfKingSafeOld(board, move);
-            return afterMove != null;
-        }
-
-        private bool IsKingSafeAfterMove(Board board, Move move)
+        public bool IsKingSafeAfterMove(Board board, Move move)
         {
             Bitboard allPieces = board.AllPieces;
             var inverseFromBitboard = ~(1UL << move.From);

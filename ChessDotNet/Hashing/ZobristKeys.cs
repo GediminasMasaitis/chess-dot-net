@@ -14,7 +14,8 @@ namespace ChessDotNet.Hashing
         {
             ZPieces = new ulong[64, 13];
             ZEnPassant = new ulong[8];
-            ZCastle = new ulong[4];
+            var castleLength = (byte)CastlingPermission.All + 1;
+            ZCastle = new ulong[castleLength];
 
             var rng = new Random(0);
             for (var i = 1; i < 64; i++)
@@ -30,7 +31,7 @@ namespace ChessDotNet.Hashing
                 ZEnPassant[i] = NextKey(rng);
             }
 
-            for (var i = 0; i < 4; i++)
+            for (var i = 0; i < castleLength; i++)
             {
                 ZCastle[i] = NextKey(rng);
             }
@@ -63,12 +64,29 @@ namespace ChessDotNet.Hashing
                 key ^= ZEnPassant[board.EnPassantFileIndex];
             }
 
-            for (var i = 0; i < 4; i++)
+            //for (var i = 0; i < 4; i++)
+            //{
+            //    if (board.CastlingPermissions[i])
+            //    {
+            //        key ^= ZCastle[i];
+            //    }
+            //}
+
+            if ((board.CastlingPermissions & CastlingPermission.WhiteQueen) != CastlingPermission.None)
             {
-                if (board.CastlingPermissions[i])
-                {
-                    key ^= ZCastle[i];
-                }
+                key ^= ZCastle[(byte)CastlingPermission.WhiteQueen];
+            }
+            if ((board.CastlingPermissions & CastlingPermission.WhiteKing) != CastlingPermission.None)
+            {
+                key ^= ZCastle[(byte)CastlingPermission.WhiteKing];
+            }
+            if ((board.CastlingPermissions & CastlingPermission.BlackQueen) != CastlingPermission.None)
+            {
+                key ^= ZCastle[(byte)CastlingPermission.BlackQueen];
+            }
+            if ((board.CastlingPermissions & CastlingPermission.BlackKing) != CastlingPermission.None)
+            {
+                key ^= ZCastle[(byte)CastlingPermission.BlackKing];
             }
 
             if (board.WhiteToMove)

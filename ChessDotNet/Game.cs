@@ -58,7 +58,7 @@ namespace ChessDotNet
             foreach (var moveStr in moves)
             {
                 var move = Move.FromPositionString(CurrentBoard, moveStr);
-                CurrentBoard = CurrentBoard.DoMove(move);
+                CurrentBoard.DoMove2(move);
             }
         }
 
@@ -79,7 +79,7 @@ namespace ChessDotNet
                 SetStartingPos();
             }
             var searchResult = Search.Run(CurrentBoard, searchParameters);
-            CurrentBoard = CurrentBoard.DoMove(searchResult[0]);
+            CurrentBoard.DoMove2(searchResult[0]);
             return searchResult;
         }
     }

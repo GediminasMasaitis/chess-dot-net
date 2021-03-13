@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using ChessDotNet.Data;
 using ChessDotNet.MoveGeneration;
+using ChessDotNet.Search2;
 
 namespace ChessDotNet.Perft
 {
@@ -12,11 +13,17 @@ namespace ChessDotNet.Perft
         private readonly BoardFactory _boardFactory;
 
         private Board _currentBoard;
+        private List<Move>[] _moves;
 
         public InternalPerftClient(PossibleMovesService possibleMovesService, BoardFactory boardFactory)
         {
             _possibleMovesService = possibleMovesService;
             _boardFactory = boardFactory;
+            _moves = new List<Move>[SearchConstants.MaxDepth];
+            for (var i = 0; i < SearchConstants.MaxDepth; i++)
+            {
+                _moves[i] = new List<Move>();
+            }
 
             SetBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
         }
@@ -45,7 +52,9 @@ namespace ChessDotNet.Perft
                 throw new ArgumentOutOfRangeException(nameof(depth), depth, null);
             }
 
-            var possibleMoves = _possibleMovesService.GetAllPossibleMoves(_currentBoard);
+            var possibleMoves = _moves[depth];
+            possibleMoves.Clear();
+            _possibleMovesService.GetAllPossibleMoves(_currentBoard, possibleMoves);
             for (var i = 0; i < possibleMoves.Count; i++)
             {
                 var move = possibleMoves[i];
@@ -67,7 +76,9 @@ namespace ChessDotNet.Perft
                 return 1;
             }
 
-            var possibleMoves = _possibleMovesService.GetAllPossibleMoves(board);
+            var possibleMoves = _moves[depth];
+            possibleMoves.Clear();
+            _possibleMovesService.GetAllPossibleMoves(board, possibleMoves);
             if (depth == 1)
             {
                 return possibleMoves.Count;

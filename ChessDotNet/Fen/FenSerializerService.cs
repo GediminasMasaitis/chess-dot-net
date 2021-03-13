@@ -51,25 +51,25 @@ namespace ChessDotNet.Fen
             builder.Append(" ");
             builder.Append(board.WhiteToMove ? 'w' : 'b');
             builder.Append(" ");
-            if (board.CastlingPermissions2 == CastlingPermission2.None)
+            if (board.CastlingPermissions == CastlingPermission.None)
             {
                 builder.Append("-");
             }
             else
             {
-                if ((board.CastlingPermissions2 & CastlingPermission2.WhiteKing) != CastlingPermission2.None)
+                if ((board.CastlingPermissions & CastlingPermission.WhiteKing) != CastlingPermission.None)
                 {
                     builder.Append("K");
                 }
-                if ((board.CastlingPermissions2 & CastlingPermission2.WhiteQueen) != CastlingPermission2.None)
+                if ((board.CastlingPermissions & CastlingPermission.WhiteQueen) != CastlingPermission.None)
                 {
                     builder.Append("Q");
                 }
-                if ((board.CastlingPermissions2 & CastlingPermission2.BlackKing) != CastlingPermission2.None)
+                if ((board.CastlingPermissions & CastlingPermission.BlackKing) != CastlingPermission.None)
                 {
                     builder.Append("k");
                 }
-                if ((board.CastlingPermissions2 & CastlingPermission2.BlackQueen) != CastlingPermission2.None)
+                if ((board.CastlingPermissions & CastlingPermission.BlackQueen) != CastlingPermission.None)
                 {
                     builder.Append("q");
                 }

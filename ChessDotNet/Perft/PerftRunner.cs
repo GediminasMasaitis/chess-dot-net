@@ -61,9 +61,9 @@ namespace ChessDotNet.Perft
                 board.DoMove2(faultyResult.PerftResult.EngineMove.Value);
                 Console.WriteLine(board.Print(null, _fenSerializer));
                 fen = _fenSerializer.SerializeToFen(board);
-                var newBoard = _boardFactory.ParseFEN(fen);
-                board.ExactlyEquals(newBoard);
-                newBoard.ExactlyEquals(board);
+                //var newBoard = _boardFactory.ParseFEN(fen);
+                //board.ExactlyEquals(newBoard);
+                //newBoard.ExactlyEquals(board);
                 depth--;
                 faultyResult = RunComparison(fen, depth);
                 if (faultyResult.Correct)
