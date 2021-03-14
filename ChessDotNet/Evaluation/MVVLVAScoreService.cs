@@ -16,7 +16,10 @@ namespace ChessDotNet.Evaluation
             {
                 for (var j = 1; j < PieceScores.Length; j++)
                 {
-                    Scores[i, j] = PieceScores[j]*100 + 6 - PieceScores[i];
+                    var score = (PieceScores[j] * 10) + (6 - PieceScores[i]);
+                    score *= 1000000;
+                    score += 100000000;
+                    Scores[i, j] = score;
                 }
             }
             

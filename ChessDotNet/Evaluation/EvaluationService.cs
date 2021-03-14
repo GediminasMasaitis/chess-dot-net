@@ -156,126 +156,159 @@ namespace ChessDotNet.Evaluation
         public int EvaluatePositions(Board board)
         {
             var score = 0;
+            ulong bitboard;
 
-            for (var rank = 0; rank < 8; rank++)
+            bitboard = board.BitBoard[ChessPiece.WhitePawn];
+            while (bitboard != 0)
             {
-                for (var file = 0; file < 8; file++)
+                var pos = bitboard.BitScanForward();
+                score += PawnTable[pos];
+                if ((board.BitBoard[ChessPiece.BlackPawn] & PassedPawnMasksWhite[pos]) == 0)
                 {
-                    var pos = rank*8 + file;
-                    switch (board.ArrayBoard[pos])
+                    score += PassedPawnScores[pos];
+                }
+                if ((board.BitBoard[ChessPiece.WhitePawn] & IsolatedPawnMasks[pos]) == 0)
+                {
+                    score += IsolatedScore;
+                }
+                bitboard &= ~(1UL << pos);
+            }
+
+            bitboard = board.BitBoard[ChessPiece.BlackPawn];
+            while (bitboard != 0)
+            {
+                var pos = bitboard.BitScanForward();
+                score -= PawnTable[Mirror[pos]];
+                if ((board.BitBoard[ChessPiece.WhitePawn] & PassedPawnMasksBlack[pos]) == 0)
+                {
+                    score -= PassedPawnScores[Mirror[pos]];
+                }
+                if ((board.BitBoard[ChessPiece.BlackPawn] & IsolatedPawnMasks[pos]) == 0)
+                {
+                    score -= IsolatedScore;
+                }
+                bitboard &= ~(1UL << pos);
+            }
+
+            bitboard = board.BitBoard[ChessPiece.WhiteKnight];
+            while (bitboard != 0)
+            {
+                var pos = bitboard.BitScanForward();
+                score += KnightTable[pos];
+                bitboard &= ~(1UL << pos);
+            }
+
+            bitboard = board.BitBoard[ChessPiece.BlackKnight];
+            while (bitboard != 0)
+            {
+                var pos = bitboard.BitScanForward();
+                score -= KnightTable[Mirror[pos]];
+                bitboard &= ~(1UL << pos);
+            }
+
+            bitboard = board.BitBoard[ChessPiece.WhiteBishop];
+            while (bitboard != 0)
+            {
+                var pos = bitboard.BitScanForward();
+                score += BishopTable[pos];
+                bitboard &= ~(1UL << pos);
+            }
+
+            bitboard = board.BitBoard[ChessPiece.BlackBishop];
+            while (bitboard != 0)
+            {
+                var pos = bitboard.BitScanForward();
+                score -= BishopTable[Mirror[pos]];
+                bitboard &= ~(1UL << pos);
+            }
+
+            bitboard = board.BitBoard[ChessPiece.WhiteRook];
+            while (bitboard != 0)
+            {
+                var pos = bitboard.BitScanForward();
+                var file = pos % 8;
+                score += RookTable[pos];
+                if ((board.BitBoard[ChessPiece.BlackPawn] & BitboardConstants.Files[file]) == 0)
+                {
+                    if ((board.BitBoard[ChessPiece.WhitePawn] & BitboardConstants.Files[file]) == 0)
                     {
-                        case ChessPiece.Empty:
-                            break;
-
-                        case ChessPiece.WhitePawn:
-                            score += PawnTable[pos];
-                            if ((board.BitBoard[ChessPiece.BlackPawn] & PassedPawnMasksWhite[pos]) == 0)
-                            {
-                                score += PassedPawnScores[pos];
-                            }
-                            if ((board.BitBoard[ChessPiece.WhitePawn] & IsolatedPawnMasks[pos]) == 0)
-                            {
-                                score += IsolatedScore;
-                            }
-                            break;
-                        case ChessPiece.BlackPawn:
-                            score -= PawnTable[Mirror[pos]];
-                            if ((board.BitBoard[ChessPiece.WhitePawn] & PassedPawnMasksBlack[pos]) == 0)
-                            {
-                                score -= PassedPawnScores[Mirror[pos]];
-                            }
-                            if ((board.BitBoard[ChessPiece.BlackPawn] & IsolatedPawnMasks[pos]) == 0)
-                            {
-                                score -= IsolatedScore;
-                            }
-                            break;
-
-                        case ChessPiece.WhiteKnight:
-                            score += KnightTable[pos];
-                            break;
-                        case ChessPiece.BlackKnight:
-                            score -= KnightTable[Mirror[pos]];
-                            break;
-
-                        case ChessPiece.WhiteBishop:
-                            score += BishopTable[pos];
-                            break;
-                        case ChessPiece.BlackBishop:
-                            score -= BishopTable[Mirror[pos]];
-                            break;
-
-                        case ChessPiece.WhiteRook:
-                            score += RookTable[pos];
-                            if ((board.BitBoard[ChessPiece.BlackPawn] & BitboardConstants.Files[file]) == 0)
-                            {
-                                if ((board.BitBoard[ChessPiece.WhitePawn] & BitboardConstants.Files[file]) == 0)
-                                {
-                                    score += RookOpenScore;
-                                }
-                                else
-                                {
-                                    score += RookSemiOpenScore;
-                                }
-                            }
-                            break;
-                        case ChessPiece.BlackRook:
-                            score -= RookTable[Mirror[pos]];
-                            if ((board.BitBoard[ChessPiece.WhitePawn] & BitboardConstants.Files[file]) == 0)
-                            {
-                                if ((board.BitBoard[ChessPiece.BlackPawn] & BitboardConstants.Files[file]) == 0)
-                                {
-                                    score -= RookOpenScore;
-                                }
-                                else
-                                {
-                                    score -= RookSemiOpenScore;
-                                }
-                            }
-                            break;
-
-                        case ChessPiece.WhiteQueen:
-                            if ((board.BitBoard[ChessPiece.BlackPawn] & BitboardConstants.Files[file]) == 0)
-                            {
-                                if ((board.BitBoard[ChessPiece.WhitePawn] & BitboardConstants.Files[file]) == 0)
-                                {
-                                    score += QueenOpenScore;
-                                }
-                                else
-                                {
-                                    score += QueenSemiOpenScore;
-                                }
-                            }
-                            break;
-                        case ChessPiece.BlackQueen:
-                            if ((board.BitBoard[ChessPiece.WhitePawn] & BitboardConstants.Files[file]) == 0)
-                            {
-                                if ((board.BitBoard[ChessPiece.BlackPawn] & BitboardConstants.Files[file]) == 0)
-                                {
-                                    score -= QueenOpenScore;
-                                }
-                                else
-                                {
-                                    score -= QueenOpenScore;
-                                }
-                            }
-                            break;
-
-                        case ChessPiece.WhiteKing:
-                            break;
-                        case ChessPiece.BlackKing:
-                            break;
+                        score += RookOpenScore;
+                    }
+                    else
+                    {
+                        score += RookSemiOpenScore;
                     }
                 }
-
-                if (board.PieceCounts[ChessPiece.WhiteBishop] == 2)
-                {
-                    score += BishopPairScore;
-                }
-                if (board.PieceCounts[ChessPiece.BlackBishop] == 2)
-                {
-                    score -= BishopPairScore;
-                }
+                bitboard &= ~(1UL << pos);
             }
+
+            bitboard = board.BitBoard[ChessPiece.BlackRook];
+            while (bitboard != 0)
+            {
+                var pos = bitboard.BitScanForward();
+                var file = pos % 8;
+                score -= RookTable[Mirror[pos]];
+                if ((board.BitBoard[ChessPiece.WhitePawn] & BitboardConstants.Files[file]) == 0)
+                {
+                    if ((board.BitBoard[ChessPiece.BlackPawn] & BitboardConstants.Files[file]) == 0)
+                    {
+                        score -= RookOpenScore;
+                    }
+                    else
+                    {
+                        score -= RookSemiOpenScore;
+                    }
+                }
+                bitboard &= ~(1UL << pos);
+            }
+
+            bitboard = board.BitBoard[ChessPiece.WhiteQueen];
+            while (bitboard != 0)
+            {
+                var pos = bitboard.BitScanForward();
+                var file = pos % 8;
+                if ((board.BitBoard[ChessPiece.BlackPawn] & BitboardConstants.Files[file]) == 0)
+                {
+                    if ((board.BitBoard[ChessPiece.WhitePawn] & BitboardConstants.Files[file]) == 0)
+                    {
+                        score += QueenOpenScore;
+                    }
+                    else
+                    {
+                        score += QueenSemiOpenScore;
+                    }
+                }
+                bitboard &= ~(1UL << pos);
+            }
+
+            bitboard = board.BitBoard[ChessPiece.BlackQueen];
+            while (bitboard != 0)
+            {
+                var pos = bitboard.BitScanForward();
+                var file = pos % 8;
+                if ((board.BitBoard[ChessPiece.WhitePawn] & BitboardConstants.Files[file]) == 0)
+                {
+                    if ((board.BitBoard[ChessPiece.BlackPawn] & BitboardConstants.Files[file]) == 0)
+                    {
+                        score -= QueenOpenScore;
+                    }
+                    else
+                    {
+                        score -= QueenOpenScore;
+                    }
+                }
+                bitboard &= ~(1UL << pos);
+            }
+
+            if (board.PieceCounts[ChessPiece.WhiteBishop] == 2)
+            {
+                score += BishopPairScore;
+            }
+            if (board.PieceCounts[ChessPiece.BlackBishop] == 2)
+            {
+                score -= BishopPairScore;
+            }
+
             return score;
         }
     }

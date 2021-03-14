@@ -48,6 +48,29 @@ namespace ChessDotNet.Search2
         public void Reset()
         {
             NodesSearched = 0;
+            AspirationSuccess = 0;
+            AspirationFail = 0;
+            MateAlpha = 0;
+            MateBeta = 0;
+            MateCutoff = 0;
+            HashMiss = 0;
+            HashCollision = 0;
+            HashInsufficientDepth = 0;
+            HashAlphaCutoff = 0;
+            HashAlphaContinue = 0;
+            HashBetaCutoff = 0;
+            HashBetaContinue = 0;
+            HashCutoffExact = 0;
+            StoresBeta = 0;
+            StoresAlpha = 0;
+            StoresExact = 0;
+            BetaCutoffs = 0;
+            NullMoveCutoffs = 0;
+            PvsScoutSuccess = 0;
+            PvsScoutFail = 0;
+            Repetitions = 0;
+            Mates = 0;
+            Stalemates = 0;
         }
 
         public string TrimNumber(long number, double divisor, string sufffix)

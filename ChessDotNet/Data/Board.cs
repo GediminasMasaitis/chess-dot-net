@@ -277,7 +277,7 @@ namespace ChessDotNet.Data
             Debug.Assert(ExactlyEquals(this, clone));
         }
 
-        public void UndoMove(bool test = true)
+        public void UndoMove(bool test = false)
         {
             var history = History2[HistoryDepth - 1];
             var move = history.Move;
@@ -453,7 +453,7 @@ namespace ChessDotNet.Data
             return clone;
         }
 
-        public void DoMove2(Move move, bool test = true)
+        public void DoMove2(Move move, bool test = false)
         {
             if (test)
             {

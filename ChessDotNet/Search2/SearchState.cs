@@ -6,7 +6,8 @@ namespace ChessDotNet.Search2
 {
     public class SearchState
     {
-        public TranspositionTable Table { get; }
+        public PrincipalVariationTable PrincipalVariationTable { get; }
+        public TranspositionTable TranspositionTable { get; }
         public UInt64[,] Killers { get; }
         public int[,] History { get; }
         public List<Move>[] Moves { get; }
@@ -14,7 +15,8 @@ namespace ChessDotNet.Search2
 
         public SearchState()
         {
-            Table = new TranspositionTable(1024 * 1024 * 32);
+            TranspositionTable = new TranspositionTable(1024 * 1024 * 32);
+            PrincipalVariationTable = new PrincipalVariationTable();
             Killers = new UInt64[SearchConstants.MaxDepth, 2]; // Non-captures causing beta cutoffs
             History = new int[64, 64];
             Moves = new List<Move>[SearchConstants.MaxDepth];
@@ -28,6 +30,7 @@ namespace ChessDotNet.Search2
         {
             Array.Clear(Killers, 0, Killers.Length);
             Array.Clear(History, 0, History.Length);
+            PrincipalVariationTable.Clear();
             //Table.Clear();
         }
 

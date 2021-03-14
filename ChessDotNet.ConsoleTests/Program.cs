@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Text;
@@ -16,6 +18,7 @@ using ChessDotNet.MoveGeneration;
 using ChessDotNet.MoveGeneration.SlideGeneration;
 using ChessDotNet.Perft;
 using ChessDotNet.Perft.External;
+using ChessDotNet.Perft.Suite;
 using ChessDotNet.Protocols;
 using ChessDotNet.Search2;
 using ChessDotNet.Searching;
@@ -32,13 +35,14 @@ namespace ChessDotNet.ConsoleTests
 
             //DoTimings();
 
-            //DoPerftSuite();
+
             //TestMove();
             //TestZobrist();
             //TestRepetitions();
 
             //DoPerftClient();
             //DoPerft();
+            //DoPerftSuite();
             await DoSearch2Async();
 
             //Console.WriteLine(new BoardFactory().ParseFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").Print());
@@ -64,6 +68,7 @@ namespace ChessDotNet.ConsoleTests
         {
             var fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
             //var fen = "rnbqkbnr/2pppppp/p7/Pp6/8/8/1PPPPPPP/RNBQKBNR w KQkq b6 0 3 ";
+            //var fen = "8/3R1k2/8/4B3/1K6/p6B/5p1P/8 b - - 1 67 ";
 
             //var fen = "8/1k6/8/2Pp3r/2K5/8/8/8 w - d6";
             //var fen = "8/8/4k3/8/2p5/8/B2P2K1/8 w - - 0 1";
@@ -91,8 +96,8 @@ namespace ChessDotNet.ConsoleTests
         private static async Task DoSearch2Async()
         {
             Console.WriteLine(Marshal.SizeOf<Move>());
-            var fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"; // Starting pos
-            //var fen = "rnbqkbnr/pppppppp/8/8/8/N7/PPPPPPPP/RNBQKBNR w KQkq - 0 1"; // Starting pos
+            //var fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"; // Starting pos
+            var fen = "rnbqkbnr/pppppppp/8/8/8/N7/PPPPPPPP/RNBQKBNR w KQkq - 0 1"; // Starting pos
             //var fen = "rnbqkbnr/pppppppp/7n/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"; // Starting pos
 
             //var fen = "r4rk1/p2n1ppp/3qp3/6B1/N5P1/3P1b2/PPP1BbP1/R2Q1R1K b - - 0 14"; // Mate in 3
@@ -110,6 +115,7 @@ namespace ChessDotNet.ConsoleTests
             Console.WriteLine(board.Print(evaluationService, fenSerializer));
             searchService.SearchInfo += info => Console.WriteLine(info.ToString());
             var searchParameters = new SearchParameters();
+            //searchParameters.WhiteTime = 5;
             searchParameters.Infinite = true;
             //searchParameters.MaxDepth = 8;
 
@@ -191,8 +197,11 @@ namespace ChessDotNet.ConsoleTests
             var fenSerializer = new FenSerializerService();
             var perftRunner = new PerftRunner(testClient, verificationClient, boardFactory, fenSerializer);
             perftRunner.OnOut += Console.Write;
-            var suite = new PerftSuite(perftRunner);
-            suite.Run();
+            //var suite = new PerftSuite(perftRunner);
+            //suite.Run();
+            var suite = new PerftSuiteRunner(perftRunner);
+            var path = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "hartmann.epd");
+            suite.RunSuite(path);
         }
 
         private static void TestMove()
@@ -207,15 +216,15 @@ namespace ChessDotNet.ConsoleTests
             var attacksService = new AttacksService(slideMoveGenerator);
             var movesService = new PossibleMovesService(attacksService, slideMoveGenerator);
             var forWhite = true;
-            var moves = movesService.GetPossibleKingMoves(board).ToList();
-            var dests = moves.Select(x => x.To);
-            var toMoveBoard = fact.PositionsToBitBoard(dests);
-            var attacked = attacksService.GetAllAttacked(board);
+            //var moves = movesService.GetPossibleKingMoves(board).ToList();
+            //var dests = moves.Select(x => x.To);
+            //var toMoveBoard = fact.PositionsToBitBoard(dests);
+            //var attacked = attacksService.GetAllAttacked(board);
 
-            var newMove = new Move(4,2,ChessPiece.WhiteKing);
-            board.DoMove2(newMove);
+            //var newMove = new Move(4,2,ChessPiece.WhiteKing);
+            //board.DoMove2(newMove);
 
-            Debugging.ShowBitBoard(board.BitBoard[ChessPiece.WhiteKing], board.BitBoard[ChessPiece.WhiteRook]);
+            //Debugging.ShowBitBoard(board.BitBoard[ChessPiece.WhiteKing], board.BitBoard[ChessPiece.WhiteRook]);
         }
 
         private static void TestZobrist()

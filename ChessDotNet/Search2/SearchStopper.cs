@@ -66,6 +66,12 @@ namespace ChessDotNet.Search2
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsStopped()
+        {
+            return _cancellationTokenSource.IsCancellationRequested;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double GetSearchedTime()
         {
             return _stopwatch.Elapsed.TotalMilliseconds;

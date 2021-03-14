@@ -25,7 +25,7 @@ namespace ChessDotNet.Protocols
         {
             var time = searchInfo.Time > 0 ? searchInfo.Time : 1;
             var nps = searchInfo.NodesSearched/time;
-            var pv = searchInfo.PrincipalVariation.Select(x => x.Move.ToPositionString()).Aggregate((x, n) => x + " " + n);
+            var pv = searchInfo.PrincipalVariation.Select(x => x.ToPositionString()).Aggregate((x, n) => x + " " + n);
             var score = searchInfo.MateIn.HasValue ? "mate " + searchInfo.MateIn.Value : "cp " + searchInfo.Score;
             var outStr = $"info depth {searchInfo.Depth} multipv 1 score {score} nodes {searchInfo.NodesSearched} nps {nps} time {time} pv {pv}";
             Output(outStr);

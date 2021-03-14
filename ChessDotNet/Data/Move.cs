@@ -13,6 +13,7 @@ namespace ChessDotNet.Data
     public struct Move
     {
         private readonly ulong Value;
+
         public Move(Position from, Position to, Piece piece, Piece takesPiece = 0, bool enPassant = false, Piece? pawnPromoteTo = null)
         {
             var promote = pawnPromoteTo.HasValue ? pawnPromoteTo.Value : ChessPiece.Empty;

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using ChessDotNet.Data;
 
@@ -21,21 +22,25 @@ namespace ChessDotNet.Search2
             var index = GetTableIndex(key);
             var existingEntry = _entries[index];
 
-            if (existingEntry.Depth > depth && existingEntry.Key == key)
+            // Cpw
+            if (existingEntry.Key == key && existingEntry.Depth > depth)
             {
                 return;
             }
+
+            //if (existingEntry.Depth > depth && existingEntry.Key == key)
+            //{
+            //    return;
+            //}
             
-            //if (existingEntry.Key != 0 && existingEntry.Key != key)
+            // Stockfish
+            //if (flag != TranspositionTableFlags.Exact && existingEntry.Key == key && depth <= existingEntry.Depth - 4)
             //{
             //    return;
             //}
 
-            if (flag == TranspositionTableFlags.Exact || existingEntry.Key != key || depth > existingEntry.Depth - 4)
-            {
-                var entry = new TranspositionTableEntry(key, move, depth, score, flag);
-                _entries[index] = entry;
-            }
+            var entry = new TranspositionTableEntry(key, move, depth, score, flag);
+            _entries[index] = entry;
         }
 
         public bool TryProbe(UInt64 key, out TranspositionTableEntry entry)
@@ -46,6 +51,28 @@ namespace ChessDotNet.Search2
             var exists = entry.Flag != TranspositionTableFlags.None;
             //var valid = entry.Key == key;
             return exists;
+        }
+
+        public IList<TranspositionTableEntry> GetPrincipalVariation(Board board)
+        {
+            var entries = new List<TranspositionTableEntry>();
+            for (var i = 0; i < SearchConstants.MaxDepth; i++)
+            {
+                var success = TryProbe(board.Key, out var entry);
+                if (!success)
+                {
+                    break;
+                }
+
+                if (board.Key != entry.Key)
+                {
+                    break;
+                }
+
+                entries.Add(entry);
+                board = board.DoMove(entry.Move);
+            }
+            return entries;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

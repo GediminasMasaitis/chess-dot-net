@@ -33,27 +33,25 @@ namespace ChessDotNet.Search2
             var isPrincipalVariation = principalVariationMove.HasValue && principalVariationMove.Value.Key2 == moveKey;
             if (isPrincipalVariation)
             {
-                return 2000000;
+                return 200000000;
             }
 
             var mvvLvaScore = MVVLVAScoreCalculation.Scores[move.Piece, move.TakesPiece];
             if (mvvLvaScore > 0)
             {
-                return mvvLvaScore + 1000000;
+                return mvvLvaScore;
             }
 
             if (killers[ply, 0] == moveKey)
             {
-                return 900000;
+                return 90000000;
             }
             if (killers[ply, 1] == moveKey)
             {
-                return 800000;
+                return 80000000;
             }
 
-
             var historyScore = history[move.From, move.To];
-
             return historyScore;
         }
     }
