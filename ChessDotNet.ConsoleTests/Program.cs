@@ -115,14 +115,19 @@ namespace ChessDotNet.ConsoleTests
             Console.WriteLine(board.Print(evaluationService, fenSerializer));
             searchService.SearchInfo += info => Console.WriteLine(info.ToString());
             var searchParameters = new SearchParameters();
-            //searchParameters.WhiteTime = 5;
+            //searchParameters.WhiteTime = 10;
             searchParameters.Infinite = true;
-            //searchParameters.MaxDepth = 8;
+            //searchParameters.MaxDepth = 9;
 
             var cancellationTokenSource = new CancellationTokenSource();
-            var searchTask = Task.Run(() => searchService.Run(board, searchParameters, cancellationTokenSource.Token));
+            var searchTask = Task.Run(() =>
+            {
+                var moves = searchService.Run(board, searchParameters, cancellationTokenSource.Token);
+                return moves;
+            });
             HandleInterrupt(cancellationTokenSource);
             await searchTask;
+            var foo = 123;
         }
 
         private static void HandleInterrupt(CancellationTokenSource cancellationTokenSource)

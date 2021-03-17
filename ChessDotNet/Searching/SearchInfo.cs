@@ -16,7 +16,7 @@ namespace ChessDotNet.Searching
 
         public override string ToString()
         {
-            var principalVariation = string.Join(" ", PrincipalVariation.Select(x=>x.ToPositionString()));
+            var principalVariation = PrincipalVariation.ToPositionsString();
             return $"Depth: {Depth}, SelectiveDepth: {SelectiveDepth}, Score: {Score}, MateIn: {MateIn}, NodesSearched: {NodesSearched}, Time: {Time}, PrincipalVariation: {principalVariation}";
         }
 

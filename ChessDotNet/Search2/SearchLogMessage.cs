@@ -2,7 +2,7 @@
 
 namespace ChessDotNet.Search2
 {
-    public class SearchLogMessage
+    public class SearchLogMessage : SearchLogBase
     {
         public string Text { get; }
         public int? Depth { get; }
@@ -19,13 +19,9 @@ namespace ChessDotNet.Search2
             Final = final;
         }
 
-        /*public override string ToString()
+        public override void Serialize(StringBuilder builder, int logDepth)
         {
-            return $"A: {Alpha}, B: {Beta}; {Text}";
-        }*/
-
-        public void Serialize(StringBuilder builder)
-        {
+            Pad(builder, logDepth);
             if (Depth.HasValue)
             {
                 builder.Append($"D={Depth.Value} ");
@@ -44,6 +40,7 @@ namespace ChessDotNet.Search2
             }
 
             builder.Append($"; {Text}");
+            builder.AppendLine();
         }
     }
 }

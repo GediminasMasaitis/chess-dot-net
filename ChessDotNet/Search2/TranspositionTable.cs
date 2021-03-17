@@ -34,10 +34,10 @@ namespace ChessDotNet.Search2
             //}
             
             // Stockfish
-            //if (flag != TranspositionTableFlags.Exact && existingEntry.Key == key && depth <= existingEntry.Depth - 4)
-            //{
-            //    return;
-            //}
+            /*if (flag != TranspositionTableFlags.Exact && existingEntry.Key == key && depth <= existingEntry.Depth - 4)
+            {
+                return;
+            }*/
 
             var entry = new TranspositionTableEntry(key, move, depth, score, flag);
             _entries[index] = entry;
@@ -69,6 +69,11 @@ namespace ChessDotNet.Search2
                     break;
                 }
 
+                if (entry.Flag != TranspositionTableFlags.Exact)
+                {
+                    break;
+                }
+
                 entries.Add(entry);
                 board = board.DoMove(entry.Move);
             }
@@ -76,7 +81,7 @@ namespace ChessDotNet.Search2
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private ulong GetTableIndex(UInt64 key)
+        public ulong GetTableIndex(UInt64 key)
         {
             var index = key % _size;
             return index;

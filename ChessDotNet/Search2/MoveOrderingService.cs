@@ -7,7 +7,7 @@ namespace ChessDotNet.Search2
 {
     public class MoveOrderingService
     {
-        public void OrderNextMove(int currentIndex, IList<Move> moves, int ply, Move? pvMove, UInt64[,] killers, int[,] history)
+        public void OrderNextMove(int currentIndex, IList<Move> moves, int ply, Move? pvMove, UInt64[,] killers, int[,,] history)
         {
             var bestScore = -SearchConstants.Inf;
             var bestScoreIndex = -1;
@@ -26,7 +26,7 @@ namespace ChessDotNet.Search2
             moves[bestScoreIndex] = temp;
         }
 
-        private int CalculateMoveScore(Move move, int ply, Move? principalVariationMove, UInt64[,] killers, int[,] history)
+        private int CalculateMoveScore(Move move, int ply, Move? principalVariationMove, UInt64[,] killers, int[,,] history)
         {
             //return 0;
             UInt64 moveKey = move.Key2;
@@ -51,7 +51,7 @@ namespace ChessDotNet.Search2
                 return 80000000;
             }
 
-            var historyScore = history[move.From, move.To];
+            var historyScore = history[move.WhiteToMoveNum, move.From, move.To];
             return historyScore;
         }
     }

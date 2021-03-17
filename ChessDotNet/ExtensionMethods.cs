@@ -5,7 +5,7 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
-
+using ChessDotNet.Data;
 using Bitboard = System.UInt64;
 using Key = System.UInt64;
 using Position = System.Byte;
@@ -67,6 +67,12 @@ namespace ChessDotNet
                 bitboard >>= 1;
             }
             return num;
+        }
+
+        public static string ToPositionsString(this IEnumerable<Move> moves)
+        {
+            var result = string.Join(" ", moves.Select(x => x.ToPositionString()));
+            return result;
         }
     }
 }

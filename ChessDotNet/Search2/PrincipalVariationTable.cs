@@ -48,6 +48,7 @@ namespace ChessDotNet.Search2
 
         public IList<Move> GetPrincipalVariation()
         {
+            //Console.WriteLine($"Getting for {_searchedDepth}");
             var moves = new List<Move>();
             foreach (var move in Moves[_searchedDepth])
             {

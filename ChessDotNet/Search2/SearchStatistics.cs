@@ -29,11 +29,20 @@ namespace ChessDotNet.Search2
 
         public long BetaCutoffs { get; set; }
 
-        public long NullMoveCutoffs { get; set; }
 
+        public long StaticEvaluationCutoffs { get; set; }
+        public long NullMoveCutoffs { get; set; }
+        
 
         public long PvsScoutSuccess { get; set; }
         public long PvsScoutFail { get; set; }
+
+        public long RazoringSuccess { get; set; }
+        public long RazoringFail { get; set; }
+
+        public long FutilityReductions { get; set; }
+        public long LateMoveReductions1 { get; set; }
+        public long LateMoveReductions2 { get; set; }
 
         public long Repetitions { get; set; }
         public long Mates { get; set; }
@@ -65,9 +74,16 @@ namespace ChessDotNet.Search2
             StoresAlpha = 0;
             StoresExact = 0;
             BetaCutoffs = 0;
+            StaticEvaluationCutoffs = 0;
             NullMoveCutoffs = 0;
             PvsScoutSuccess = 0;
             PvsScoutFail = 0;
+            RazoringSuccess = 0;
+            RazoringFail = 0;
+            FutilityReductions = 0;
+            LateMoveReductions1 = 0;
+            LateMoveReductions2 = 0;
+            FutilityReductions = 0;
             Repetitions = 0;
             Mates = 0;
             Stalemates = 0;
@@ -155,9 +171,15 @@ namespace ChessDotNet.Search2
             AppendStatistic(builder, nameof(StoresAlpha), StoresAlpha);
             AppendStatistic(builder, nameof(StoresExact), StoresExact);
             AppendStatistic(builder, nameof(BetaCutoffs), BetaCutoffs);
+            AppendStatistic(builder, nameof(StaticEvaluationCutoffs), StaticEvaluationCutoffs);
             AppendStatistic(builder, nameof(NullMoveCutoffs), NullMoveCutoffs);
             AppendStatistic(builder, nameof(PvsScoutSuccess), PvsScoutSuccess);
             AppendStatistic(builder, nameof(PvsScoutFail), PvsScoutFail);
+            AppendStatistic(builder, nameof(RazoringSuccess), RazoringSuccess);
+            AppendStatistic(builder, nameof(RazoringFail), RazoringFail);
+            AppendStatistic(builder, nameof(FutilityReductions), FutilityReductions);
+            AppendStatistic(builder, nameof(LateMoveReductions1), LateMoveReductions1);
+            AppendStatistic(builder, nameof(LateMoveReductions2), LateMoveReductions2);
             AppendStatistic(builder, nameof(Repetitions), Repetitions);
             AppendStatistic(builder, nameof(Mates), Mates);
             AppendStatistic(builder, nameof(Stalemates), Stalemates);
