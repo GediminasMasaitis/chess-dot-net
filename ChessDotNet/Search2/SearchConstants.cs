@@ -8,5 +8,8 @@
         public const int Inf = int.MaxValue;
 
         public const int EndgameMaterial = 51300;
+
+        public const int ThreadCount = 8;
+        public const int InitialDepth = 1;
     }
 }
