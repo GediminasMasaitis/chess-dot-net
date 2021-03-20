@@ -24,7 +24,7 @@ namespace ChessDotNet.Data
             key |= (ulong)takesPiece << 24;
             key |= (ulong)promote << 32;
             key |= Convert.ToUInt64(enPassant) << 40;
-            key |= Convert.ToUInt64((piece == ChessPiece.WhiteKing || piece == ChessPiece.BlackKing) && Math.Abs(@from - to) == 2) << 41;
+            key |= Convert.ToUInt64((piece == ChessPiece.WhiteKing || piece == ChessPiece.BlackKing) && Math.Abs(from - to) == 2) << 41;
             key |= Convert.ToUInt64(piece == 0) << 42;
             key |= Convert.ToUInt64(piece <= 6) << 43;
             Value = key;

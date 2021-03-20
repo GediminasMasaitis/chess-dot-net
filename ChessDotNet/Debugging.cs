@@ -49,7 +49,6 @@ namespace ChessDotNet
             var board = new Board();
             board.ArrayBoard = new Piece[64];
             board.BitBoard = new ulong[13];
-            board.History = new HistoryEntry[0];
             board.BitBoard[ChessPiece.WhiteRook] = bitBoard;
             board.SyncExtraBitBoards();
             board.SyncBitBoardsToArrayBoard();

@@ -68,7 +68,6 @@ namespace ChessDotNet.Data
         public Bitboard EnPassantFile { get; set; }
         public ZobristKey Key { get; set; }
 
-        public HistoryEntry[] History { get; set; }
         public int LastTookPieceHistoryIndex { get; set; }
 
         public int[] PieceCounts { get; set; }
@@ -747,7 +746,6 @@ namespace ChessDotNet.Data
             clone.WhiteMaterial = WhiteMaterial;
             clone.BlackMaterial = BlackMaterial;
 
-            clone.History = History.ToArray();
             clone.History2 = (UndoMove[])History2.Clone();
             clone.HistoryDepth = HistoryDepth;
             clone.CastlingPermissions = CastlingPermissions;

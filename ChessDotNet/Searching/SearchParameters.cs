@@ -22,10 +22,10 @@ namespace ChessDotNet.Searching
             // Defaults to 3+1
             Infinite = false;
             MaxDepth = null;
-            WhiteTime = 60000 * 3;
-            BlackTime = 60000 * 3;
-            WhiteTimeIncrement = 1000;
-            BlackTimeIncrement = 1000;
+            WhiteTime = 0;
+            BlackTime = 0;
+            WhiteTimeIncrement = 0;
+            BlackTimeIncrement = 0;
         }
     }
 }

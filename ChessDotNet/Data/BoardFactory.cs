@@ -18,8 +18,7 @@ namespace ChessDotNet.Data
             board.ArrayBoard = new Piece[64];
             board.BitBoard = new ulong[13];
             board.CastlingPermissions = CastlingPermission.None;
-            board.History = new HistoryEntry[0];
-            board.History2 = new UndoMove[2048]; // TODO
+            board.History2 = new UndoMove[2048];
 
             var boardPosition = 0;
             var fenPosition = 0;

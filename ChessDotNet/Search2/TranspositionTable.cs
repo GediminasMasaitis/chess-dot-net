@@ -1,20 +1,32 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using ChessDotNet.Data;
 
 namespace ChessDotNet.Search2
 {
     public class TranspositionTable
     {
-        private readonly ulong _size;
-        private readonly TranspositionTableEntry[] _entries;
+        private uint _size;
+        private TranspositionTableEntry[] _entries;
 
-        public TranspositionTable(ulong size)
+        public TranspositionTable()
         {
-            _size = size;
-            //var entrySize = Marshal.SizeOf<TranspositionTableEntry>();
-            _entries = new TranspositionTableEntry[size];
+
+        }
+
+        public void SetSize(uint bytes)
+        {
+            var entrySize = (uint)Marshal.SizeOf<TranspositionTableEntry>();
+            var newSize = bytes / entrySize;
+            if (_size == newSize)
+            {
+                return;
+            }
+
+            _size = newSize;
+            _entries = new TranspositionTableEntry[newSize];
         }
 
         public void Store(UInt64 key, Move move, int depth, int score, Byte flag)

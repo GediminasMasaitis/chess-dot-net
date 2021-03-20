@@ -41,9 +41,9 @@ namespace ChessDotNet.ConsoleTests
             //TestRepetitions();
 
             //DoPerftClient();
-            //DoPerft();
+            DoPerft();
             //DoPerftSuite();
-            await DoSearch2Async();
+            //await DoSearch2Async();
 
             //Console.WriteLine(new BoardFactory().ParseFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").Print());
             //var pos = 27;
@@ -60,8 +60,8 @@ namespace ChessDotNet.ConsoleTests
             var movesService = new PossibleMovesService(attacksService, slidingMoveGenerator);
             var boardFactory = new BoardFactory();
             using var testClient = new InternalPerftClient(movesService, boardFactory);
-            //using var verificationClient = new SharperPerftClient(@"C:\Chess\Sharper\Sharper.exe");
-            using var verificationClient = new StockfishPerftClient(@"C:\Chess\stockfish_13_win_x64_avx2\stockfish_13_win_x64_avx2.exe");
+            //using var verificationClient = new SharperPerftClient(@"C:\Chess\Engines\Sharper\Sharper.exe");
+            using var verificationClient = new StockfishPerftClient(@"C:\Chess\Engines\stockfish_13_win_x64_avx2\stockfish_13_win_x64_avx2.exe");
         }
 
         private static void DoPerft()
@@ -84,8 +84,8 @@ namespace ChessDotNet.ConsoleTests
             var movesService = new PossibleMovesService(attacksService, slidingMoveGenerator);
             var boardFactory = new BoardFactory();
             using var testClient = new InternalPerftClient(movesService, boardFactory);
-            //using var verificationClient = new SharperPerftClient(@"C:\Chess\Sharper\Sharper.exe");
-            using var verificationClient = new StockfishPerftClient(@"C:\Chess\stockfish_13_win_x64_avx2\stockfish_13_win_x64_avx2.exe");
+            //using var verificationClient = new SharperPerftClient(@"C:\Chess\Engines\Sharper\Sharper.exe");
+            using var verificationClient = new StockfishPerftClient(@"C:\Chess\Engines\stockfish_13_win_x64_avx2\stockfish_13_win_x64_avx2.exe");
 
             var fenSerializer = new FenSerializerService();
             var perftRunner = new PerftRunner(testClient, verificationClient, boardFactory, fenSerializer);
@@ -96,8 +96,8 @@ namespace ChessDotNet.ConsoleTests
         private static async Task DoSearch2Async()
         {
             Console.WriteLine(Marshal.SizeOf<Move>());
-            //var fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"; // Starting pos
-            var fen = "rnbqkbnr/pppppppp/8/8/8/N7/PPPPPPPP/RNBQKBNR w KQkq - 0 1"; // Starting pos
+            var fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"; // Starting pos
+            //var fen = "rnbqkbnr/pppppppp/8/8/8/N7/PPPPPPPP/RNBQKBNR w KQkq - 0 1"; // Starting pos
             //var fen = "rnbqkbnr/pppppppp/7n/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"; // Starting pos
 
             //var fen = "r4rk1/p2n1ppp/3qp3/6B1/N5P1/3P1b2/PPP1BbP1/R2Q1R1K b - - 0 14"; // Mate in 3
@@ -115,15 +115,22 @@ namespace ChessDotNet.ConsoleTests
             Console.WriteLine(board.Print(evaluationService, fenSerializer));
             searchService.SearchInfo += info => Console.WriteLine(info.ToString());
             var searchParameters = new SearchParameters();
-            //searchParameters.WhiteTime = 10;
+            //searchParameters.WhiteTime = 1000;
             searchParameters.Infinite = true;
             //searchParameters.MaxDepth = 9;
-
+            var options = new SearchOptions();
+            var stopwatch = new Stopwatch();
             var cancellationTokenSource = new CancellationTokenSource();
             var searchTask = Task.Run(() =>
             {
-                var moves = searchService.Run(board, searchParameters, cancellationTokenSource.Token);
-                return moves;
+                for (int i = 0; i < 1; i++)
+                {
+                    stopwatch.Restart();
+                    var moves = searchService.Run(board, searchParameters, options, cancellationTokenSource.Token);
+                    stopwatch.Stop();
+                    searchService.ClearTranspositionTable();
+                    Console.WriteLine($"Total time: {stopwatch.Elapsed.TotalMilliseconds} ms");
+                }
             });
             HandleInterrupt(cancellationTokenSource);
             await searchTask;
@@ -196,8 +203,8 @@ namespace ChessDotNet.ConsoleTests
             var movesService = new PossibleMovesService(attacksService, slidingMoveGenerator);
             var boardFactory = new BoardFactory();
             using var testClient = new InternalPerftClient(movesService, boardFactory);
-            //using var verificationClient = new SharperPerftClient(@"C:\Chess\Sharper\Sharper.exe");
-            using var verificationClient = new StockfishPerftClient(@"C:\Chess\stockfish_13_win_x64_avx2\stockfish_13_win_x64_avx2.exe");
+            //using var verificationClient = new SharperPerftClient(@"C:\Chess\Engines\Sharper\Sharper.exe");
+            using var verificationClient = new StockfishPerftClient(@"C:\Chess\Engines\stockfish_13_win_x64_avx2\stockfish_13_win_x64_avx2.exe");
 
             var fenSerializer = new FenSerializerService();
             var perftRunner = new PerftRunner(testClient, verificationClient, boardFactory, fenSerializer);

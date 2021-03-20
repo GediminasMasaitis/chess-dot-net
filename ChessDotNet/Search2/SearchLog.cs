@@ -8,25 +8,6 @@ using ChessDotNet.Data;
 
 namespace ChessDotNet.Search2
 {
-    public interface ISearchEntry
-    {
-        void Serialize(StringBuilder builder, int logDepth);
-    }
-
-    public abstract class SearchLogBase : ISearchEntry
-    {
-        protected void Pad(StringBuilder builder, int logDepth)
-        {
-            const string pad = "  ";
-            for (var i = 0; i < logDepth; i++)
-            {
-                builder.Append(pad);
-            }
-        }
-
-        public abstract void Serialize(StringBuilder builder, int logDepth);
-    }
-
     public class SearchLog : SearchLogBase
     {
         public Move? Move { get; set; }

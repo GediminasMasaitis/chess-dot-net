@@ -1,28 +1,33 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using ChessDotNet.Data;
 using ChessDotNet.Init;
 using ChessDotNet.MoveGeneration.SlideGeneration;
+using ChessDotNet.Search2;
 using ChessDotNet.Searching;
 
 namespace ChessDotNet.Protocols
 {
     public class UciProtocol : IChessProtocol
     {
-        private Game Game { get; set; }
+        private readonly Game _game;
 
-        public UciProtocol(IInterruptor interruptor)
+        public UciProtocol()
         {
             BitboardConstants.Init();
             new MagicBitboardsInitializer(new HyperbolaQuintessence(), new KnownMagicNumberProvider()).Init();
-            Game = new Game(interruptor);
-            Game.Search.SearchInfo += OnOnSearchInfo;
+
+            _game = new Game();
+            _game.Search.SearchInfo += OnOnSearchInfo;
         }
 
         private void OnOnSearchInfo(SearchInfo searchInfo)
         {
+            return;
             var time = searchInfo.Time > 0 ? searchInfo.Time : 1;
             var nps = searchInfo.NodesSearched/time;
             var pv = searchInfo.PrincipalVariation.ToPositionsString();
@@ -40,12 +45,13 @@ namespace ChessDotNet.Protocols
                     ConfigureUCI();
                     break;
                 case "setoption":
+                    SetOption(_game.Options, words);
                     break;
                 case "isready":
                     Output("readyok");
                     break;
                 case "ucinewgame":
-                    Game.SetStartingPos();
+                    _game.SetStartingPos();
                     break;
                 case "position":
                 {
@@ -90,12 +96,12 @@ namespace ChessDotNet.Protocols
 
                     if (byFen)
                     {
-                        Game.SetPositionByFEN(fen);
+                        _game.SetPositionByFEN(fen);
                     }
                     if(byMoves)
                     {
                         var moves = words.Skip(i).ToList();
-                        Game.SetPositionByMoves(isStartPos && !byFen, moves);
+                        _game.SetPositionByMoves(isStartPos && !byFen, moves);
                     }
                 }
                     break;
@@ -125,7 +131,7 @@ namespace ChessDotNet.Protocols
 
                     }
                     
-                    var results = Game.SearchMove(searchParams);
+                    var results = _game.SearchMove(searchParams);
                     var moveStr = results[0].ToPositionString();
 
                     if (results.Count == 1)
@@ -140,7 +146,7 @@ namespace ChessDotNet.Protocols
                 }
                     break;
                 case "print":
-                    Output(Game.Print());
+                    Output(_game.Print());
                     break;
                 case "exit":
                 case "quit":
@@ -161,14 +167,82 @@ namespace ChessDotNet.Protocols
         {
             OnExit?.Invoke(errorCode);
         }
+
+        private void SetOption(SearchOptions options, string[] words)
+        {
+            var name = words[2];
+            var value = words[4];
+
+            var optionsType = options.GetType();
+            var property = optionsType.GetProperty(name);
+            var type = property.PropertyType;
+            var convertedValue = Convert.ChangeType(value, type);
+            property.SetValue(options, convertedValue);
+        }
         
         private void ConfigureUCI()
         {
             Output("id name Chess.NET");
             Output("id author Gediminas Masaitis");
+            Output(string.Empty);
+            PrintOptions(_game.Options);
             Output("uciok");
         }
 
+        private void PrintOptions(SearchOptions options)
+        {
+            var optionsType = options.GetType();
+            var properties = optionsType.GetProperties();
+            foreach (var property in properties)
+            {
+                var builder = new StringBuilder();
 
+                var name = property.Name;
+                builder.Append($"option name {name}");
+
+                var value = property.GetValue(options);
+                string typeStr;
+                string valueStr;
+                switch (value)
+                {
+                    case int _:
+                    case uint _:
+                    case long _:
+                    case ulong _:
+                        typeStr = "spin";
+                        valueStr = value.ToString();
+                        break;
+                    case bool _:
+                        typeStr = "check";
+                        valueStr = value.ToString().ToLowerInvariant();
+                        break;
+                    case string valueString:
+                        typeStr = "string";
+                        valueStr = valueString;
+                        break;
+                    default:
+                        typeStr = "unknown";
+                        valueStr = string.Empty;
+                        break;
+                }
+                builder.Append($" type {typeStr}");
+                builder.Append($" default {valueStr}");
+
+                var minAttribute = (MinAttribute) property.GetCustomAttribute(typeof(MinAttribute));
+                if (minAttribute != null)
+                {
+                    builder.Append($" min {minAttribute.Min}");
+                }
+
+                var maxAttribute = (MaxAttribute)property.GetCustomAttribute(typeof(MaxAttribute));
+                if (maxAttribute != null)
+                {
+                    builder.Append($" max {maxAttribute.Max}");
+                }
+                
+                var result = builder.ToString();
+                Output(result);
+            }
+        }
     }
 }

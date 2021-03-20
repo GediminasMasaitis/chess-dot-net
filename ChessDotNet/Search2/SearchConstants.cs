@@ -9,7 +9,8 @@
 
         public const int EndgameMaterial = 51300;
 
-        public const int ThreadCount = 8;
+        public const bool Multithreading = false;
+        public const int ThreadCount = Multithreading ? 8 : 1;
         public const int InitialDepth = 1;
     }
 }

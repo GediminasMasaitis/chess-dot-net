@@ -13,21 +13,12 @@ namespace ChessDotNet.ConsoleRunner
         {
             Console.WriteLine("Chess.NET by Gediminas Masaitis");
             IChessProtocol protocol = null;
-            var interruptor = new ConsoleInterruptor();
             while (true)
             {
-                string line;
-                if (interruptor.IsRunning)
-                {
-                    line = interruptor.WaitStopAndGetResult();
-                }
-                else
-                {
-                    line = Console.ReadLine();
-                }
+                var line = Console.ReadLine();
                 if (protocol == null && line == "uci")
                 {
-                    protocol = new UciProtocol(interruptor);
+                    protocol = new UciProtocol();
                     protocol.OnOutput += Console.WriteLine;
                     protocol.OnExit += Environment.Exit;
                 }
