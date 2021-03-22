@@ -18,10 +18,14 @@ namespace ChessDotNet.Data
         public static Position KnightSpanPosition { get; private set; }
         public static Bitboard KingSpan { get; private set; }
         public static Position KingSpanPosition { get; private set; }
-        public static IReadOnlyList<Bitboard> Files { get; private set; }
-        public static IReadOnlyList<Bitboard> Ranks { get; private set; }
-        public static IReadOnlyList<Bitboard> Diagonals { get; private set; }
-        public static IReadOnlyList<Bitboard> Antidiagonals { get; private set; }
+        public static Bitboard WhitePawnSpan { get; private set; }
+        public static Position WhitePawnSpanPosition { get; private set; }
+        public static Bitboard BlackPawnSpan { get; private set; }
+        public static Position BlackPawnSpanPosition { get; private set; }
+        public static Bitboard[] Files { get; private set; }
+        public static Bitboard[] Ranks { get; private set; }
+        public static Bitboard[] Diagonals { get; private set; }
+        public static Bitboard[] Antidiagonals { get; private set; }
         public static Bitboard KingSide { get; private set; }
         public static Bitboard QueenSide { get; private set; }
 
@@ -35,6 +39,9 @@ namespace ChessDotNet.Data
         public static Bitboard BlackKingSideCastleAttackMask { get; private set; }
         public static Bitboard BlackQueenSideCastleAttackMask { get; private set; }
 
+        public static Bitboard[] KnightJumps { get; private set; }
+        public static Bitboard[] KingJumps { get; private set; }
+        public static Bitboard[,] PawnJumps { get; private set; }
 
         public static void Init()
         {
@@ -46,7 +53,13 @@ namespace ChessDotNet.Data
             KingSpan = 460039UL;
             KingSpanPosition = 9;
 
-            var files = new List<Bitboard>(8);
+            WhitePawnSpan = 1280;
+            WhitePawnSpanPosition = 1;
+
+            BlackPawnSpan = 5;
+            BlackPawnSpanPosition = 9;
+
+            var files = new Bitboard[8];
             for(var i = 0; i < 8; i++)
             {
                 var file = 0UL;
@@ -54,14 +67,14 @@ namespace ChessDotNet.Data
                 {
                     file |= 1UL << i << (j * 8);
                 }
-                files.Add(file);
+                files[i] = file;
             }
             Files = files;
 
             QueenSide = Files[0] | Files[1] | Files[2] | Files[3];
             KingSide = ~QueenSide;
 
-            var ranks = new List<Bitboard>(8);
+            var ranks = new Bitboard[8];
             for(var i = 0; i < 8; i++)
             {
                 var rank = 0UL;
@@ -69,7 +82,8 @@ namespace ChessDotNet.Data
                 {
                     rank |= 1UL << (i * 8) << j;
                 }
-                ranks.Add(rank);
+
+                ranks[i] = rank;
             }
             Ranks = ranks;
 
@@ -124,6 +138,33 @@ namespace ChessDotNet.Data
             WhiteKingSideCastleAttackMask = kingSideCastleAttackMask & Ranks[0];
             BlackQueenSideCastleAttackMask = queenSideCastleAttackMask & Ranks[7];
             BlackKingSideCastleAttackMask = kingSideCastleAttackMask & Ranks[7];
+
+            KnightJumps = new Bitboard[64];
+            KingJumps = new Bitboard[64];
+            PawnJumps = new ulong[2, 64];
+            for (Position i = 0; i < 64; i++)
+            {
+                KnightJumps[i] = GetAttackedByJumpingPiece(i, KnightSpan, KnightSpanPosition);
+                KingJumps[i] = GetAttackedByJumpingPiece(i, KingSpan, KingSpanPosition);
+                PawnJumps[0, i] = GetAttackedByJumpingPiece(i, BlackPawnSpan, BlackPawnSpanPosition);
+                PawnJumps[1, i] = GetAttackedByJumpingPiece(i, WhitePawnSpan, WhitePawnSpanPosition);
+            }
+        }
+
+        private static ulong GetAttackedByJumpingPiece(Position position, Bitboard jumpMask, Position jumpMaskCenter)
+        {
+            ulong jumps;
+            if (position > jumpMaskCenter)
+            {
+                jumps = jumpMask << (position - jumpMaskCenter);
+            }
+            else
+            {
+                jumps = jumpMask >> (jumpMaskCenter - position);
+            }
+
+            jumps &= ~(position % 8 < 4 ? BitboardConstants.Files[6] | BitboardConstants.Files[7] : BitboardConstants.Files[0] | BitboardConstants.Files[1]);
+            return jumps;
         }
     }
 }

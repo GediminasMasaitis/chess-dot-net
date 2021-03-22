@@ -31,6 +31,16 @@ namespace ChessDotNet.ConsoleTests
         {
             Init();
 
+            //foreach (var file in BitboardConstants.Files)
+            //{
+            //    Console.WriteLine($"0x{file:X}ULL,");
+            //}
+            //Console.WriteLine();
+            //foreach (var rank in BitboardConstants.Ranks)
+            //{
+            //    Console.WriteLine($"0x{rank:X}ULL,");
+            //}
+
             //DoMagicBitboards();
 
             //DoTimings();
@@ -41,16 +51,35 @@ namespace ChessDotNet.ConsoleTests
             //TestRepetitions();
 
             //DoPerftClient();
-            DoPerft();
+            //DoPerft();
             //DoPerftSuite();
-            //await DoSearch2Async();
+            await DoSearch2Async();
 
             //Console.WriteLine(new BoardFactory().ParseFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").Print());
             //var pos = 27;
             //Debugging.ShowBitBoard(EvaluationService.PassedPawnMasksWhite[pos], EvaluationService.PassedPawnMasksBlack[pos], EvaluationService.IsolatedPawnMasks[pos]);
             //DoEvaluate();
+            //DoSlideTest();
             Console.WriteLine("Done");
             Console.ReadLine();
+        }
+
+        public static void DoSlideTest()
+        {
+            var fen = "8/8/3k2bp/8/8/3K4/8/8 w - - 0 1";
+            var boardFactory = new BoardFactory();
+            var board = boardFactory.ParseFEN(fen);
+
+            var bishops = board.BitBoard[ChessPiece.BlackBishop];
+            var bishopPos = bishops.BitScanForward();
+
+            var kings = board.BitBoard[ChessPiece.WhiteKing];
+            var kingPos = kings.BitScanForward();
+
+            var slidingMoveGenerator = new MagicBitboardsService();
+            var result = slidingMoveGenerator.DiagonalAntidiagonalSlide(board.AllPieces, kingPos);
+            var a = 123;
+
         }
 
         public static void DoPerftClient()
@@ -67,6 +96,7 @@ namespace ChessDotNet.ConsoleTests
         private static void DoPerft()
         {
             var fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+            //var fen = "8/8/3k4/8/3K4/8/8/8 w - - 0 1";
             //var fen = "rnbqkbnr/2pppppp/p7/Pp6/8/8/1PPPPPPP/RNBQKBNR w KQkq b6 0 3 ";
             //var fen = "8/3R1k2/8/4B3/1K6/p6B/5p1P/8 b - - 1 67 ";
 
@@ -78,8 +108,8 @@ namespace ChessDotNet.ConsoleTests
             //fen = "r1b1k2r/ppppnppp/2n2q2/2b5/3NP3/2P1B3/PP3PPP/RN1QKB1R w KQkq - 0 1";
             //fen = "2k5/8/8/8/8/8/6p1/2K5 w - - 1 1 ";
             //fen = "rnbqkbnr/1ppppppp/8/p7/1P6/P7/2PPPPPP/RNBQKBNR b KQkq b3 0 2 ";
-
             var slidingMoveGenerator = new MagicBitboardsService();
+            //var slidingMoveGenerator = new HyperbolaQuintessence();
             var attacksService = new AttacksService(slidingMoveGenerator);
             var movesService = new PossibleMovesService(attacksService, slidingMoveGenerator);
             var boardFactory = new BoardFactory();
@@ -108,6 +138,7 @@ namespace ChessDotNet.ConsoleTests
 
             var fenSerializer = new FenSerializerService();
             var slideMoveGenerator = new MagicBitboardsService();
+            //var slideMoveGenerator = new HyperbolaQuintessence();
             var evaluationService = new EvaluationService();
             var attacksService = new AttacksService(slideMoveGenerator);
             var movesService = new PossibleMovesService(attacksService, slideMoveGenerator);

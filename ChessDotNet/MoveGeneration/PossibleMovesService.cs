@@ -61,7 +61,7 @@ namespace ChessDotNet.MoveGeneration
             //var captures = new List<Move>();
             //GetAllPotentialCaptures(board, captures);
             //moves.AddRange(captures);
-            //moves.Sort((m1, m2) => m1.Key2.CompareTo(m2.Key2));
+            moves.Sort((m1, m2) => m1.Key2.CompareTo(m2.Key2));
         }
 
         public List<Move> GetAllPotentialCaptures(Board board, List<Move> moves)
@@ -468,7 +468,7 @@ namespace ChessDotNet.MoveGeneration
         //    return null;
         //}
 
-        public bool IsKingSafeAfterMove(Board board, Move move)
+        public bool IsKingSafeAfterMoveOld(Board board, Move move)
         {
             Bitboard allPieces = board.AllPieces;
             var inverseFromBitboard = ~(1UL << move.From);
@@ -493,6 +493,118 @@ namespace ChessDotNet.MoveGeneration
 
             var isSafe = (enemyAttackedAfterMove & myKings) == 0;
             return isSafe;
+        }
+
+        //public bool IsKingSafeAfterMoveTest(Board board, Move move)
+        //{
+        //    var o = IsKingSafeAfterMoveOld(board, move);
+        //    var n = IsKingSafeAfterMoveNew(board, move);
+
+        //    if (o != n)
+        //    {
+        //        IsKingSafeAfterMoveNew(board, move);
+        //    }
+
+        //    return n;
+        //}
+
+        public bool IsKingSafeAfterMove(Board board, Move move)
+        {
+            Bitboard allPieces = board.AllPieces;
+            var fromBitboard = 1UL << move.From;
+            var toBitboard = 1UL << move.To;
+            
+            allPieces &= ~fromBitboard;
+            allPieces |= toBitboard;
+
+            var takesBitboard = toBitboard;
+            if (move.EnPassant)
+            {
+                var enPassantedBitboard = board.WhiteToMove ? toBitboard >> 8 : toBitboard << 8;
+                allPieces &= ~enPassantedBitboard;
+                takesBitboard |= enPassantedBitboard;
+            }
+
+            var kingMove = move.Piece == ChessPiece.WhiteKing || move.Piece == ChessPiece.BlackKing;
+            var myKings = board.WhiteToMove ? board.BitBoard[ChessPiece.WhiteKing] : board.BitBoard[ChessPiece.BlackKing];
+            Position myKingPos;
+            if (kingMove)
+            {
+                myKings &= ~fromBitboard;
+                myKings |= toBitboard;
+                myKingPos = move.To;
+            }
+            else
+            {
+                myKingPos = myKings.BitScanForward();
+            }
+
+            var invTakes = ~takesBitboard;
+
+            Bitboard pawns;
+            Bitboard knights;
+            Bitboard bishops;
+            Bitboard rooks;
+            Bitboard queens;
+            Bitboard kings;
+            if (board.WhiteToMove)
+            {
+                pawns = board.BitBoard[ChessPiece.BlackPawn] & invTakes;
+                knights = board.BitBoard[ChessPiece.BlackKnight] & invTakes;
+                bishops = board.BitBoard[ChessPiece.BlackBishop] & invTakes;
+                rooks = board.BitBoard[ChessPiece.BlackRook] & invTakes;
+                queens = board.BitBoard[ChessPiece.BlackQueen] & invTakes;
+                kings = board.BitBoard[ChessPiece.BlackKing] & invTakes;
+            }
+            else
+            {
+                pawns = board.BitBoard[ChessPiece.WhitePawn] & invTakes;
+                knights = board.BitBoard[ChessPiece.WhiteKnight] & invTakes;
+                bishops = board.BitBoard[ChessPiece.WhiteBishop] & invTakes;
+                rooks = board.BitBoard[ChessPiece.WhiteRook] & invTakes;
+                queens = board.BitBoard[ChessPiece.WhiteQueen] & invTakes;
+                kings = board.BitBoard[ChessPiece.WhiteKing] & invTakes;
+            }
+
+            var knightAttack = BitboardConstants.KnightJumps[myKingPos];
+            if ((knightAttack & knights) != 0)
+            {
+                return false;
+            }
+
+            var kingAttack = BitboardConstants.KingJumps[myKingPos];
+            if ((kingAttack & kings) != 0)
+            {
+                return false;
+            }
+
+            var pawnAttack = BitboardConstants.PawnJumps[move.WhiteToMoveNum, myKingPos]; //AttacksService.GetAttackedByPawns(myKings, board.WhiteToMove);
+            if ((pawnAttack & pawns) != 0)
+            {
+                return false;
+            }
+
+            var diagonalAttack = AttacksService.SlideMoveGenerator.DiagonalAntidiagonalSlide(allPieces, myKingPos);
+            if ((diagonalAttack & bishops) != 0)
+            {
+                return false;
+            }
+            if ((diagonalAttack & queens) != 0)
+            {
+                return false;
+            }
+            
+            var verticalAttack = AttacksService.SlideMoveGenerator.HorizontalVerticalSlide(allPieces, myKingPos);
+            if ((verticalAttack & rooks) != 0)
+            {
+                return false;
+            }
+            if ((verticalAttack & queens) != 0)
+            {
+                return false;
+            }
+
+            return true;
         }
 
         private void BitmaskToMoves(Board board, Bitboard bitmask, Position positionFrom, Piece piece, List<Move> moves)

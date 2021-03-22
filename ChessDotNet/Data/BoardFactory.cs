@@ -19,6 +19,7 @@ namespace ChessDotNet.Data
             board.BitBoard = new ulong[13];
             board.CastlingPermissions = CastlingPermission.None;
             board.History2 = new UndoMove[2048];
+            board.PieceCounts = new int[13];
 
             var boardPosition = 0;
             var fenPosition = 0;
@@ -31,6 +32,8 @@ namespace ChessDotNet.Data
                 if (success)
                 {
                     board.BitBoard[piece] |= pieceBitBoard;
+                    board.ArrayBoard[fixedBoardPosition] = piece;
+                    board.PieceCounts[piece]++;
                     boardPosition++;
                     continue;
                 }
@@ -110,8 +113,8 @@ namespace ChessDotNet.Data
             
 
             board.SyncExtraBitBoards();
-            board.SyncBitBoardsToArrayBoard();
-            board.SyncPiecesCount();
+            //board.SyncBitBoardsToArrayBoard();
+            //board.SyncPiecesCount();
             board.SyncMaterial();
             board.Key = ZobristKeys.CalculateKey(board);
             return board;
