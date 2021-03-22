@@ -51,9 +51,9 @@ namespace ChessDotNet.ConsoleTests
             //TestRepetitions();
 
             //DoPerftClient();
-            //DoPerft();
+            DoPerft();
             //DoPerftSuite();
-            await DoSearch2Async();
+            //await DoSearch2Async();
 
             //Console.WriteLine(new BoardFactory().ParseFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").Print());
             //var pos = 27;
@@ -120,7 +120,7 @@ namespace ChessDotNet.ConsoleTests
             var fenSerializer = new FenSerializerService();
             var perftRunner = new PerftRunner(testClient, verificationClient, boardFactory, fenSerializer);
             perftRunner.OnOut += Console.Write;
-            perftRunner.Test(fen, 6);
+            perftRunner.Test(fen, 7);
         }
 
         private static async Task DoSearch2Async()
@@ -150,6 +150,7 @@ namespace ChessDotNet.ConsoleTests
             searchParameters.Infinite = true;
             //searchParameters.MaxDepth = 9;
             var options = new SearchOptions();
+            options.Debug = true;
             var stopwatch = new Stopwatch();
             var cancellationTokenSource = new CancellationTokenSource();
             var searchTask = Task.Run(() =>
@@ -159,7 +160,7 @@ namespace ChessDotNet.ConsoleTests
                     stopwatch.Restart();
                     var moves = searchService.Run(board, searchParameters, options, cancellationTokenSource.Token);
                     stopwatch.Stop();
-                    searchService.ClearTranspositionTable();
+                    searchService.NewGame();
                     Console.WriteLine($"Total time: {stopwatch.Elapsed.TotalMilliseconds} ms");
                 }
             });

@@ -27,6 +27,11 @@ namespace ChessDotNet.Protocols
 
         private void OnOnSearchInfo(SearchInfo searchInfo)
         {
+            if (!_game.Options.SearchInfo)
+            {
+                return;
+            }
+
             var time = searchInfo.Time > 0 ? searchInfo.Time : 1;
             var nps = searchInfo.NodesSearched/time;
             var pv = searchInfo.PrincipalVariation.ToPositionsString();

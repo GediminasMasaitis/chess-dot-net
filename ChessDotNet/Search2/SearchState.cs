@@ -34,6 +34,11 @@ namespace ChessDotNet.Search2
 
         }
 
+        public void OnNewGame()
+        {
+            TranspositionTable.Clear();
+        }
+
         public void OnNewSearch(SearchOptions options)
         {
             TranspositionTable.SetSize(options.Hash * 1024 * 1024);

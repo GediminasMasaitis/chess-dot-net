@@ -40,6 +40,12 @@ namespace ChessDotNet.MoveGeneration
         {
             var allowedSquareMask = ~0UL;
 
+            GetPotentialKnightMoves(board, allowedSquareMask, moves);
+            GetPotentialBishopMoves(board, allowedSquareMask, moves);
+            GetPotentialRookMoves(board, allowedSquareMask, moves);
+            GetPotentialQueenMoves(board, allowedSquareMask, moves);
+            GetPotentialKingMoves(board, moves);
+
             if (board.WhiteToMove)
             {
                 GetPotentialWhitePawnCaptures(board, moves);
@@ -51,22 +57,23 @@ namespace ChessDotNet.MoveGeneration
                 GetPotentialBlackPawnMoves(board, moves);
             }
 
-            GetPotentialKnightMoves(board, allowedSquareMask, moves);
-            GetPotentialBishopMoves(board, allowedSquareMask, moves);
-            GetPotentialRookMoves(board, allowedSquareMask, moves);
-            GetPotentialQueenMoves(board, allowedSquareMask, moves);
-            GetPotentialKingMoves(board, moves);
-
             //moves.RemoveAll(m => m.TakesPiece != 0);
             //var captures = new List<Move>();
             //GetAllPotentialCaptures(board, captures);
             //moves.AddRange(captures);
-            moves.Sort((m1, m2) => m1.Key2.CompareTo(m2.Key2));
+
+            //moves.Sort((m1, m2) => m1.Key2.CompareTo(m2.Key2));
         }
 
         public List<Move> GetAllPotentialCaptures(Board board, List<Move> moves)
         {
             var allowedSquareMask = board.WhiteToMove ? board.BlackPieces : board.WhitePieces;
+
+            GetPotentialKnightMoves(board, allowedSquareMask, moves);
+            GetPotentialBishopMoves(board, allowedSquareMask, moves);
+            GetPotentialRookMoves(board, allowedSquareMask, moves);
+            GetPotentialQueenMoves(board, allowedSquareMask, moves);
+            GetPotentialKingCaptures(board, allowedSquareMask, moves);
 
             if (board.WhiteToMove)
             {
@@ -76,12 +83,6 @@ namespace ChessDotNet.MoveGeneration
             {
                 GetPotentialBlackPawnCaptures(board, moves);
             }
-
-            GetPotentialKnightMoves(board, allowedSquareMask, moves);
-            GetPotentialBishopMoves(board, allowedSquareMask, moves);
-            GetPotentialRookMoves(board, allowedSquareMask, moves);
-            GetPotentialQueenMoves(board, allowedSquareMask, moves);
-            GetPotentialKingCaptures(board, allowedSquareMask, moves);
 
             //moves.RemoveAll(m => m.TakesPiece == 0);
 
@@ -262,10 +263,10 @@ namespace ChessDotNet.MoveGeneration
                 new Move(from, to, piece, takesPiece, enPassant, forWhite ? ChessPiece.WhiteRook : ChessPiece.BlackRook),
                 new Move(from, to, piece, takesPiece, enPassant, forWhite ? ChessPiece.WhiteQueen : ChessPiece.BlackQueen),
             };*/
-            moves.Add(new Move(from, to, piece, takesPiece, enPassant, forWhite ? ChessPiece.WhiteKnight : ChessPiece.BlackKnight));
-            moves.Add(new Move(from, to, piece, takesPiece, enPassant, forWhite ? ChessPiece.WhiteBishop : ChessPiece.BlackBishop));
-            moves.Add(new Move(from, to, piece, takesPiece, enPassant, forWhite ? ChessPiece.WhiteRook : ChessPiece.BlackRook));
-            moves.Add(new Move(from, to, piece, takesPiece, enPassant, forWhite ? ChessPiece.WhiteQueen : ChessPiece.BlackQueen));
+            moves.Add(new Move(from, to, piece, takesPiece, enPassant, false, forWhite ? ChessPiece.WhiteKnight : ChessPiece.BlackKnight));
+            moves.Add(new Move(from, to, piece, takesPiece, enPassant, false, forWhite ? ChessPiece.WhiteBishop : ChessPiece.BlackBishop));
+            moves.Add(new Move(from, to, piece, takesPiece, enPassant, false, forWhite ? ChessPiece.WhiteRook : ChessPiece.BlackRook));
+            moves.Add(new Move(from, to, piece, takesPiece, enPassant, false, forWhite ? ChessPiece.WhiteQueen : ChessPiece.BlackQueen));
         }
 
         public List<Move> GetPossibleKingMoves(Board board)
@@ -280,14 +281,14 @@ namespace ChessDotNet.MoveGeneration
         {
             var kings = board.WhiteToMove ? board.BitBoard[ChessPiece.WhiteKing] : board.BitBoard[ChessPiece.BlackKing];
             var chessPiece = board.WhiteToMove ? ChessPiece.WhiteKing : ChessPiece.BlackKing;
-            GetPotentialJumpingMoves(board, allowedSquareMask, kings, BitboardConstants.KingSpan, BitboardConstants.KingSpanPosition, chessPiece, moves);
+            GetPotentialJumpingMoves(board, allowedSquareMask, kings, BitboardConstants.KingJumps, chessPiece, moves);
         }
 
         public void GetPotentialKingMoves(Board board, List<Move> moves)
         {
             var kings = board.WhiteToMove ? board.BitBoard[ChessPiece.WhiteKing] : board.BitBoard[ChessPiece.BlackKing];
             var chessPiece = board.WhiteToMove ? ChessPiece.WhiteKing : ChessPiece.BlackKing;
-            GetPotentialJumpingMoves(board, ~0UL, kings, BitboardConstants.KingSpan, BitboardConstants.KingSpanPosition, chessPiece, moves);
+            GetPotentialJumpingMoves(board, ~0UL, kings, BitboardConstants.KingJumps, chessPiece, moves);
             GetPotentialCastlingMoves(board, moves);
         }
 
@@ -334,11 +335,11 @@ namespace ChessDotNet.MoveGeneration
                 var attackedByEnemy = AttacksService.GetAllAttacked(board, !board.WhiteToMove);
                 if (canMaybeCastleQueenSide && ((attackedByEnemy & queenSideCastleAttackMask) == 0))
                 {
-                    moves.Add(new Move(kingPos, (Position)(kingPos - 2), piece));
+                    moves.Add(new Move(kingPos, (Position)(kingPos - 2), piece, ChessPiece.Empty, false, true));
                 }
                 if (canMaybeCastleKingSide && ((attackedByEnemy & kingSideCastleAttackMask) == 0))
                 {
-                    moves.Add(new Move(kingPos, (Position)(kingPos + 2), piece));
+                    moves.Add(new Move(kingPos, (Position)(kingPos + 2), piece, ChessPiece.Empty, false, true));
                 }
             }
         }
@@ -347,26 +348,27 @@ namespace ChessDotNet.MoveGeneration
         {
             var knights = board.WhiteToMove ? board.BitBoard[ChessPiece.WhiteKnight] : board.BitBoard[ChessPiece.BlackKnight];
             var chessPiece = board.WhiteToMove ? ChessPiece.WhiteKnight : ChessPiece.BlackKnight;
-            GetPotentialJumpingMoves(board, allowedSquareMask, knights, BitboardConstants.KnightSpan, BitboardConstants.KnightSpanPosition, chessPiece, moves);
+            GetPotentialJumpingMoves(board, allowedSquareMask, knights, BitboardConstants.KnightJumps, chessPiece, moves);
         }
 
-        private void GetPotentialJumpingMoves(Board board, Bitboard allowedSquareMask, ulong jumpingPieces, ulong jumpMask, int jumpMaskCenter, Piece piece, List<Move> moves)
+        private void GetPotentialJumpingMoves(Board board, Bitboard allowedSquareMask, ulong jumpingPieces, Bitboard[] jumpTable, Piece piece, List<Move> moves)
         {
             var ownPieces = board.WhiteToMove ? board.WhitePieces : board.BlackPieces;
             while (jumpingPieces != 0)
             {
                 Position i = jumpingPieces.BitScanForward();
-                Bitboard jumps;
-                if (i > jumpMaskCenter)
-                {
-                    jumps = jumpMask << (i - jumpMaskCenter);
-                }
-                else
-                {
-                    jumps = jumpMask >> (jumpMaskCenter - i);
-                }
+                var jumps = jumpTable[i];
+                //Bitboard jumps;
+                //if (i > jumpMaskCenter)
+                //{
+                //    jumps = jumpMask << (i - jumpMaskCenter);
+                //}
+                //else
+                //{
+                //    jumps = jumpMask >> (jumpMaskCenter - i);
+                //}
 
-                jumps &= ~(i % 8 < 4 ? BitboardConstants.Files[6] | BitboardConstants.Files[7] : BitboardConstants.Files[0] | BitboardConstants.Files[1]);
+                //jumps &= ~(i % 8 < 4 ? BitboardConstants.Files[6] | BitboardConstants.Files[7] : BitboardConstants.Files[0] | BitboardConstants.Files[1]);
                 jumps &= ~ownPieces;
                 jumps &= allowedSquareMask;
 

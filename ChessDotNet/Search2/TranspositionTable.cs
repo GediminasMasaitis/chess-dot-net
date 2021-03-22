@@ -10,6 +10,7 @@ namespace ChessDotNet.Search2
     {
         private uint _size;
         private TranspositionTableEntry[] _entries;
+        private IList<TranspositionTableEntry> _principalVariation;
 
         public TranspositionTable()
         {
@@ -27,6 +28,7 @@ namespace ChessDotNet.Search2
 
             _size = newSize;
             _entries = new TranspositionTableEntry[newSize];
+            //_principalVariation = new TranspositionTableEntry[SearchConstants.MaxDepth];
         }
 
         public void Store(UInt64 key, Move move, int depth, int score, Byte flag)
@@ -40,11 +42,19 @@ namespace ChessDotNet.Search2
                 return;
             }
 
+            if (existingEntry.Flag == TranspositionTableFlags.Exact)
+            {
+                if (flag != TranspositionTableFlags.Exact)
+                {
+                    return;
+                }
+            }
+
             //if (existingEntry.Depth > depth && existingEntry.Key == key)
             //{
             //    return;
             //}
-            
+
             // Stockfish
             /*if (flag != TranspositionTableFlags.Exact && existingEntry.Key == key && depth <= existingEntry.Depth - 4)
             {
@@ -63,6 +73,16 @@ namespace ChessDotNet.Search2
             var exists = entry.Flag != TranspositionTableFlags.None;
             //var valid = entry.Key == key;
             return exists;
+        }
+
+        public void SavePrincipalVariation(Board board)
+        {
+            _principalVariation = GetPrincipalVariation(board);
+        }
+
+        public IList<TranspositionTableEntry> GetSavedPrincipalVariation()
+        {
+            return _principalVariation;
         }
 
         public IList<TranspositionTableEntry> GetPrincipalVariation(Board board)
@@ -101,6 +121,11 @@ namespace ChessDotNet.Search2
 
         public void Clear()
         {
+            if (_entries == null)
+            {
+                return;
+            }
+
             Array.Clear(_entries, 0, _entries.Length);
         }
     }

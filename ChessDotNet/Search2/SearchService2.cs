@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -28,7 +29,7 @@ namespace ChessDotNet.Search2
         private readonly SearchStopper _stopper;
         private readonly MoveOrderingService _moveOrdering;
         private readonly SearchStatistics _statistics;
-        
+
         private SearchOptions _options;
 
         public SearchService2
@@ -68,19 +69,19 @@ namespace ChessDotNet.Search2
             {
                 RunStandard(board, log);
             }
-            
-            log.PrintLastChild();
-            
-            //var principalVariation = _state.TranspositionTable.GetPrincipalVariation(board);
-            //var moves = principalVariation.Select(entry => entry.Move).ToList();
 
-            var moves = _state.PrincipalVariationTable.GetPrincipalVariation();
+            log.PrintLastChild();
+
+            var principalVariation = _state.TranspositionTable.GetSavedPrincipalVariation();
+            var moves = principalVariation.Select(entry => entry.Move).ToList();
+
+            //var moves = _state.PrincipalVariationTable.GetPrincipalVariation();
             return moves;
         }
 
-        public void ClearTranspositionTable()
+        public void NewGame()
         {
-            _state.TranspositionTable.Clear();
+            _state.OnNewGame();
         }
 
         private void RunStandard(Board board, SearchLog log)
@@ -140,6 +141,7 @@ namespace ChessDotNet.Search2
             {
                 return initialScore;
             }
+            _state.TranspositionTable.SavePrincipalVariation(board);
             _state.PrincipalVariationTable.SetSearchedDepth(initialDepth);
             LogOutput(0, board, initialDepth, initialScore);
             _state.Synchronize();
@@ -171,13 +173,13 @@ namespace ChessDotNet.Search2
                 _state.PrincipalVariationTable.SetCurrentDepth(depth);
                 var iterativeLog = SearchLog.New();
 
-                //score = SearchToDepth(board, depth, 0, -SearchConstants.Inf, SearchConstants.Inf, true, true, iterativeLog);
                 score = SearchAspirationWindow(threadId, board, depth, score, iterativeLog);
-                
+
                 log.AddChild(iterativeLog);
 
                 if (!_stopper.IsStopped())
                 {
+                    _state.TranspositionTable.SavePrincipalVariation(board);
                     _state.PrincipalVariationTable.SetSearchedDepth(depth);
                 }
 
@@ -197,7 +199,7 @@ namespace ChessDotNet.Search2
             {
                 Console.WriteLine($"Thread {threadId}: {depth}");
             }
-            
+
             if (threadId == 0)
             {
                 ReportCurrentState(board);
@@ -215,10 +217,10 @@ namespace ChessDotNet.Search2
 
         private void ReportSearchInfo(Board board, int depth, int score)
         {
-            //var principalVariation = _state.TranspositionTable.GetPrincipalVariation(board);
-            //var principalMoves = principalVariation.Select(entry => entry.Move).ToList();
+            var principalVariation = _state.TranspositionTable.GetSavedPrincipalVariation();
+            var principalMoves = principalVariation.Select(entry => entry.Move).ToList();
 
-            var principalMoves = _state.PrincipalVariationTable.GetPrincipalVariation();
+            //var principalMoves = _state.PrincipalVariationTable.GetPrincipalVariation();
 
             var searchInfo = new SearchInfo();
             searchInfo.Depth = depth;
@@ -242,9 +244,13 @@ namespace ChessDotNet.Search2
 
             Console.WriteLine($"{_statistics}");
 
-            var transpositionTablePv = _state.TranspositionTable.GetPrincipalVariation(board);
-            var transpositionTablePvStr = transpositionTablePv.Select(entry => entry.Move).ToPositionsString();
-            Console.WriteLine($"TT: {transpositionTablePvStr}");
+            var currentTTPV = _state.TranspositionTable.GetPrincipalVariation(board);
+            var currentTTPVStr = currentTTPV.Select(entry => entry.Move).ToPositionsString();
+            Console.WriteLine($"CTT: {currentTTPVStr}");
+
+            var savedTTPV = _state.TranspositionTable.GetSavedPrincipalVariation();
+            var savedTTPVStr = savedTTPV.Select(entry => entry.Move).ToPositionsString();
+            Console.WriteLine($"STT: {savedTTPVStr}");
 
             var principalVariation = _state.PrincipalVariationTable.GetPrincipalVariation();
             var principalVariationStr = principalVariation.ToPositionsString();
@@ -375,7 +381,7 @@ namespace ChessDotNet.Search2
                     return alpha;
                 }
             }
-            
+
             // IN CHECK EXTENSION
             var enemyAttacks = _possibleMoves.AttacksService.GetAllAttacked(board, !board.WhiteToMove);
             var myKing = board.WhiteToMove ? board.BitBoard[ChessPiece.WhiteKing] : board.BitBoard[ChessPiece.BlackKing];
@@ -400,28 +406,61 @@ namespace ChessDotNet.Search2
 
             // PROBE TRANSPOSITION TABLE
             Move? principalVariationMove = null;
-            if(_options.UseTranspositionTable)
+            if (_options.UseTranspositionTable)
             {
-                var probeResult = ProbeTranspositionTable(board.Key, depth, alpha, beta, isPrincipalVariation, out var tableEntry);
-                switch (probeResult)
+                //var probeResult = ProbeTranspositionTable(board.Key, depth, alpha, beta, isPrincipalVariation, out var tableEntry);
+                //switch (probeResult)
+                //{
+                //    case TranspositionTableProbeResult.HitCutoff:
+                //        var exactScore = tableEntry.Score;
+                //        if (exactScore > SearchConstants.MateThereshold)
+                //        {
+                //            exactScore -= ply;
+                //        }
+                //        else if (exactScore < -SearchConstants.MateThereshold)
+                //        {
+                //            exactScore += ply;
+                //        }
+
+                //        log.AddMessage($"Transposition cutoff, flag {tableEntry.Flag}", depth, alpha, beta, exactScore);
+                //        //if (tableEntry.Score > alpha)
+                //        if (tableEntry.Flag == TranspositionTableFlags.Exact)
+                //        {
+                //            _state.PrincipalVariationTable.SetBestMove(ply, tableEntry.Move);
+                //        }
+                //        return exactScore;
+                //    //principalVariationMove = tableEntry.Move;
+                //    //break;
+                //    case TranspositionTableProbeResult.HitContinue:
+                //        principalVariationMove = tableEntry.Move;
+                //        break;
+                //    case TranspositionTableProbeResult.Miss:
+                //        break;
+                //    default:
+                //        throw new ArgumentOutOfRangeException(nameof(probeResult), probeResult, null);
+                //}
+
+                var probeSuccess = TryProbeTranspositionTable(board.Key, depth, alpha, beta, ref principalVariationMove, out var probedScore, out var exact);
+                if (probeSuccess)
                 {
-                    case TranspositionTableProbeResult.HitCutoff:
-                        log.AddMessage($"Transposition cutoff, flag {tableEntry.Flag}", depth, alpha, beta, tableEntry.Score);
-                        //if (tableEntry.Score > alpha)
-                        if (tableEntry.Flag == TranspositionTableFlags.Exact)
+                    if (!isPrincipalVariation || (probedScore > alpha && probedScore < beta))
+                    {
+                        if (probedScore > alpha && probedScore < beta)
                         {
-                            _state.PrincipalVariationTable.SetBestMove(ply, tableEntry.Move);
+                            _state.PrincipalVariationTable.SetBestMove(ply, principalVariationMove.Value);
                         }
-                        return tableEntry.Score;
-                    //principalVariationMove = tableEntry.Move;
-                    //break;
-                    case TranspositionTableProbeResult.HitContinue:
-                        principalVariationMove = tableEntry.Move;
-                        break;
-                    case TranspositionTableProbeResult.Miss:
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException(nameof(probeResult), probeResult, null);
+
+                        if (probedScore > SearchConstants.MateThereshold)
+                        {
+                            probedScore -= ply;
+                        }
+                        else if (probedScore < -SearchConstants.MateThereshold)
+                        {
+                            probedScore += ply;
+                        }
+
+                        return probedScore;
+                    }
                 }
             }
 
@@ -448,7 +487,7 @@ namespace ChessDotNet.Search2
                     return staticScore - margin;
                 }
             }
-            
+
             // NULL MOVE PRUNING
             var nullDepthReduction = depth > 6 ? 3 : 2;
             if
@@ -527,7 +566,7 @@ namespace ChessDotNet.Search2
             var bestScore = -SearchConstants.Inf;
             Move bestMove = default;
             SearchLog bestLog = default;
-            
+
             // CHILD SEARCH
             var initialAlpha = alpha;
             var potentialMoves = threadState.Moves[ply];
@@ -645,7 +684,7 @@ namespace ChessDotNet.Search2
                             {
                                 StoreTranspositionTable(board.Key, move, depth, childScore, TranspositionTableFlags.Beta);
                             }
-                            
+
                             if (move.TakesPiece == 0)
                             {
                                 threadState.Killers[ply, 1] = threadState.Killers[ply, 0];
@@ -658,7 +697,7 @@ namespace ChessDotNet.Search2
 
                         if (move.TakesPiece == ChessPiece.Empty)
                         {
-                            threadState.History[move.WhiteToMoveNum, move.From, move.To] += depth*depth;
+                            threadState.History[move.WhiteToMoveNum, move.From, move.To] += depth * depth;
                         }
 
                         alpha = childScore;
@@ -738,7 +777,7 @@ namespace ChessDotNet.Search2
             {
                 alpha = evaluatedScore;
             }
-            
+
 
             // PROBE TRANSPOSITION TABLE
             Move? principalVariationMove = null;
@@ -844,9 +883,67 @@ namespace ChessDotNet.Search2
             }
             _state.TranspositionTable.Store(key, move, depth, score, flag);
         }
-        
+
+        private bool TryProbeTranspositionTable(ZobristKey key, int depth, int alpha, int beta, ref Move? bestMove, out int score, out bool exact)
+        {
+            score = default;
+            exact = false;
+
+            var found = _state.TranspositionTable.TryProbe(key, out var entry);
+            if (!found)
+            {
+                _statistics.HashMiss++;
+                return false;
+            }
+
+            if (entry.Key != key)
+            {
+                _statistics.HashCollision++;
+                return false;
+            }
+
+            bestMove = entry.Move;
+
+            if (entry.Depth < depth)
+            {
+                _statistics.HashInsufficientDepth++;
+                return false;
+            }
+
+            switch (entry.Flag)
+            {
+                case TranspositionTableFlags.Exact:
+                    exact = true;
+                    score = entry.Score;
+                    return true;
+                case TranspositionTableFlags.Alpha:
+                    if (entry.Score <= alpha)
+                    {
+                        score = alpha;
+                        return true;
+                    }
+
+                    return false;
+                case TranspositionTableFlags.Beta:
+                    if (entry.Score >= beta)
+                    {
+                        score = beta;
+                        return true;
+                    }
+
+                    return false;
+                default:
+                    Debug.Assert(false);
+                    break;
+            }
+
+            return false;
+        }
+
         private TranspositionTableProbeResult ProbeTranspositionTable(ZobristKey key, int depth, int alpha, int beta, bool isPrincipalVariation, out TranspositionTableEntry entry)
         {
+            Debug.Assert(alpha < beta);
+
             var found = _state.TranspositionTable.TryProbe(key, out entry);
             if (!found)
             {
