@@ -336,7 +336,7 @@ namespace ChessDotNet.Search2
             var threadState = _state.ThreadStates[threadId];
 
             // STOP CHECK
-            if (_stopper.ShouldStop())
+            if (depth > 2 && _stopper.ShouldStop())
             {
                 var score = 0;
                 log.AddMessage("Stop requested", depth, alpha, beta, score);
@@ -383,9 +383,9 @@ namespace ChessDotNet.Search2
             }
 
             // IN CHECK EXTENSION
-            var enemyAttacks = _possibleMoves.AttacksService.GetAllAttacked(board, !board.WhiteToMove);
             var myKing = board.WhiteToMove ? board.BitBoard[ChessPiece.WhiteKing] : board.BitBoard[ChessPiece.BlackKing];
-            var inCheck = (enemyAttacks & myKing) != 0;
+            var myKingPos = myKing.BitScanForward();
+            var inCheck = _possibleMoves.AttacksService.IsPositionAttacked(board, myKingPos, !board.WhiteToMove);
 
             if (inCheck)
             {
@@ -405,7 +405,7 @@ namespace ChessDotNet.Search2
             }
 
             // PROBE TRANSPOSITION TABLE
-            Move? principalVariationMove = null;
+            Move principalVariationMove = default;
             if (_options.UseTranspositionTable)
             {
                 //var probeResult = ProbeTranspositionTable(board.Key, depth, alpha, beta, isPrincipalVariation, out var tableEntry);
@@ -447,7 +447,7 @@ namespace ChessDotNet.Search2
                     {
                         if (probedScore > alpha && probedScore < beta)
                         {
-                            _state.PrincipalVariationTable.SetBestMove(ply, principalVariationMove.Value);
+                            _state.PrincipalVariationTable.SetBestMove(ply, principalVariationMove);
                         }
 
                         if (probedScore > SearchConstants.MateThereshold)
@@ -526,7 +526,7 @@ namespace ChessDotNet.Search2
                 _options.UseRazoring
                 && !isPrincipalVariation
                 && !inCheck
-                && !principalVariationMove.HasValue
+                && principalVariationMove.Key2 == 0
                 && nullMoveAllowed
                 && depth <= 3
             )
@@ -570,15 +570,15 @@ namespace ChessDotNet.Search2
             // CHILD SEARCH
             var initialAlpha = alpha;
             var potentialMoves = threadState.Moves[ply];
-            potentialMoves.Clear();
-            _possibleMoves.GetAllPotentialMoves(board, potentialMoves);
+            var moveCount = 0;
+            _possibleMoves.GetAllPotentialMoves(board, potentialMoves, ref moveCount);
             //_moveOrdering.CalculateMoveScores(potentialMoves, ply, principalVariationMove, _state.Killers, _state.History);
             var movesEvaluated = 0;
             var raisedAlpha = false;
 
-            for (var moveIndex = 0; moveIndex < potentialMoves.Count; moveIndex++)
+            for (var moveIndex = 0; moveIndex < moveCount; moveIndex++)
             {
-                _moveOrdering.OrderNextMove(moveIndex, potentialMoves, ply, principalVariationMove, threadState.Killers, threadState.History);
+                _moveOrdering.OrderNextMove(moveIndex, potentialMoves, moveCount, ply, principalVariationMove, threadState.Killers, threadState.History);
                 var move = potentialMoves[moveIndex];
 
                 var kingSafe = _possibleMoves.IsKingSafeAfterMove(board, move);
@@ -596,13 +596,18 @@ namespace ChessDotNet.Search2
                     futilityPruning
                     && movesEvaluated > 0
                     && move.TakesPiece == ChessPiece.Empty
-                    && !move.PawnPromoteTo.HasValue
+                    && move.PawnPromoteTo == ChessPiece.Empty
                 )
                 {
-                    var attacks = _possibleMoves.AttacksService.GetAllAttacked(board, !board.WhiteToMove);
+                    //var attacks = _possibleMoves.AttacksService.GetAllAttacked(board, !board.WhiteToMove);
+                    //var opponentKing = board.WhiteToMove ? board.BitBoard[ChessPiece.WhiteKing] : board.BitBoard[ChessPiece.BlackKing];
+                    //var opponentInCheck = (attacks & opponentKing) != 0;
+
                     var opponentKing = board.WhiteToMove ? board.BitBoard[ChessPiece.WhiteKing] : board.BitBoard[ChessPiece.BlackKing];
-                    var oponnentInCheck = (attacks & opponentKing) != 0;
-                    if (!oponnentInCheck)
+                    var opponentKingPos = opponentKing.BitScanForward();
+                    var opponentInCheck = _possibleMoves.AttacksService.IsPositionAttacked(board, opponentKingPos, !board.WhiteToMove);
+                    
+                    if (!opponentInCheck)
                     {
                         _statistics.FutilityReductions++;
                         board.UndoMove();
@@ -624,7 +629,7 @@ namespace ChessDotNet.Search2
                     && move.Key2 != threadState.Killers[ply, 0]
                     && move.Key2 != threadState.Killers[ply, 1]
                     && move.TakesPiece == ChessPiece.Empty
-                    && !move.PawnPromoteTo.HasValue
+                    && move.PawnPromoteTo == ChessPiece.Empty
                 )
                 {
                     var attacks = _possibleMoves.AttacksService.GetAllAttacked(board, !board.WhiteToMove);
@@ -780,7 +785,7 @@ namespace ChessDotNet.Search2
 
 
             // PROBE TRANSPOSITION TABLE
-            Move? principalVariationMove = null;
+            Move principalVariationMove = default;
             //var probeResult = ProbeTranspositionTable(board.Key, depth, alpha, beta, true /* ? */, out var tableEntry);
             //switch (probeResult)
             //{
@@ -801,12 +806,12 @@ namespace ChessDotNet.Search2
 
             var initialAlpha = alpha;
             var potentialMoves = threadState.Moves[ply];
-            potentialMoves.Clear();
-            _possibleMoves.GetAllPotentialCaptures(board, potentialMoves);
+            var moveCount = 0;
+            _possibleMoves.GetAllPotentialCaptures(board, potentialMoves, ref moveCount);
             var movesEvaluated = 0;
-            for (var moveIndex = 0; moveIndex < potentialMoves.Count; moveIndex++)
+            for (var moveIndex = 0; moveIndex < moveCount; moveIndex++)
             {
-                _moveOrdering.OrderNextMove(moveIndex, potentialMoves, ply, principalVariationMove, threadState.Killers, threadState.History);
+                _moveOrdering.OrderNextMove(moveIndex, potentialMoves, moveCount, ply, principalVariationMove, threadState.Killers, threadState.History);
                 var move = potentialMoves[moveIndex];
 
                 if (move.TakesPiece == ChessPiece.Empty)
@@ -884,7 +889,7 @@ namespace ChessDotNet.Search2
             _state.TranspositionTable.Store(key, move, depth, score, flag);
         }
 
-        private bool TryProbeTranspositionTable(ZobristKey key, int depth, int alpha, int beta, ref Move? bestMove, out int score, out bool exact)
+        private bool TryProbeTranspositionTable(ZobristKey key, int depth, int alpha, int beta, ref Move bestMove, out int score, out bool exact)
         {
             score = default;
             exact = false;

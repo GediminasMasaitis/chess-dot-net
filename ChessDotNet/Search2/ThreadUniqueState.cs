@@ -6,21 +6,21 @@ namespace ChessDotNet.Search2
 {
     public class ThreadUniqueState
     {
-        public UInt64[,] Killers { get; }
+        public uint[,] Killers { get; }
         public int[,,] History { get; }
         public int[,,] Cutoff { get; }
-        public List<Move>[] Moves { get; }
+        public Move[][] Moves { get; }
         public Random Rng { get; }
 
         public ThreadUniqueState(int threadId)
         {
-            Killers = new UInt64[SearchConstants.MaxDepth, 2]; // Non-captures causing beta cutoffs
+            Killers = new uint[SearchConstants.MaxDepth, 2]; // Non-captures causing beta cutoffs
             History = new int[2, 64, 64];
             Cutoff = new int[2, 64, 64];
-            Moves = new List<Move>[SearchConstants.MaxDepth];
+            Moves = new Move[SearchConstants.MaxDepth][];
             for (int i = 0; i < Moves.Length; i++)
             {
-                Moves[i] = new List<Move>();
+                Moves[i] = new Move[218];
             }
             Rng = new Random(threadId);
         }

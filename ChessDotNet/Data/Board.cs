@@ -38,15 +38,39 @@ namespace ChessDotNet.Data
         public int EnPassantRankIndex { get; set; }
         public int FiftyMoveRule { get; set; }
         public ZobristKey Key { get; set; }
-
-        //public UndoMove(Move move, CastlingPermission2 castlingPermission, int enPassantFileIndex, ulong key)
-        //{
-        //    Move = move;
-        //    CastlingPermission = castlingPermission;
-        //    EnPassantFileIndex = enPassantFileIndex;
-        //    Key = key;
-        //}
     }
+
+    //public struct UndoMove
+    //{
+    //    private ushort _extra;
+
+    //    public Move Move { get; }
+    //    public CastlingPermission CastlingPermission => (CastlingPermission)(_extra & 0x0F);
+
+    //    public int EnPassantFileIndex => (_extra >> 4) & 0x07;
+
+    //    public int EnPassantRankIndex => (_extra >> 7) & 0x07;
+    //    public int FiftyMoveRule => (_extra >> 10);
+    //    public ZobristKey Key { get; }
+
+    //    public UndoMove
+    //    (
+    //        Move move,
+    //        CastlingPermission castlingPermission,
+    //        int enPassantFileIndex,
+    //        int enPassantRankIndex,
+    //        int fiftyMoveRule,
+    //        ulong key
+    //    ) : this()
+    //    {
+    //        Move = move;
+    //        _extra |= (ushort)castlingPermission;
+    //        _extra |= (ushort)(enPassantFileIndex << 4);
+    //        _extra |= (ushort)(enPassantRankIndex << 7);
+    //        _extra |= (ushort)(fiftyMoveRule << 10);
+    //        Key = key;
+    //    }
+    //}
 
     public class Board
     {
@@ -313,9 +337,9 @@ namespace ChessDotNet.Data
             BitBoard[move.Piece] |= fromPosBitBoard;
 
             Piece promotedPiece;
-            if (move.PawnPromoteTo.HasValue)
+            if (move.PawnPromoteTo != ChessPiece.Empty)
             {
-                promotedPiece = move.PawnPromoteTo.Value;
+                promotedPiece = move.PawnPromoteTo;
                 PieceCounts[move.Piece]++;
                 PieceCounts[promotedPiece]--;
                 if (WhiteToMove)
@@ -500,9 +524,9 @@ namespace ChessDotNet.Data
             Key ^= ZobristKeys.ZPieces[move.From, move.Piece];
 
             Piece promotedPiece;
-            if (move.PawnPromoteTo.HasValue)
+            if (move.PawnPromoteTo != ChessPiece.Empty)
             {
-                promotedPiece = move.PawnPromoteTo.Value;
+                promotedPiece = move.PawnPromoteTo;
                 PieceCounts[move.Piece]--;
                 PieceCounts[promotedPiece]++;
                 if (whiteToMove)

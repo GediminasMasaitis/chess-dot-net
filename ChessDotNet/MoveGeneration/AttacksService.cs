@@ -118,5 +118,78 @@ namespace ChessDotNet.MoveGeneration
             }
             return allSlide;
         }
+
+        public bool IsPositionAttacked(Board board, Position position, bool byWhite)
+        {
+            Bitboard allPieces = board.AllPieces;
+
+            var invTakes = ~0UL;
+
+            Bitboard pawns;
+            Bitboard knights;
+            Bitboard bishops;
+            Bitboard rooks;
+            Bitboard queens;
+            Bitboard kings;
+            if (byWhite)
+            {
+                pawns = board.BitBoard[ChessPiece.WhitePawn] & invTakes;
+                knights = board.BitBoard[ChessPiece.WhiteKnight] & invTakes;
+                bishops = board.BitBoard[ChessPiece.WhiteBishop] & invTakes;
+                rooks = board.BitBoard[ChessPiece.WhiteRook] & invTakes;
+                queens = board.BitBoard[ChessPiece.WhiteQueen] & invTakes;
+                kings = board.BitBoard[ChessPiece.WhiteKing] & invTakes;
+            }
+            else
+            {
+                pawns = board.BitBoard[ChessPiece.BlackPawn] & invTakes;
+                knights = board.BitBoard[ChessPiece.BlackKnight] & invTakes;
+                bishops = board.BitBoard[ChessPiece.BlackBishop] & invTakes;
+                rooks = board.BitBoard[ChessPiece.BlackRook] & invTakes;
+                queens = board.BitBoard[ChessPiece.BlackQueen] & invTakes;
+                kings = board.BitBoard[ChessPiece.BlackKing] & invTakes;
+            }
+
+            var knightAttack = BitboardConstants.KnightJumps[position];
+            if ((knightAttack & knights) != 0)
+            {
+                return true;
+            }
+
+            var kingAttack = BitboardConstants.KingJumps[position];
+            if ((kingAttack & kings) != 0)
+            {
+                return true;
+            }
+
+            var pawnIndex = byWhite ? 0 : 1;
+            var pawnAttack = BitboardConstants.PawnJumps[pawnIndex, position];
+            if ((pawnAttack & pawns) != 0)
+            {
+                return true;
+            }
+
+            var diagonalAttack = SlideMoveGenerator.DiagonalAntidiagonalSlide(allPieces, position);
+            if ((diagonalAttack & bishops) != 0)
+            {
+                return true;
+            }
+            if ((diagonalAttack & queens) != 0)
+            {
+                return true;
+            }
+
+            var verticalAttack = SlideMoveGenerator.HorizontalVerticalSlide(allPieces, position);
+            if ((verticalAttack & rooks) != 0)
+            {
+                return true;
+            }
+            if ((verticalAttack & queens) != 0)
+            {
+                return true;
+            }
+
+            return false;
+        }
     }
 }

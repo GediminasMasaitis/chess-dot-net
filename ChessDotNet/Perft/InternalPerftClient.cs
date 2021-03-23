@@ -13,16 +13,16 @@ namespace ChessDotNet.Perft
         private readonly BoardFactory _boardFactory;
 
         private Board _currentBoard;
-        private List<Move>[] _moves;
+        private Move[][] _moves;
 
         public InternalPerftClient(PossibleMovesService possibleMovesService, BoardFactory boardFactory)
         {
             _possibleMovesService = possibleMovesService;
             _boardFactory = boardFactory;
-            _moves = new List<Move>[SearchConstants.MaxDepth];
+            _moves = new Move[SearchConstants.MaxDepth][];
             for (var i = 0; i < SearchConstants.MaxDepth; i++)
             {
-                _moves[i] = new List<Move>();
+                _moves[i] = new Move[218];
             }
 
             SetBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
@@ -53,9 +53,9 @@ namespace ChessDotNet.Perft
             }
 
             var possibleMoves = _moves[depth];
-            possibleMoves.Clear();
-            _possibleMovesService.GetAllPossibleMoves(_currentBoard, possibleMoves);
-            for (var i = 0; i < possibleMoves.Count; i++)
+            var moveCount = 0;
+            _possibleMovesService.GetAllPossibleMoves(_currentBoard, possibleMoves, ref moveCount);
+            for (var i = 0; i < moveCount; i++)
             {
                 var move = possibleMoves[i];
                 //_currentBoard.TestMove(move);
@@ -77,22 +77,24 @@ namespace ChessDotNet.Perft
             }
 
             var possibleMoves = _moves[depth];
-            possibleMoves.Clear();
-            _possibleMovesService.GetAllPossibleMoves(board, possibleMoves);
+            var moveCount = 0;
+            _possibleMovesService.GetAllPossibleMoves(board, possibleMoves, ref moveCount);
             if (depth == 1)
             {
-                return possibleMoves.Count;
+                return moveCount;
             }
 
             var nodes = 0;
-            foreach (var move in possibleMoves)
+            for (var i = 0; i < moveCount; i++)
             {
+                var move = possibleMoves[i];
                 //board.TestMove(move);
                 board.DoMove2(move);
                 var childNodes = GetNodesInner(board, depth - 1);
                 board.UndoMove();
                 nodes += childNodes;
             }
+
             return nodes;
         }
 

@@ -24,7 +24,7 @@ namespace ChessDotNet.MoveGeneration.SlideGeneration
             return Foo(allPieces, position, MagicBitboards.Bishops);
         }
 
-        private UInt64 Foo(ulong allPieces, int position, IReadOnlyList<MagicBitboardEntry> entries)
+        private UInt64 Foo(ulong allPieces, int position, MagicBitboardEntry[] entries)
         {
             var entry = entries[position];
             var occupancy = allPieces & entry.BlockerMask;

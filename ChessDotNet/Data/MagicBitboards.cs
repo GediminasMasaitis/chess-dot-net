@@ -5,9 +5,9 @@ using ChessDotNet.MoveGeneration;
 
 namespace ChessDotNet.Data
 {
-    public class MagicBitboards
+    public static class MagicBitboards
     {
-        public static IReadOnlyList<MagicBitboardEntry> Rooks { get; set; }
-        public static IReadOnlyList<MagicBitboardEntry> Bishops { get; set; }
+        public static MagicBitboardEntry[] Rooks { get; set; }
+        public static MagicBitboardEntry[] Bishops { get; set; }
     }
 }

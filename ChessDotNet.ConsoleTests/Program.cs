@@ -51,9 +51,9 @@ namespace ChessDotNet.ConsoleTests
             //TestRepetitions();
 
             //DoPerftClient();
-            DoPerft();
+            //DoPerft();
             //DoPerftSuite();
-            //await DoSearch2Async();
+            await DoSearch2Async();
 
             //Console.WriteLine(new BoardFactory().ParseFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").Print());
             //var pos = 27;
@@ -126,6 +126,7 @@ namespace ChessDotNet.ConsoleTests
         private static async Task DoSearch2Async()
         {
             Console.WriteLine(Marshal.SizeOf<Move>());
+            Console.WriteLine(Marshal.SizeOf<TranspositionTableEntry>());
             var fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"; // Starting pos
             //var fen = "rnbqkbnr/pppppppp/8/8/8/N7/PPPPPPPP/RNBQKBNR w KQkq - 0 1"; // Starting pos
             //var fen = "rnbqkbnr/pppppppp/7n/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"; // Starting pos

@@ -8,26 +8,27 @@ using Position = System.Byte;
 using Piece = System.Byte;
 using MoveKey = System.UInt32;
 
+using MoveValue = System.UInt32;
+
 namespace ChessDotNet.Data
 {
     public struct Move
     {
-        private readonly ulong Value;
+        private readonly MoveValue Value;
 
-        public Move(Position from, Position to, Piece piece, Piece takesPiece = 0, bool enPassant = false, bool castle = false, Piece? pawnPromoteTo = null)
+        public Move(Position from, Position to, Piece piece, Piece takesPiece = 0, bool enPassant = false, bool castle = false, Piece pawnPromoteTo = ChessPiece.Empty)
         {
-            var promote = pawnPromoteTo.HasValue ? pawnPromoteTo.Value : ChessPiece.Empty;
-            ulong key = 0;
+            MoveValue key = 0;
             key |= from;
-            key |= (ulong)to << 8;
-            key |= (ulong)piece << 16;
-            key |= (ulong)takesPiece << 24;
-            key |= (ulong)promote << 32;
-            key |= Convert.ToUInt64(enPassant) << 40;
+            key |= (MoveValue)to << 8;
+            key |= (MoveValue)piece << 16;
+            key |= (MoveValue)takesPiece << 20;
+            key |= (MoveValue)pawnPromoteTo << 24;
+            key |= Convert.ToUInt32(enPassant) << 28;
             //key |= Convert.ToUInt64((piece == ChessPiece.WhiteKing || piece == ChessPiece.BlackKing) && Math.Abs(from - to) == 2) << 41;
-            key |= Convert.ToUInt64(castle) << 41;
-            key |= Convert.ToUInt64(piece == 0) << 42;
-            key |= Convert.ToUInt64(piece <= 6) << 43;
+            key |= Convert.ToUInt32(castle) << 29;
+            key |= Convert.ToUInt32(piece == 0) << 30;
+            key |= Convert.ToUInt32(piece <= 6) << 31;
             Value = key;
 
 #if TEST
@@ -46,32 +47,23 @@ namespace ChessDotNet.Data
 
         public Position From => (byte)(Value & 0xFF);
         public Position To => (byte)((Value >> 8) & 0xFF);
-        public Piece Piece => (byte) ((Value >> 16) & 0xFF);
-        public Piece TakesPiece => (byte) ((Value >> 24) & 0xFF);
-        public Piece? PawnPromoteTo => (byte) ((Value >> 32) & 0xFF) != 0 ? (byte?)((Value >> 32) & 0xFF) : null;
-        public bool EnPassant => ((Value >> 40) & 0x01) == 1;
-        public bool Castle => ((Value >> 41) & 0x01) == 1;
-        public bool NullMove => ((Value >> 42) & 0x01) == 1;
-        public bool WhiteToMove => ((Value >> 43) & 0x01) == 1;
-        public ulong WhiteToMoveNum => (Value >> 43) & 0x01;
+        public Piece Piece => (Piece)((Value >> 16) & 0x0F);
+        public Piece TakesPiece => (Piece)((Value >> 20) & 0x0F);
+        public Piece PawnPromoteTo => (Piece)((Value >> 24) & 0x0F);
+        public bool EnPassant => ((Value >> 28) & 0x01) == 1;
+        public bool Castle => ((Value >> 29) & 0x01) == 1;
+        public bool NullMove => ((Value >> 30) & 0x01) == 1;
+        public bool WhiteToMove => ((Value >> 31) & 0x01) == 1;
+        public ulong WhiteToMoveNum => (Value >> 31) & 0x01;
 
         //public int MVVLVAScore => TakesPiece > 0 ? MVVLVAScoreCalculation.Scores[Piece, TakesPiece] : 0;
         public MoveKey Key => (uint)(From << 16) + To;
         //private readonly ulong _staticKey;
 
-        public ulong Key2
-        {
-            get
-            {
-                return Value;
-                //return _staticKey;
-                //return (uint) (From << 16) + To;
-                //return Key;
-
-            }
-        }
-
-
+        public MoveKey Key2 => Value;
+        //return _staticKey;
+        //return (uint) (From << 16) + To;
+        //return Key;
         private static string PositionToText(Position position)
         {
             var rank = position / 8;
@@ -86,7 +78,7 @@ namespace ChessDotNet.Data
             var textLower = text.ToLower();
             var file = text[0] - 97;
             var rank = text[1] - 0x31;
-            var position = (Position)(rank*8 + file);
+            var position = (Position)(rank * 8 + file);
             return position;
         }
 
@@ -98,11 +90,11 @@ namespace ChessDotNet.Data
             var piece = board.ArrayBoard[from];
             var takesPiece = board.ArrayBoard[to];
             var enPassant = false;
-            Piece? pawnPromotesTo = null;
+            Piece pawnPromotesTo = ChessPiece.Empty;
             var isWhite = board.WhiteToMove;
             if (piece == ChessPiece.WhitePawn || piece == ChessPiece.BlackPawn)
             {
-                if (from%8 != to%8) // Must be take
+                if (from % 8 != to % 8) // Must be take
                 {
                     if (takesPiece == ChessPiece.Empty) // Must be en-passant
                     {
@@ -141,10 +133,10 @@ namespace ChessDotNet.Data
         public string ToPositionString()
         {
             var text = PositionToText(From) + PositionToText(To);
-            if (PawnPromoteTo.HasValue)
+            if (PawnPromoteTo != ChessPiece.Empty)
             {
                 char promotionLetter;
-                switch (PawnPromoteTo.Value)
+                switch (PawnPromoteTo)
                 {
                     case ChessPiece.WhiteKnight:
                     case ChessPiece.BlackKnight:

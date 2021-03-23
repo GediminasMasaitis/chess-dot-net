@@ -11,6 +11,11 @@
     <DefineConstants>DEBUG;TRACE;LOG</DefineConstants>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DebugType>full</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\ChessDotNet\ChessDotNet.csproj" />
   </ItemGroup>
