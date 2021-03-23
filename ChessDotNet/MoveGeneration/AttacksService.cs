@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 using ChessDotNet.Common;
 using ChessDotNet.Data;
 
@@ -63,7 +64,7 @@ namespace ChessDotNet.MoveGeneration
             return allAttacked;
         }
 
-        public ulong GetAttackedByKings(Bitboard kings)
+        private ulong GetAttackedByKings(Bitboard kings)
         {
             ulong allJumps = 0;
             while (kings != 0)
@@ -76,7 +77,7 @@ namespace ChessDotNet.MoveGeneration
             return allJumps;
         }
 
-        public ulong GetAttackedByKnights(Bitboard knights)
+        private ulong GetAttackedByKnights(Bitboard knights)
         {
             ulong allJumps = 0;
             while (knights != 0)
@@ -89,7 +90,7 @@ namespace ChessDotNet.MoveGeneration
             return allJumps;
         }
 
-        public ulong GetAttackedByPawns(Bitboard myPawns, bool whiteToMove)
+        private ulong GetAttackedByPawns(Bitboard myPawns, bool whiteToMove)
         {
             ulong pawnsLeft;
             ulong pawnsRight;
@@ -106,6 +107,7 @@ namespace ChessDotNet.MoveGeneration
             return pawnsLeft | pawnsRight;
         }
 
+        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
         private ulong GetAttackedBySlidingPieces(Bitboard allPieces, Bitboard slidingPieces, bool diagonal)
         {
             var allSlide = 0UL;
@@ -117,6 +119,22 @@ namespace ChessDotNet.MoveGeneration
                 slidingPieces &= ~(1UL << i);
             }
             return allSlide;
+        }
+
+        public bool IsBitboardAttacked(Board board, Bitboard bitboard, bool byWhite)
+        {
+            while (bitboard != 0)
+            {
+                var position = bitboard.BitScanForward();
+                var attacked = IsPositionAttacked(board, position, byWhite);
+                if (attacked)
+                {
+                    return true;
+                }
+                bitboard &= ~(1UL << position);
+            }
+
+            return false;
         }
 
         public bool IsPositionAttacked(Board board, Position position, bool byWhite)

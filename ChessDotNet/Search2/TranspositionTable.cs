@@ -65,6 +65,7 @@ namespace ChessDotNet.Search2
             _entries[index] = entry;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryProbe(UInt64 key, out TranspositionTableEntry entry)
         {
             //entry = default; return false;

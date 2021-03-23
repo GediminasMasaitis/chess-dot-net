@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using ChessDotNet.Data;
@@ -571,14 +572,16 @@ namespace ChessDotNet.Search2
             var initialAlpha = alpha;
             var potentialMoves = threadState.Moves[ply];
             var moveCount = 0;
-            _possibleMoves.GetAllPotentialMoves(board, potentialMoves, ref moveCount);
-            //_moveOrdering.CalculateMoveScores(potentialMoves, ply, principalVariationMove, _state.Killers, _state.History);
             var movesEvaluated = 0;
             var raisedAlpha = false;
 
+            _possibleMoves.GetAllPotentialMoves(board, potentialMoves, ref moveCount);
+            var moveStaticScores = threadState.MoveStaticScores[ply];
+            _moveOrdering.CalculateStaticScores(potentialMoves, moveCount, ply, principalVariationMove, threadState.Killers, moveStaticScores);
+            
             for (var moveIndex = 0; moveIndex < moveCount; moveIndex++)
             {
-                _moveOrdering.OrderNextMove(moveIndex, potentialMoves, moveCount, ply, principalVariationMove, threadState.Killers, threadState.History);
+                _moveOrdering.OrderNextMove(moveIndex, potentialMoves, moveStaticScores, moveCount, threadState.History);
                 var move = potentialMoves[moveIndex];
 
                 var kingSafe = _possibleMoves.IsKingSafeAfterMove(board, move);
@@ -690,7 +693,7 @@ namespace ChessDotNet.Search2
                                 StoreTranspositionTable(board.Key, move, depth, childScore, TranspositionTableFlags.Beta);
                             }
 
-                            if (move.TakesPiece == 0)
+                            if (move.TakesPiece == ChessPiece.Empty)
                             {
                                 threadState.Killers[ply, 1] = threadState.Killers[ply, 0];
                                 threadState.Killers[ply, 0] = move.Key2;
@@ -807,11 +810,15 @@ namespace ChessDotNet.Search2
             var initialAlpha = alpha;
             var potentialMoves = threadState.Moves[ply];
             var moveCount = 0;
-            _possibleMoves.GetAllPotentialCaptures(board, potentialMoves, ref moveCount);
             var movesEvaluated = 0;
+
+            _possibleMoves.GetAllPotentialCaptures(board, potentialMoves, ref moveCount);
+            var moveStaticScores = threadState.MoveStaticScores[ply];
+            _moveOrdering.CalculateStaticScores(potentialMoves, moveCount, ply, principalVariationMove, threadState.Killers, moveStaticScores);
+
             for (var moveIndex = 0; moveIndex < moveCount; moveIndex++)
             {
-                _moveOrdering.OrderNextMove(moveIndex, potentialMoves, moveCount, ply, principalVariationMove, threadState.Killers, threadState.History);
+                _moveOrdering.OrderNextMove(moveIndex, potentialMoves, moveStaticScores, moveCount, threadState.History);
                 var move = potentialMoves[moveIndex];
 
                 if (move.TakesPiece == ChessPiece.Empty)
@@ -889,6 +896,7 @@ namespace ChessDotNet.Search2
             _state.TranspositionTable.Store(key, move, depth, score, flag);
         }
 
+        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool TryProbeTranspositionTable(ZobristKey key, int depth, int alpha, int beta, ref Move bestMove, out int score, out bool exact)
         {
             score = default;

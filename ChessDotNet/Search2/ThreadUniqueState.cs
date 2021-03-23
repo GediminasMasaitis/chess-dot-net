@@ -10,6 +10,7 @@ namespace ChessDotNet.Search2
         public int[,,] History { get; }
         public int[,,] Cutoff { get; }
         public Move[][] Moves { get; }
+        public int[][] MoveStaticScores { get; }
         public Random Rng { get; }
 
         public ThreadUniqueState(int threadId)
@@ -21,6 +22,11 @@ namespace ChessDotNet.Search2
             for (int i = 0; i < Moves.Length; i++)
             {
                 Moves[i] = new Move[218];
+            }
+            MoveStaticScores = new int[SearchConstants.MaxDepth][];
+            for (int i = 0; i < MoveStaticScores.Length; i++)
+            {
+                MoveStaticScores[i] = new int[218];
             }
             Rng = new Random(threadId);
         }

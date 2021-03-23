@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using ChessDotNet.Common;
 using ChessDotNet.Data;
 
@@ -19,11 +20,13 @@ namespace ChessDotNet.MoveGeneration.SlideGeneration
             return Foo(allPieces, position, MagicBitboards.Rooks);
         }
 
+
         public ulong DiagonalAntidiagonalSlide(ulong allPieces, int position)
         {
             return Foo(allPieces, position, MagicBitboards.Bishops);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private UInt64 Foo(ulong allPieces, int position, MagicBitboardEntry[] entries)
         {
             var entry = entries[position];
