@@ -521,7 +521,7 @@ namespace ChessDotNet.Data
             var fromPosBitBoard = 1UL << move.From;
             ArrayBoard[move.From] = ChessPiece.Empty;
             BitBoard[move.Piece] &= ~fromPosBitBoard;
-            Key ^= ZobristKeys.ZPieces[move.From, move.Piece];
+            Key ^= ZobristKeys.ZPieces[move.From][move.Piece];
 
             Piece promotedPiece;
             if (move.PawnPromoteTo != ChessPiece.Empty)
@@ -550,7 +550,7 @@ namespace ChessDotNet.Data
             var toPosBitBoard = 1UL << move.To;
             ArrayBoard[move.To] = promotedPiece;
             BitBoard[promotedPiece] |= toPosBitBoard;
-            Key ^= ZobristKeys.ZPieces[move.To, promotedPiece];
+            Key ^= ZobristKeys.ZPieces[move.To][promotedPiece];
 
             // TAKES
             if (move.TakesPiece > 0)
@@ -558,7 +558,7 @@ namespace ChessDotNet.Data
                 if (!move.EnPassant)
                 {
                     BitBoard[move.TakesPiece] &= ~toPosBitBoard;
-                    Key ^= ZobristKeys.ZPieces[move.To, move.TakesPiece];
+                    Key ^= ZobristKeys.ZPieces[move.To][move.TakesPiece];
                 }
                 LastTookPieceHistoryIndex = HistoryDepth - 1;
                 PieceCounts[move.TakesPiece]--;
@@ -589,7 +589,7 @@ namespace ChessDotNet.Data
 
                 BitBoard[move.TakesPiece] &= ~killedPawnBitBoard;
                 ArrayBoard[killedPawnPos] = ChessPiece.Empty;
-                Key ^= ZobristKeys.ZPieces[killedPawnPos, move.TakesPiece];
+                Key ^= ZobristKeys.ZPieces[killedPawnPos][move.TakesPiece];
             }
 
             // PAWN DOUBLE MOVES
@@ -622,8 +622,8 @@ namespace ChessDotNet.Data
                 ArrayBoard[castlingRookNewPos] = rookPiece;
                 BitBoard[rookPiece] &= ~(1UL << castlingRookPos);
                 BitBoard[rookPiece] |= 1UL << castlingRookNewPos;
-                Key ^= ZobristKeys.ZPieces[castlingRookPos, rookPiece];
-                Key ^= ZobristKeys.ZPieces[castlingRookNewPos, rookPiece];
+                Key ^= ZobristKeys.ZPieces[castlingRookPos][rookPiece];
+                Key ^= ZobristKeys.ZPieces[castlingRookNewPos][rookPiece];
             }
             
             if (move.Piece == ChessPiece.WhiteKing)

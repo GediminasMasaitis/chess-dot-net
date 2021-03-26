@@ -8,7 +8,7 @@ namespace ChessDotNet.Data
 {
     public class MagicBitboardEntry
     {
-        public MagicBitboardEntry(ulong blockerMask, ulong magicNumber, byte offset, IReadOnlyList<ulong> moveboards)
+        public MagicBitboardEntry(ulong blockerMask, ulong magicNumber, byte offset, ulong[] moveboards)
         {
             BlockerMask = blockerMask;
             MagicNumber = magicNumber;
@@ -19,6 +19,6 @@ namespace ChessDotNet.Data
         public Bitboard BlockerMask { get; }
         public Bitboard MagicNumber { get; }
         public byte Offset { get; }
-        public IReadOnlyList<Bitboard> Moveboards { get; }
+        public Bitboard[] Moveboards { get; }
     }
 }

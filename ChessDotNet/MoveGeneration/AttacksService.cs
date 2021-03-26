@@ -137,6 +137,110 @@ namespace ChessDotNet.MoveGeneration
             return false;
         }
 
+        public Bitboard GetSlidingAttackersOf(Board board, Position position, Bitboard allPieces)
+        {
+            Bitboard result = 0UL;
+
+            var bishops = board.BitBoard[ChessPiece.WhiteBishop] | board.BitBoard[ChessPiece.BlackBishop];
+            var rooks = board.BitBoard[ChessPiece.WhiteRook] | board.BitBoard[ChessPiece.BlackRook];
+            var queens = board.BitBoard[ChessPiece.WhiteQueen] | board.BitBoard[ChessPiece.BlackQueen];
+
+            var diagonalAttack = SlideMoveGenerator.DiagonalAntidiagonalSlide(allPieces, position);
+            result |= diagonalAttack & bishops;
+            result |= diagonalAttack & queens;
+
+            var verticalAttack = SlideMoveGenerator.HorizontalVerticalSlide(allPieces, position);
+            result |= verticalAttack & rooks;
+            result |= verticalAttack & queens;
+
+            return result;
+        }
+
+        public Bitboard GetAttackersOf(Board board, Position position, Bitboard allPieces)
+        {
+            Bitboard result = 0UL;
+
+            var whitePawns = board.BitBoard[ChessPiece.WhitePawn];
+            var blackPawns = board.BitBoard[ChessPiece.BlackPawn];
+            var knights = board.BitBoard[ChessPiece.WhiteKnight] | board.BitBoard[ChessPiece.BlackKnight];
+            var bishops = board.BitBoard[ChessPiece.WhiteBishop] | board.BitBoard[ChessPiece.BlackBishop];
+            var rooks = board.BitBoard[ChessPiece.WhiteRook] | board.BitBoard[ChessPiece.BlackRook];
+            var queens = board.BitBoard[ChessPiece.WhiteQueen] | board.BitBoard[ChessPiece.BlackQueen];
+            var kings = board.BitBoard[ChessPiece.WhiteKing] | board.BitBoard[ChessPiece.BlackKing];
+
+            var knightAttack = BitboardConstants.KnightJumps[position];
+            result |= knightAttack & knights;
+
+            var kingAttack = BitboardConstants.KingJumps[position];
+            result |= kingAttack & kings;
+
+            var whitePawnAttack = BitboardConstants.PawnJumps[0, position];
+            result |= whitePawnAttack & whitePawns;
+
+            var blackPawnAttack = BitboardConstants.PawnJumps[1, position];
+            result |= blackPawnAttack & blackPawns;
+
+            var diagonalAttack = SlideMoveGenerator.DiagonalAntidiagonalSlide(allPieces, position);
+            result |= diagonalAttack & bishops;
+            result |= diagonalAttack & queens;
+
+            var verticalAttack = SlideMoveGenerator.HorizontalVerticalSlide(allPieces, position);
+            result |= verticalAttack & rooks;
+            result |= verticalAttack & queens;
+
+            return result;
+        }
+
+        public Bitboard GetAttackersOfSide(Board board, Position position, bool byWhite, Bitboard allPieces)
+        {
+            Bitboard result = 0UL;
+
+            Bitboard pawns;
+            Bitboard knights;
+            Bitboard bishops;
+            Bitboard rooks;
+            Bitboard queens;
+            Bitboard kings;
+            if (byWhite)
+            {
+                pawns = board.BitBoard[ChessPiece.WhitePawn];
+                knights = board.BitBoard[ChessPiece.WhiteKnight];
+                bishops = board.BitBoard[ChessPiece.WhiteBishop];
+                rooks = board.BitBoard[ChessPiece.WhiteRook];
+                queens = board.BitBoard[ChessPiece.WhiteQueen];
+                kings = board.BitBoard[ChessPiece.WhiteKing];
+            }
+            else
+            {
+                pawns = board.BitBoard[ChessPiece.BlackPawn];
+                knights = board.BitBoard[ChessPiece.BlackKnight];
+                bishops = board.BitBoard[ChessPiece.BlackBishop];
+                rooks = board.BitBoard[ChessPiece.BlackRook];
+                queens = board.BitBoard[ChessPiece.BlackQueen];
+                kings = board.BitBoard[ChessPiece.BlackKing];
+            }
+
+            var knightAttack = BitboardConstants.KnightJumps[position];
+            result |= knightAttack & knights;
+
+            var kingAttack = BitboardConstants.KingJumps[position];
+            result |= kingAttack & kings;
+            
+            var pawnIndex = byWhite ? 0 : 1;
+            var pawnAttack = BitboardConstants.PawnJumps[pawnIndex, position];
+            result |= pawnAttack & pawns;
+
+            var diagonalAttack = SlideMoveGenerator.DiagonalAntidiagonalSlide(allPieces, position);
+            result |= diagonalAttack & bishops;
+            result |= diagonalAttack & queens;
+
+            var verticalAttack = SlideMoveGenerator.HorizontalVerticalSlide(allPieces, position);
+            result |= verticalAttack & rooks;
+            result |= verticalAttack & queens;
+
+            return result;
+        }
+
         public bool IsPositionAttacked(Board board, Position position, bool byWhite)
         {
             Bitboard allPieces = board.AllPieces;

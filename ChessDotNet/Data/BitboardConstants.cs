@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 using Bitboard = System.UInt64;
 using Key = System.UInt64;
-using Position = System.Int32;
+using Position = System.Byte;
 using Piece = System.Int32;
 
 namespace ChessDotNet.Data
@@ -166,5 +166,92 @@ namespace ChessDotNet.Data
             jumps &= ~(position % 8 < 4 ? BitboardConstants.Files[6] | BitboardConstants.Files[7] : BitboardConstants.Files[0] | BitboardConstants.Files[1]);
             return jumps;
         }
+    }
+
+    public static class ChessPosition
+    {
+        public const Position A1 = 0;
+        public const Position B1 = 1;
+        public const Position C1 = 2;
+        public const Position D1 = 3;
+        public const Position E1 = 4;
+        public const Position F1 = 5;
+        public const Position G1 = 6;
+        public const Position H1 = 7;
+
+        public const Position A2 = 8;
+        public const Position B2 = 9;
+        public const Position C2 = 10;
+        public const Position D2 = 11;
+        public const Position E2 = 12;
+        public const Position F2 = 13;
+        public const Position G2 = 14;
+        public const Position H2 = 15;
+
+        public const Position A3 = 16;
+        public const Position B3 = 17;
+        public const Position C3 = 18;
+        public const Position D3 = 19;
+        public const Position E3 = 20;
+        public const Position F3 = 21;
+        public const Position G3 = 22;
+        public const Position H3 = 23;
+
+        public const Position A4 = 24;
+        public const Position B4 = 25;
+        public const Position C4 = 26;
+        public const Position D4 = 27;
+        public const Position E4 = 28;
+        public const Position F4 = 29;
+        public const Position G4 = 30;
+        public const Position H4 = 31;
+
+        public const Position A5 = 32;
+        public const Position B5 = 33;
+        public const Position C5 = 34;
+        public const Position D5 = 35;
+        public const Position E5 = 36;
+        public const Position F5 = 37;
+        public const Position G5 = 38;
+        public const Position H5 = 39;
+
+        public const Position A6 = 40;
+        public const Position B6 = 41;
+        public const Position C6 = 42;
+        public const Position D6 = 43;
+        public const Position E6 = 44;
+        public const Position F6 = 45;
+        public const Position G6 = 46;
+        public const Position H6 = 47;
+
+        public const Position A7 = 48;
+        public const Position B7 = 49;
+        public const Position C7 = 50;
+        public const Position D7 = 51;
+        public const Position E7 = 52;
+        public const Position F7 = 53;
+        public const Position G7 = 54;
+        public const Position H7 = 55;
+
+        public const Position A8 = 56;
+        public const Position B8 = 57;
+        public const Position C8 = 58;
+        public const Position D8 = 59;
+        public const Position E8 = 60;
+        public const Position F8 = 61;
+        public const Position G8 = 62;
+        public const Position H8 = 63;
+    }
+
+    public static class ChessFile
+    {
+        public const Position A = 0;
+        public const Position B = 1;
+        public const Position C = 2;
+        public const Position D = 3;
+        public const Position E = 4;
+        public const Position F = 5;
+        public const Position G = 6;
+        public const Position H = 7;
     }
 }

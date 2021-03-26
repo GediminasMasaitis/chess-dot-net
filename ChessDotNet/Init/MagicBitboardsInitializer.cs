@@ -21,8 +21,8 @@ namespace ChessDotNet.Init
             public Bitboard BlockerMask { get; set; }
             public Bitboard MagicNumber { get; set; }
             public byte BitCount { get; set; }
-            public IReadOnlyList<Bitboard> Occupancies { get; set; }
-            public IReadOnlyList<Bitboard> Moveboards { get; set; }
+            public Bitboard[] Occupancies { get; set; }
+            public Bitboard[] Moveboards { get; set; }
         }
 
         public ISlideMoveGenerator OtherGenerator { get; }
@@ -147,7 +147,7 @@ namespace ChessDotNet.Init
                 iterations++;
                 magicNumber = CandidateProvider.GetMagicNumberCandidate(generationEntry.Position, generationEntry.Bishop);
                 success = true;
-                for (var i = 0; i < generationEntry.Occupancies.Count; i++)
+                for (var i = 0; i < generationEntry.Occupancies.Length; i++)
                 {
                     var occupancy = generationEntry.Occupancies[i];
                     var moveboard = generationEntry.Moveboards[i];

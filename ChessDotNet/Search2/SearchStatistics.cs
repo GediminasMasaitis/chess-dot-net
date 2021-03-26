@@ -43,6 +43,10 @@ namespace ChessDotNet.Search2
         public long FutilityReductions { get; set; }
         public long LateMoveReductions1 { get; set; }
         public long LateMoveReductions2 { get; set; }
+        public long LateMoveFail { get; set; }
+
+        public long DeltaPruning { get; set; }
+        public long SeePruning { get; set; }
 
         public long Repetitions { get; set; }
         public long Mates { get; set; }
@@ -83,7 +87,10 @@ namespace ChessDotNet.Search2
             FutilityReductions = 0;
             LateMoveReductions1 = 0;
             LateMoveReductions2 = 0;
+            LateMoveFail = 0;
             FutilityReductions = 0;
+            DeltaPruning = 0;
+            SeePruning = 0;
             Repetitions = 0;
             Mates = 0;
             Stalemates = 0;
@@ -180,6 +187,9 @@ namespace ChessDotNet.Search2
             AppendStatistic(builder, nameof(FutilityReductions), FutilityReductions);
             AppendStatistic(builder, nameof(LateMoveReductions1), LateMoveReductions1);
             AppendStatistic(builder, nameof(LateMoveReductions2), LateMoveReductions2);
+            AppendStatistic(builder, nameof(LateMoveFail), LateMoveFail);
+            AppendStatistic(builder, nameof(DeltaPruning), DeltaPruning);
+            AppendStatistic(builder, nameof(SeePruning), SeePruning);
             AppendStatistic(builder, nameof(Repetitions), Repetitions);
             AppendStatistic(builder, nameof(Mates), Mates);
             AppendStatistic(builder, nameof(Stalemates), Stalemates);

@@ -54,6 +54,7 @@ namespace ChessDotNet.ConsoleTests
             //DoPerft();
             //DoPerftSuite();
             await DoSearch2Async();
+            //TestSee();
 
             //Console.WriteLine(new BoardFactory().ParseFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").Print());
             //var pos = 27;
@@ -64,12 +65,37 @@ namespace ChessDotNet.ConsoleTests
             Console.ReadLine();
         }
 
-        public static void DoSlideTest()
+        public static Board MakeBoard(string fen)
         {
-            var fen = "8/8/3k2bp/8/8/3K4/8/8 w - - 0 1";
             var boardFactory = new BoardFactory();
             var board = boardFactory.ParseFEN(fen);
+            Console.WriteLine(board.Print(new EvaluationService(), new FenSerializerService()));
+            return board;
+        }
 
+        public static void TestSee()
+        {
+            var board = MakeBoard("k7/8/2b5/3p4/4b3/5B2/6B1/K7 w - - 0 1");
+
+            var slidingMoveGenerator = new MagicBitboardsService();
+            var attacksService = new AttacksService(slidingMoveGenerator);
+            var seeService = new SeeService(attacksService);
+
+            var from = ChessPosition.F3;
+            var to = ChessPosition.E4;
+            var move = new Move(from, to, board.ArrayBoard[from], board.ArrayBoard[to]);
+            //board.DoMove2(move);
+            Console.WriteLine(1UL << move.From);
+            Console.WriteLine(1UL << move.To);
+            Console.WriteLine(board.Print());
+            var score = seeService.See(board, move);
+            Console.WriteLine(score);
+        }
+
+        public static void DoSlideTest()
+        {
+            var board = MakeBoard("8/8/3k2bp/8/8/3K4/8/8 w - - 0 1");
+            
             var bishops = board.BitBoard[ChessPiece.BlackBishop];
             var bishopPos = bishops.BitScanForward();
 
@@ -132,7 +158,7 @@ namespace ChessDotNet.ConsoleTests
             //var fen = "rnbqkbnr/pppppppp/7n/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"; // Starting pos
 
             //var fen = "r4rk1/p2n1ppp/3qp3/6B1/N5P1/3P1b2/PPP1BbP1/R2Q1R1K b - - 0 14"; // Mate in 3
-            //var fen = "r1b1kb1r/2pp1ppp/1np1q3/p3P3/2P5/1P6/PB1NQPPP/R3KB1R b KQkq - 0 1 "; // Midgame
+            //var fen = "r1b1kb1r/2pp1ppp/1np1q3/p3P3/2P5/1P6/PB1NQPPP/R3KB1R b KQkq - 0 1"; // Midgame
             //var fen = "r3r1kb/p2bp2p/1q1p1npB/5NQ1/2p1P1P1/2N2P2/PPP5/2KR3R w - - 0 1"; // Midgame 2
             var fact = new BoardFactory();
             var board = fact.ParseFEN(fen);
@@ -289,8 +315,8 @@ namespace ChessDotNet.ConsoleTests
             var keySameAfterMove = board.Key == keyAfterMove;
 
             var manualKey = board.Key;
-            manualKey ^= ZobristKeys.ZPieces[8, ChessPiece.WhitePawn];
-            manualKey ^= ZobristKeys.ZPieces[16, ChessPiece.WhitePawn];
+            manualKey ^= ZobristKeys.ZPieces[8][ChessPiece.WhitePawn];
+            manualKey ^= ZobristKeys.ZPieces[16][ChessPiece.WhitePawn];
             manualKey ^= ZobristKeys.ZWhiteToMove;
 
             Console.WriteLine(keySameAfterMove ? "Keys after move match" : "Keys after move are different");

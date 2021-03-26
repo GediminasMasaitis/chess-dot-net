@@ -5,14 +5,18 @@ namespace ChessDotNet.Hashing
 {
     public static class ZobristKeys
     {
-        public static ulong[,] ZPieces { get; }
+        public static ulong[][] ZPieces { get; }
         public static ulong[] ZEnPassant { get; }
         public static ulong[] ZCastle { get; }
         public static ulong ZWhiteToMove { get; }
 
         static ZobristKeys()
         {
-            ZPieces = new ulong[64, 13];
+            ZPieces = new ulong[64][];
+            for (int i = 0; i < ZPieces.Length; i++)
+            {
+                ZPieces[i] = new ulong[13];
+            }
             ZEnPassant = new ulong[8];
             var castleLength = (byte)CastlingPermission.All + 1;
             ZCastle = new ulong[castleLength];
@@ -22,7 +26,7 @@ namespace ChessDotNet.Hashing
             {
                 for (var j = 0; j < 13; j++)
                 {
-                    ZPieces[i, j] = NextKey(rng);
+                    ZPieces[i][j] = NextKey(rng);
                 }
             }
 
@@ -55,7 +59,7 @@ namespace ChessDotNet.Hashing
                 var piece = board.ArrayBoard[i];
                 if (piece != ChessPiece.Empty)
                 {
-                    key ^= ZPieces[i, piece];
+                    key ^= ZPieces[i][piece];
                 }
             }
 
