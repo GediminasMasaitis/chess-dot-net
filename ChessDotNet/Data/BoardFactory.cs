@@ -6,6 +6,7 @@ using Bitboard = System.UInt64;
 using Key = System.UInt64;
 using Position = System.Byte;
 using Piece = System.Byte;
+using Score = System.Int32;
 
 namespace ChessDotNet.Data
 {
@@ -16,10 +17,11 @@ namespace ChessDotNet.Data
             fen = fen.Trim().Replace("/",string.Empty);
             var board = new Board();
             board.ArrayBoard = new Piece[64];
-            board.BitBoard = new ulong[13];
+            board.BitBoard = new ulong[ChessPiece.Count];
             board.CastlingPermissions = CastlingPermission.None;
             board.History2 = new UndoMove[2048];
-            board.PieceCounts = new int[13];
+            board.PieceCounts = new int[ChessPiece.Count];
+            board.Material = new Score[2];
 
             var boardPosition = 0;
             var fenPosition = 0;

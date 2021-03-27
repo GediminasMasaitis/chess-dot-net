@@ -44,15 +44,25 @@ namespace ChessDotNet
             ShowBitBoard(bitBoard);
         }
 
+        private static void SyncPiecesCount(Board board)
+        {
+            board.PieceCounts = new int[ChessPiece.Count];
+            for (var i = 0; i < 64; i++)
+            {
+                var piece = board.ArrayBoard[i];
+                board.PieceCounts[piece]++;
+            }
+        }
+
         public static Board ToDebugRookBoard(this ulong bitBoard)
         {
             var board = new Board();
             board.ArrayBoard = new Piece[64];
-            board.BitBoard = new ulong[13];
+            board.BitBoard = new ulong[ChessPiece.Count];
             board.BitBoard[ChessPiece.WhiteRook] = bitBoard;
             board.SyncExtraBitBoards();
             board.SyncBitBoardsToArrayBoard();
-            board.SyncPiecesCount();
+            SyncPiecesCount(board);
             board.SyncMaterial();
             board.Key = ZobristKeys.CalculateKey(board);
             return board;

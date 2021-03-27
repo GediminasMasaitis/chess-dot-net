@@ -12,6 +12,7 @@ using Bitboard = System.UInt64;
 using ZobristKey = System.UInt64;
 using Position = System.Byte;
 using Piece = System.Byte;
+using Score = System.Int32;
 using TTFlag = System.Byte;
 
 namespace ChessDotNet.Data
@@ -74,7 +75,13 @@ namespace ChessDotNet.Data
 
     public class Board
     {
-        public bool WhiteToMove { get; set; }
+        public byte ColorToMove { get; set; }
+        public bool WhiteToMove
+        {
+            get => Convert.ToBoolean(ColorToMove);
+            set => ColorToMove = Convert.ToByte(value);
+        }
+
         public CastlingPermission CastlingPermissions { get; set; }
         public UndoMove[] History2 { get; set; }
         public int HistoryDepth { get; set; }
@@ -95,8 +102,7 @@ namespace ChessDotNet.Data
         public int LastTookPieceHistoryIndex { get; set; }
 
         public int[] PieceCounts { get; set; }
-        public int WhiteMaterial { get; set; }
-        public int BlackMaterial { get; set; }
+        public Score[] Material { get; set; }
 
         private static CastlingPermission[] CastleRevocationTable { get; set; }
 
@@ -319,7 +325,7 @@ namespace ChessDotNet.Data
             Key = history.Key;
             LastTookPieceHistoryIndex = history.FiftyMoveRule;
 
-            //var whiteToMove = WhiteToMove;
+            var originalColorToMove = ColorToMove;
             WhiteToMove = !WhiteToMove;
 
 
@@ -342,16 +348,8 @@ namespace ChessDotNet.Data
                 promotedPiece = move.PawnPromoteTo;
                 PieceCounts[move.Piece]++;
                 PieceCounts[promotedPiece]--;
-                if (WhiteToMove)
-                {
-                    WhiteMaterial += EvaluationService.Weights[ChessPiece.WhitePawn];
-                    WhiteMaterial -= EvaluationService.Weights[promotedPiece];
-                }
-                else
-                {
-                    BlackMaterial += EvaluationService.Weights[ChessPiece.BlackPawn];
-                    BlackMaterial -= EvaluationService.Weights[promotedPiece];
-                }
+                Material[ColorToMove] += EvaluationService.Weights[ChessPiece.Pawn];
+                Material[ColorToMove] -= EvaluationService.Weights[promotedPiece];
             }
             else
             {
@@ -378,14 +376,7 @@ namespace ChessDotNet.Data
                     BitBoard[move.TakesPiece] |= toPosBitBoard;
                 }
                 PieceCounts[move.TakesPiece]++;
-                if (WhiteToMove)
-                {
-                    BlackMaterial += EvaluationService.Weights[move.TakesPiece];
-                }
-                else
-                {
-                    WhiteMaterial += EvaluationService.Weights[move.TakesPiece];
-                }
+                Material[originalColorToMove] += EvaluationService.Weights[move.TakesPiece];
             }
 
             // EN PASSANT
@@ -478,6 +469,8 @@ namespace ChessDotNet.Data
 
         public void DoMove2(Move move, bool test = false)
         {
+            Debug.Assert(move.ColorToMove == ColorToMove);
+
             if (test)
             {
                 TestMove(move);
@@ -495,9 +488,10 @@ namespace ChessDotNet.Data
             History2[HistoryDepth].FiftyMoveRule = LastTookPieceHistoryIndex;
             HistoryDepth++;
             
-            var whiteToMove = WhiteToMove;
+            var originalWhiteToMove = WhiteToMove;
+            var originalColorToMove = ColorToMove;
 
-            WhiteToMove = !whiteToMove;
+            WhiteToMove = !originalWhiteToMove;
             Key ^= ZobristKeys.ZWhiteToMove;
 
             if (EnPassantFile != 0)
@@ -529,16 +523,8 @@ namespace ChessDotNet.Data
                 promotedPiece = move.PawnPromoteTo;
                 PieceCounts[move.Piece]--;
                 PieceCounts[promotedPiece]++;
-                if (whiteToMove)
-                {
-                    WhiteMaterial -= EvaluationService.Weights[ChessPiece.WhitePawn];
-                    WhiteMaterial += EvaluationService.Weights[promotedPiece];
-                }
-                else
-                {
-                    BlackMaterial -= EvaluationService.Weights[ChessPiece.BlackPawn];
-                    BlackMaterial += EvaluationService.Weights[promotedPiece];
-                }
+                Material[originalColorToMove] -= EvaluationService.Weights[ChessPiece.Pawn];
+                Material[originalColorToMove] += EvaluationService.Weights[promotedPiece];
             }
             else
             {
@@ -562,14 +548,7 @@ namespace ChessDotNet.Data
                 }
                 LastTookPieceHistoryIndex = HistoryDepth - 1;
                 PieceCounts[move.TakesPiece]--;
-                if (whiteToMove)
-                {
-                    BlackMaterial -= EvaluationService.Weights[move.TakesPiece];
-                }
-                else
-                {
-                    WhiteMaterial -= EvaluationService.Weights[move.TakesPiece];
-                }
+                Material[ColorToMove] -= EvaluationService.Weights[move.TakesPiece];
             }
 
             // EN PASSANT
@@ -596,7 +575,7 @@ namespace ChessDotNet.Data
             if ((move.Piece == ChessPiece.WhitePawn && move.From + 16 == move.To) || (move.Piece == ChessPiece.BlackPawn && move.From - 16 == move.To))
             {
                 var fileIndex = move.From % 8;
-                var rankIndex = (move.To >> 3) + (whiteToMove ? -1 : 1);
+                var rankIndex = (move.To >> 3) + (originalWhiteToMove ? -1 : 1);
                 EnPassantFile = BitboardConstants.Files[fileIndex];
                 EnPassantFileIndex = fileIndex;
                 EnPassantRankIndex = rankIndex;
@@ -767,8 +746,7 @@ namespace ChessDotNet.Data
             //clone.History = board.History; // TODO
             clone.LastTookPieceHistoryIndex = LastTookPieceHistoryIndex;
             clone.PieceCounts = (int[])PieceCounts.Clone();
-            clone.WhiteMaterial = WhiteMaterial;
-            clone.BlackMaterial = BlackMaterial;
+            clone.Material = (Score[])Material.Clone();
 
             clone.History2 = (UndoMove[])History2.Clone();
             clone.HistoryDepth = HistoryDepth;
@@ -782,119 +760,43 @@ namespace ChessDotNet.Data
         {
             var lhsKey = ZobristKeys.CalculateKey(lhs);
             var rhsKey = ZobristKeys.CalculateKey(rhs);
-            if (lhsKey != rhsKey)
-            {
-                return false;
-            }
-            if (lhs.Key != lhsKey)
-            {
-                return false;
-            }
-            if (rhs.Key != rhsKey)
-            {
-                return false;
-            }
-
-            if (lhs.WhiteToMove != rhs.WhiteToMove)
-            {
-                return false;
-            }
+            Debug.Assert(lhsKey == rhsKey);
+            Debug.Assert(lhs.Key == lhsKey);
+            Debug.Assert(rhs.Key == rhsKey);
+            Debug.Assert(lhs.WhiteToMove == rhs.WhiteToMove);
+            Debug.Assert(lhs.ColorToMove == rhs.ColorToMove);
 
             for (int i = 0; i < lhs.BitBoard.Length; i++)
             {
                 var bitBoard1 = lhs.BitBoard[i];
                 var bitBoard2 = rhs.BitBoard[i];
-                if (bitBoard1 != bitBoard2)
-                {
-                    return false;
-                }
+                Debug.Assert(bitBoard1 == bitBoard2);
             }
 
-            if (lhs.WhitePieces != rhs.WhitePieces)
-            {
-                return false;
-            }
+            Debug.Assert(lhs.WhitePieces == rhs.WhitePieces);
+            Debug.Assert(lhs.BlackPieces == rhs.BlackPieces);
+            Debug.Assert(lhs.EmptySquares == rhs.EmptySquares);
+            Debug.Assert(lhs.AllPieces == rhs.AllPieces);
 
-            if (lhs.BlackPieces != rhs.BlackPieces)
-            {
-                return false;
-            }
 
-            if (lhs.EmptySquares != rhs.EmptySquares)
-            {
-                return false;
-            }
-
-            if (lhs.AllPieces != rhs.AllPieces)
-            {
-                return false;
-            }
 
             for (int i = 0; i < lhs.ArrayBoard.Length; i++)
             {
                 var piece1 = lhs.ArrayBoard[i];
                 var piece2 = rhs.ArrayBoard[i];
-                if (piece1 != piece2)
-                {
-                    return false;
-                }
-
+                Debug.Assert(piece1 == piece2);
             }
 
-            if (!lhs.ArrayBoard.SequenceEqual(rhs.ArrayBoard))
-            {
-                return false;
-            }
-
-            if (lhs.EnPassantFileIndex != rhs.EnPassantFileIndex)
-            {
-                return false;
-            }
-
-            if (lhs.EnPassantRankIndex != rhs.EnPassantRankIndex)
-            {
-                return false;
-            }
-
-            if (lhs.EnPassantFile != rhs.EnPassantFile)
-            {
-                return false;
-            }
-
-            if (lhs.Key != rhs.Key)
-            {
-                return false;
-            }
-
-            if (lhs.LastTookPieceHistoryIndex != rhs.LastTookPieceHistoryIndex)
-            {
-                return false;
-            }
-
-            if (!lhs.PieceCounts.SequenceEqual(rhs.PieceCounts))
-            {
-                return false;
-            }
-
-            if (lhs.WhiteMaterial != rhs.WhiteMaterial)
-            {
-                return false;
-            }
-
-            if (lhs.BlackMaterial != rhs.BlackMaterial)
-            {
-                return false;
-            }
-
-            if (lhs.CastlingPermissions != rhs.CastlingPermissions)
-            {
-                return false;
-            }
-
-            if (lhs.HistoryDepth != rhs.HistoryDepth)
-            {
-                return false;
-            }
+            Debug.Assert(lhs.ArrayBoard.SequenceEqual(rhs.ArrayBoard));
+            Debug.Assert(lhs.EnPassantFileIndex == rhs.EnPassantFileIndex);
+            Debug.Assert(lhs.EnPassantRankIndex == rhs.EnPassantRankIndex);
+            Debug.Assert(lhs.EnPassantFile == rhs.EnPassantFile);
+            Debug.Assert(lhs.Key == rhs.Key);
+            Debug.Assert(lhs.LastTookPieceHistoryIndex == rhs.LastTookPieceHistoryIndex);
+            Debug.Assert(lhs.PieceCounts.SequenceEqual(rhs.PieceCounts));
+            Debug.Assert(lhs.Material.SequenceEqual(rhs.Material));
+            Debug.Assert(lhs.CastlingPermissions == rhs.CastlingPermissions);
+            Debug.Assert(lhs.HistoryDepth == rhs.HistoryDepth);
 
             //for (var i = 0; i < History2.Length; i++)
             for (var i = 0; i < lhs.HistoryDepth; i++)
@@ -985,25 +887,10 @@ namespace ChessDotNet.Data
 
         public void SyncMaterial()
         {
-            WhiteMaterial = 0;
-            BlackMaterial = 0;
-            for (var i = 1; i < 7; i++)
+            for (Piece piece = 0; piece < ChessPiece.Count; piece++)
             {
-                WhiteMaterial += PieceCounts[i]*EvaluationService.Weights[i];
-            }
-            for (var i = 7; i < 13; i++)
-            {
-                BlackMaterial += PieceCounts[i]*EvaluationService.Weights[i];
-            }
-        }
-
-        public void SyncPiecesCount()
-        {
-            PieceCounts = new int[13];
-            for (var i = 0; i < 64; i++)
-            {
-                var piece = ArrayBoard[i];
-                PieceCounts[piece]++;
+                var color = piece & ChessPiece.Color;
+                Material[color] += PieceCounts[piece] * EvaluationService.Weights[piece];
             }
         }
 
@@ -1026,9 +913,9 @@ namespace ChessDotNet.Data
 
             infos.Add("Hash key: " + Key.ToString("X").PadLeft(16, '0'));
             infos.Add("To move: " + (WhiteToMove ? "White" : "Black"));
-            infos.Add("Material: " + (WhiteMaterial - BlackMaterial));
-            infos.Add("White material: " + WhiteMaterial);
-            infos.Add("Black material: " + BlackMaterial);
+            infos.Add("Material white: " + Material[ChessPiece.White]);
+            infos.Add("Material black: " + Material[ChessPiece.Black]);
+            infos.Add("Material: " + (Material[ChessPiece.White] - Material[ChessPiece.Black]));
             if (fenService != null)
             {
                 var fen = fenService.SerializeToFen(this);

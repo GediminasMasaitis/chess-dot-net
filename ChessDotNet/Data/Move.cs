@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using ChessDotNet.Testing;
 
@@ -28,21 +29,19 @@ namespace ChessDotNet.Data
             //key |= Convert.ToUInt64((piece == ChessPiece.WhiteKing || piece == ChessPiece.BlackKing) && Math.Abs(from - to) == 2) << 41;
             key |= Convert.ToUInt32(castle) << 29;
             key |= Convert.ToUInt32(piece == 0) << 30;
-            key |= Convert.ToUInt32(piece <= 6) << 31;
+            key |= Convert.ToUInt32(piece & ChessPiece.Color) << 31;
             Value = key;
 
-#if TEST
-            Test.Assert(From >= 0);
-            Test.Assert(From < 64);
-            Test.Assert(To >= 0);
-            Test.Assert(To < 64);
-            Test.Assert(Piece >= 0);
-            Test.Assert(Piece < 13);
-            Test.Assert(TakesPiece >= 0);
-            Test.Assert(TakesPiece < 13);
-            Test.Assert(TakesPiece != 6);
-            Test.Assert(TakesPiece != 12);
-#endif
+            Debug.Assert(From >= 0);
+            Debug.Assert(From < 64);
+            Debug.Assert(To >= 0);
+            Debug.Assert(To < 64);
+            Debug.Assert(Piece >= 0);
+            Debug.Assert(Piece < ChessPiece.Count);
+            Debug.Assert(TakesPiece >= 0);
+            Debug.Assert(TakesPiece < ChessPiece.Count);
+            Debug.Assert(TakesPiece != ChessPiece.WhiteKing);
+            Debug.Assert(TakesPiece != ChessPiece.BlackKing);
         }
 
         public Position From => (byte)(Value & 0xFF);
@@ -54,7 +53,7 @@ namespace ChessDotNet.Data
         public bool Castle => ((Value >> 29) & 0x01) == 1;
         public bool NullMove => ((Value >> 30) & 0x01) == 1;
         public bool WhiteToMove => ((Value >> 31) & 0x01) == 1;
-        public ulong WhiteToMoveNum => (Value >> 31) & 0x01;
+        public ulong ColorToMove => (Value >> 31) & 0x01;
 
         //public int MVVLVAScore => TakesPiece > 0 ? MVVLVAScoreCalculation.Scores[Piece, TakesPiece] : 0;
         public MoveKey Key => (uint)(From << 16) + To;

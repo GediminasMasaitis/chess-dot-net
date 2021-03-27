@@ -1,4 +1,5 @@
 ﻿using System;
+using ChessDotNet.Data;
 
 namespace ChessDotNet.Evaluation
 {
@@ -9,7 +10,20 @@ namespace ChessDotNet.Evaluation
 
         static MVVLVAScoreCalculation()
         {
-            PieceScores = new[] {0, 1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6};
+            PieceScores = new int[ChessPiece.Count];
+            PieceScores[ChessPiece.WhitePawn] = 1;
+            PieceScores[ChessPiece.BlackPawn] = 1;
+            PieceScores[ChessPiece.WhiteKnight] = 2;
+            PieceScores[ChessPiece.BlackKnight] = 2;
+            PieceScores[ChessPiece.WhiteBishop] = 3;
+            PieceScores[ChessPiece.BlackBishop] = 3;
+            PieceScores[ChessPiece.WhiteRook] = 4;
+            PieceScores[ChessPiece.BlackRook] = 4;
+            PieceScores[ChessPiece.WhiteQueen] = 5;
+            PieceScores[ChessPiece.BlackQueen] = 5;
+            PieceScores[ChessPiece.WhiteKing] = 6;
+            PieceScores[ChessPiece.BlackKing] = 6;
+
             Scores = new int[PieceScores.Length][];
             for (int i = 0; i < Scores.Length; i++)
             {

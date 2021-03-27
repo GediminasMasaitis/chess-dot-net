@@ -29,8 +29,8 @@ namespace ChessDotNet.ConsoleTests
     {
         static async Task Main(string[] args)
         {
+            WritePieces();
             Init();
-
             //foreach (var file in BitboardConstants.Files)
             //{
             //    Console.WriteLine($"0x{file:X}ULL,");
@@ -53,7 +53,7 @@ namespace ChessDotNet.ConsoleTests
             //DoPerftClient();
             //DoPerft();
             //DoPerftSuite();
-            await DoSearch2Async();
+            //await DoSearch2Async();
             //TestSee();
 
             //Console.WriteLine(new BoardFactory().ParseFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").Print());
@@ -63,6 +63,33 @@ namespace ChessDotNet.ConsoleTests
             //DoSlideTest();
             Console.WriteLine("Done");
             Console.ReadLine();
+        }
+
+        public static void WritePieces()
+        {
+            Console.WriteLine(ZobristKeys.ZWhiteToMove);
+            //Console.WriteLine($"{nameof(ChessPiece.White)}: {ChessPiece.White}");
+            //Console.WriteLine($"{nameof(ChessPiece.Black)}: {ChessPiece.Black}");
+            //Console.WriteLine($"{nameof(ChessPiece.Empty)}: {ChessPiece.Empty}");
+            //Console.WriteLine($"{nameof(ChessPiece.Pawn)}: {ChessPiece.Pawn}");
+            //Console.WriteLine($"{nameof(ChessPiece.Knight)}: {ChessPiece.Knight}");
+            //Console.WriteLine($"{nameof(ChessPiece.Bishop)}: {ChessPiece.Bishop}");
+            //Console.WriteLine($"{nameof(ChessPiece.Rook)}: {ChessPiece.Rook}");
+            //Console.WriteLine($"{nameof(ChessPiece.Queen)}: {ChessPiece.Queen}");
+            //Console.WriteLine($"{nameof(ChessPiece.King)}: {ChessPiece.King}");
+            Console.WriteLine($"{nameof(ChessPiece.WhitePawn)}: {ChessPiece.WhitePawn}");
+            Console.WriteLine($"{nameof(ChessPiece.WhiteKnight)}: {ChessPiece.WhiteKnight}");
+            Console.WriteLine($"{nameof(ChessPiece.WhiteBishop)}: {ChessPiece.WhiteBishop}");
+            Console.WriteLine($"{nameof(ChessPiece.WhiteRook)}: {ChessPiece.WhiteRook}");
+            Console.WriteLine($"{nameof(ChessPiece.WhiteQueen)}: {ChessPiece.WhiteQueen}");
+            Console.WriteLine($"{nameof(ChessPiece.WhiteKing)}: {ChessPiece.WhiteKing}");
+            Console.WriteLine($"{nameof(ChessPiece.BlackPawn)}: {ChessPiece.BlackPawn}");
+            Console.WriteLine($"{nameof(ChessPiece.BlackKnight)}: {ChessPiece.BlackKnight}");
+            Console.WriteLine($"{nameof(ChessPiece.BlackBishop)}: {ChessPiece.BlackBishop}");
+            Console.WriteLine($"{nameof(ChessPiece.BlackRook)}: {ChessPiece.BlackRook}");
+            Console.WriteLine($"{nameof(ChessPiece.BlackQueen)}: {ChessPiece.BlackQueen}");
+            Console.WriteLine($"{nameof(ChessPiece.BlackKing)}: {ChessPiece.BlackKing}");
+            Console.WriteLine($"{nameof(ChessPiece.Count)}: {ChessPiece.Count}");
         }
 
         public static Board MakeBoard(string fen)
@@ -278,16 +305,17 @@ namespace ChessDotNet.ConsoleTests
         private static void TestMove()
         {
             var fact = new BoardFactory();
-            var board = fact.ParseFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -");
-            board.EnPassantFile = BitboardConstants.Files[3];
+            var board = fact.ParseFEN("rnbqkbnr/p1pppppp/8/8/1p6/3P4/PPPKPPPP/RNBQ1BNR w kq -");
             var slideMoveGenerator = new MagicBitboardsService();
-            var evaluationService = new EvaluationService();
-            Console.WriteLine(evaluationService.Evaluate(board));
+            //var evaluationService = new EvaluationService();
+            //Console.WriteLine(evaluationService.Evaluate(board));
 
             var attacksService = new AttacksService(slideMoveGenerator);
             var movesService = new PossibleMovesService(attacksService, slideMoveGenerator);
             var forWhite = true;
-            //var moves = movesService.GetPossibleKingMoves(board).ToList();
+            var moves = new Move[218];
+            var moveCount = 0;
+            movesService.GetAllPossibleMoves(board, moves, ref moveCount);
             //var dests = moves.Select(x => x.To);
             //var toMoveBoard = fact.PositionsToBitBoard(dests);
             //var attacked = attacksService.GetAllAttacked(board);

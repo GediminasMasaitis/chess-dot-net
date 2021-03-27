@@ -15,7 +15,7 @@ namespace ChessDotNet.Hashing
             ZPieces = new ulong[64][];
             for (int i = 0; i < ZPieces.Length; i++)
             {
-                ZPieces[i] = new ulong[13];
+                ZPieces[i] = new ulong[ChessPiece.Count];
             }
             ZEnPassant = new ulong[8];
             var castleLength = (byte)CastlingPermission.All + 1;
@@ -24,7 +24,7 @@ namespace ChessDotNet.Hashing
             var rng = new Random(0);
             for (var i = 1; i < 64; i++)
             {
-                for (var j = 0; j < 13; j++)
+                for (var j = 0; j < ChessPiece.Count; j++)
                 {
                     ZPieces[i][j] = NextKey(rng);
                 }

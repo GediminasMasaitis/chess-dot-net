@@ -25,8 +25,9 @@ namespace ChessDotNet.Search2
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         Bitboard GetLeastValuablePiece(Board board, Bitboard attadef, bool whiteToMove, ref Piece piece)
         {
-            var bySide = whiteToMove ? (Piece)0 : (Piece)6;
-            for (piece = (byte)(ChessPiece.WhitePawn + bySide); piece <= (byte)(ChessPiece.WhiteKing + bySide); piece++)
+            Piece start = whiteToMove ? ChessPiece.WhitePawn : ChessPiece.BlackPawn;
+            Piece end = whiteToMove ? ChessPiece.WhiteKing : ChessPiece.BlackKing;
+            for (piece = start; piece <= end; piece += ChessPiece.NextPiece)
             {
                 var subset = attadef & board.BitBoard[piece];
                 if (subset > 0)
@@ -45,7 +46,10 @@ namespace ChessDotNet.Search2
             for (int i = 0; i < moveCount; i++)
             {
                 var move = moves[i];
-                seeScores[i] = See(board, move);
+                if (move.TakesPiece != ChessPiece.Empty)
+                {
+                    seeScores[i] = See(board, move);
+                }
             }
         }
 

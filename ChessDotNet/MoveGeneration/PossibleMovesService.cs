@@ -515,7 +515,7 @@ namespace ChessDotNet.MoveGeneration
                 return false;
             }
 
-            var pawnAttack = BitboardConstants.PawnJumps[move.WhiteToMoveNum, myKingPos]; //AttacksService.GetAttackedByPawns(myKings, board.WhiteToMove);
+            var pawnAttack = BitboardConstants.PawnJumps[move.ColorToMove, myKingPos]; //AttacksService.GetAttackedByPawns(myKings, board.WhiteToMove);
             if ((pawnAttack & pawns) != 0)
             {
                 return false;

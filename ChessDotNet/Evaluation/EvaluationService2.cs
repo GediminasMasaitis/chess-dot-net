@@ -77,8 +77,8 @@
 //        /* Piece-square tables - we use size of the board representation,
 //        not 0..63, to avoid re-indexing. Initialization routine, however,
 //        uses 0..63 format for clarity */
-//        public int[,,] mgPst = new int[6,2,64];
-//        public int[,,] egPst = new int[6,2,64];
+//        public int[,,] mgPst = new int[6, 2, 64];
+//        public int[,,] egPst = new int[6, 2, 64];
 
 //        /* piece-square tables for pawn structure */
 
@@ -112,7 +112,7 @@
 //        public int FIANCHETTO;
 //        public int TEMPO;
 //        public int ENDGAME_MAT;
-        
+
 //        /******************************************************************************
 //        *                           PAWN PCSQ                                         *
 //        *                                                                             *
@@ -392,8 +392,8 @@
 //            {
 //                for (int j = 0; j < 64; ++j)
 //                {
-//                    sqNearK[ec.WHITE,i,j] = 0;
-//                    sqNearK[ec.BLACK,i,j] = 0;
+//                    sqNearK[ec.WHITE, i, j] = 0;
+//                    sqNearK[ec.BLACK, i, j] = 0;
 
 //                    /* squares constituting the ring around both kings */
 //                    if (j == i + ec.NORTH || j == i + ec.SOUTH
@@ -402,21 +402,21 @@
 //                                          || j == i + ec.SW || j == i + ec.SE)
 //                    {
 
-//                        sqNearK[ec.WHITE,i,j] = 1;
-//                        sqNearK[ec.BLACK,i,j] = 1;
+//                        sqNearK[ec.WHITE, i, j] = 1;
+//                        sqNearK[ec.BLACK, i, j] = 1;
 //                    }
 
 //                    /* squares in front of the white king ring */
 //                    if (j == i + ec.NORTH + ec.NORTH
 //                        || j == i + ec.NORTH + ec.NE
 //                        || j == i + ec.NORTH + ec.NW)
-//                        sqNearK[ec.WHITE,i,j] = 1;
+//                        sqNearK[ec.WHITE, i, j] = 1;
 
 //                    /* squares in front og the black king ring */
 //                    if (j == i + ec.SOUTH + ec.SOUTH
 //                        || j == i + ec.SOUTH + ec.SE
 //                        || j == i + ec.SOUTH + ec.SW)
-//                        sqNearK[ec.WHITE,i,j] = 1; // TODO: BLACK??
+//                        sqNearK[ec.WHITE, i, j] = 1; // TODO: BLACK??
 //                }
 //            }
 //        }
@@ -427,43 +427,43 @@
 //            for (int i = 0; i < 64; ++i)
 //            {
 
-//                weak_pawn[ec.WHITE,i] = weak_pawn_pcsq[i];
-//                weak_pawn[ec.BLACK,i] = weak_pawn_pcsq[i];
-//                passed_pawn[ec.WHITE,i] = passed_pawn_pcsq[i];
-//                passed_pawn[ec.BLACK,i] = passed_pawn_pcsq[i];
+//                weak_pawn[ec.WHITE, i] = weak_pawn_pcsq[i];
+//                weak_pawn[ec.BLACK, i] = weak_pawn_pcsq[i];
+//                passed_pawn[ec.WHITE, i] = passed_pawn_pcsq[i];
+//                passed_pawn[ec.BLACK, i] = passed_pawn_pcsq[i];
 
 //                /* protected passers are slightly stronger than ordinary passers */
 
-//                protected_passer[ec.WHITE,i] = (passed_pawn_pcsq[i] * 10) / 8;
-//                protected_passer[ec.BLACK,i] = (passed_pawn_pcsq[i] * 10) / 8;
+//                protected_passer[ec.WHITE, i] = (passed_pawn_pcsq[i] * 10) / 8;
+//                protected_passer[ec.BLACK, i] = (passed_pawn_pcsq[i] * 10) / 8;
 
 //                /* now set the piece/square tables for each color and piece type */
 
-//                mgPst[ec.PAWN, ec.WHITE,i] = pawn_pcsq_mg[i];
-//                mgPst[ec.PAWN, ec.BLACK,i] = pawn_pcsq_mg[i];
-//                mgPst[ec.KNIGHT, ec.WHITE,i] = knight_pcsq_mg[i];
-//                mgPst[ec.KNIGHT, ec.BLACK,i] = knight_pcsq_mg[i];
-//                mgPst[ec.BISHOP, ec.WHITE,i] = bishop_pcsq_mg[i];
-//                mgPst[ec.BISHOP, ec.BLACK,i] = bishop_pcsq_mg[i];
-//                mgPst[ec.ROOK, ec.WHITE,i] = rook_pcsq_mg[i];
-//                mgPst[ec.ROOK, ec.BLACK,i] = rook_pcsq_mg[i];
-//                mgPst[ec.QUEEN, ec.WHITE,i] = queen_pcsq_mg[i];
-//                mgPst[ec.QUEEN, ec.BLACK,i] = queen_pcsq_mg[i];
-//                mgPst[ec.KING, ec.WHITE,i] = king_pcsq_mg[i];
-//                mgPst[ec.KING, ec.BLACK,i] = king_pcsq_mg[i];
+//                mgPst[ec.PAWN, ec.WHITE, i] = pawn_pcsq_mg[i];
+//                mgPst[ec.PAWN, ec.BLACK, i] = pawn_pcsq_mg[i];
+//                mgPst[ec.KNIGHT, ec.WHITE, i] = knight_pcsq_mg[i];
+//                mgPst[ec.KNIGHT, ec.BLACK, i] = knight_pcsq_mg[i];
+//                mgPst[ec.BISHOP, ec.WHITE, i] = bishop_pcsq_mg[i];
+//                mgPst[ec.BISHOP, ec.BLACK, i] = bishop_pcsq_mg[i];
+//                mgPst[ec.ROOK, ec.WHITE, i] = rook_pcsq_mg[i];
+//                mgPst[ec.ROOK, ec.BLACK, i] = rook_pcsq_mg[i];
+//                mgPst[ec.QUEEN, ec.WHITE, i] = queen_pcsq_mg[i];
+//                mgPst[ec.QUEEN, ec.BLACK, i] = queen_pcsq_mg[i];
+//                mgPst[ec.KING, ec.WHITE, i] = king_pcsq_mg[i];
+//                mgPst[ec.KING, ec.BLACK, i] = king_pcsq_mg[i];
 
-//                egPst[ec.PAWN, ec.WHITE,i] = pawn_pcsq_eg[i];
-//                egPst[ec.PAWN, ec.BLACK,i] = pawn_pcsq_eg[i];
-//                egPst[ec.KNIGHT, ec.WHITE,i] = knight_pcsq_eg[i];
-//                egPst[ec.KNIGHT, ec.BLACK,i] = knight_pcsq_eg[i];
-//                egPst[ec.BISHOP, ec.WHITE,i] = bishop_pcsq_eg[i];
-//                egPst[ec.BISHOP, ec.BLACK,i] = bishop_pcsq_eg[i];
-//                egPst[ec.ROOK, ec.WHITE,i] = rook_pcsq_eg[i];
-//                egPst[ec.ROOK, ec.BLACK,i] = rook_pcsq_eg[i];
-//                egPst[ec.QUEEN, ec.WHITE,i] = queen_pcsq_eg[i];
-//                egPst[ec.QUEEN, ec.BLACK,i] = queen_pcsq_eg[i];
-//                egPst[ec.KING, ec.WHITE,i] = king_pcsq_eg[i];
-//                egPst[ec.KING, ec.BLACK,i] = king_pcsq_eg[i];
+//                egPst[ec.PAWN, ec.WHITE, i] = pawn_pcsq_eg[i];
+//                egPst[ec.PAWN, ec.BLACK, i] = pawn_pcsq_eg[i];
+//                egPst[ec.KNIGHT, ec.WHITE, i] = knight_pcsq_eg[i];
+//                egPst[ec.KNIGHT, ec.BLACK, i] = knight_pcsq_eg[i];
+//                egPst[ec.BISHOP, ec.WHITE, i] = bishop_pcsq_eg[i];
+//                egPst[ec.BISHOP, ec.BLACK, i] = bishop_pcsq_eg[i];
+//                egPst[ec.ROOK, ec.WHITE, i] = rook_pcsq_eg[i];
+//                egPst[ec.ROOK, ec.BLACK, i] = rook_pcsq_eg[i];
+//                egPst[ec.QUEEN, ec.WHITE, i] = queen_pcsq_eg[i];
+//                egPst[ec.QUEEN, ec.BLACK, i] = queen_pcsq_eg[i];
+//                egPst[ec.KING, ec.WHITE, i] = king_pcsq_eg[i];
+//                egPst[ec.KING, ec.BLACK, i] = king_pcsq_eg[i];
 //            }
 //        }
 
@@ -491,10 +491,10 @@
 //        public int[] pcsq_eg = new int[2];
 //        public int[] piece_material = new int[2];
 //        public int[] pawn_material = new int[2];
-//        public byte[,] piece_cnt = new byte[2,6];
-//        public byte[,] pawns_on_file = new byte[2,8];
-//        public byte[,] pawns_on_rank = new byte[2,8];
-//        public byte[,] pawn_ctrl = new byte[2,64];
+//        public byte[,] piece_cnt = new byte[2, 6];
+//        public byte[,] pawns_on_file = new byte[2, 8];
+//        public byte[,] pawns_on_rank = new byte[2, 8];
+//        public byte[,] pawn_ctrl = new byte[2, 64];
 
 //        private readonly s_eval_data e;
 
@@ -547,8 +547,8 @@
 //                // update squares controlled by pawns
 //                if (color == ec.WHITE)
 //                {
-//                    if(col < 7) pawn_ctrl[ec.WHITE,sq + ec.NE]++;
-//                    if (col > 0) pawn_ctrl[ec.WHITE,sq + ec.NW]++;
+//                    if (col < 7) pawn_ctrl[ec.WHITE, sq + ec.NE]++;
+//                    if (col > 0) pawn_ctrl[ec.WHITE, sq + ec.NW]++;
 //                }
 //                else
 //                {
@@ -563,11 +563,11 @@
 //            }
 
 //            // update piece counter
-//            piece_cnt[color,piece]++;
+//            piece_cnt[color, piece]++;
 
 //            // update piece-square value
-//            pcsq_mg[color] += e.mgPst[piece,color,sq];
-//            pcsq_eg[color] += e.egPst[piece,color,sq];
+//            pcsq_mg[color] += e.mgPst[piece, color, sq];
+//            pcsq_eg[color] += e.egPst[piece, color, sq];
 
 //            // update hash key
 //            //b.hash ^= zobrist.piecesquare[piece][color][sq];
@@ -638,7 +638,7 @@
 //            *  value as pawns disappear, whereas rooks gain.                          *
 //            **************************************************************************/
 
-//            if (eb.piece_cnt[WHITE,BISHOP] > 1) v.adjustMaterial[WHITE] += e.BISHOP_PAIR;
+//            if (eb.piece_cnt[WHITE, BISHOP] > 1) v.adjustMaterial[WHITE] += e.BISHOP_PAIR;
 //            if (b.piece_cnt[BLACK][BISHOP] > 1) v.adjustMaterial[BLACK] += e.BISHOP_PAIR;
 //            if (b.piece_cnt[WHITE][KNIGHT] > 1) v.adjustMaterial[WHITE] -= e.P_KNIGHT_PAIR;
 //            if (b.piece_cnt[BLACK][KNIGHT] > 1) v.adjustMaterial[BLACK] -= e.P_KNIGHT_PAIR;

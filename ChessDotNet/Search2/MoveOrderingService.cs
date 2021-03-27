@@ -89,8 +89,9 @@ namespace ChessDotNet.Search2
                 var score = staticScores[i];
                 if (score == 0)
                 {
-                    var num = move.WhiteToMoveNum;
+                    var num = move.ColorToMove;
                     score = history[num][move.From][move.To];
+                    //score = 0;
                 }
                 
                 if (score > bestScore)
@@ -116,7 +117,7 @@ namespace ChessDotNet.Search2
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private int CalculateDynamicScore(Move move, int[][][] history)
         {
-            var historyScore = history[move.WhiteToMoveNum][move.From][move.To];
+            var historyScore = history[move.ColorToMove][move.From][move.To];
             return historyScore;
         }
 
@@ -145,7 +146,7 @@ namespace ChessDotNet.Search2
                 return 80000000;
             }
 
-            var historyScore = history[move.WhiteToMoveNum, move.From, move.To];
+            var historyScore = history[move.ColorToMove, move.From, move.To];
             return historyScore;
         }
     }

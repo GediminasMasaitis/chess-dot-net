@@ -80,7 +80,19 @@ namespace ChessDotNet.Evaluation
             IsolatedScore = -10;
             BishopPairScore = 25;
 
-            Weights = new[] {0, 100, 325, 325, 550, 1000, 30000, 100, 325, 325, 550, 1000, 30000 };
+            Weights = new int[ChessPiece.Count];
+            Weights[ChessPiece.WhitePawn] = 100;
+            Weights[ChessPiece.BlackPawn] = 100;
+            Weights[ChessPiece.WhiteKnight] = 325;
+            Weights[ChessPiece.BlackKnight] = 325;
+            Weights[ChessPiece.WhiteBishop] = 325;
+            Weights[ChessPiece.BlackBishop] = 325;
+            Weights[ChessPiece.WhiteRook] = 550;
+            Weights[ChessPiece.BlackRook] = 550;
+            Weights[ChessPiece.WhiteQueen] = 1000;
+            Weights[ChessPiece.BlackQueen] = 1000;
+            Weights[ChessPiece.WhiteKing] = 30000;
+            Weights[ChessPiece.BlackKing] = 30000;
 
             PawnTable = new[]
             {
@@ -143,7 +155,7 @@ namespace ChessDotNet.Evaluation
 
         public int Evaluate(Board board)
         {
-            var score = board.WhiteMaterial - board.BlackMaterial;
+            var score = board.Material[ChessPiece.White] - board.Material[ChessPiece.Black];
             score += EvaluatePositions(board);
 
             if (!board.WhiteToMove)

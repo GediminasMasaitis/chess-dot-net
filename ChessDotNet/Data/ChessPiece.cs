@@ -7,21 +7,34 @@ namespace ChessDotNet.Data
 {
     public static class ChessPiece
     {
+        public const Piece Color = 1;
+        public const Piece White = 1;
+        public const Piece Black = 0;
         public const Piece Empty = 0;
 
-        public const Piece WhitePawn = 1;
-        public const Piece WhiteKnight = 2;
-        public const Piece WhiteBishop = 3;
-        public const Piece WhiteRook = 4;
-        public const Piece WhiteQueen = 5;
-        public const Piece WhiteKing = 6;
+        public const Piece Pawn = 2 << 1;
+        public const Piece Knight = 3 << 1;
+        public const Piece Bishop = 4 << 1;
+        public const Piece Rook = 5 << 1;
+        public const Piece Queen = 6 << 1;
+        public const Piece King = 7 << 1;
 
-        public const Piece BlackPawn = 7;
-        public const Piece BlackKnight = 8;
-        public const Piece BlackBishop = 9;
-        public const Piece BlackRook = 10;
-        public const Piece BlackQueen = 11;
-        public const Piece BlackKing = 12;
+        public const Piece WhitePawn = White | Pawn;
+        public const Piece WhiteKnight = White | Knight;
+        public const Piece WhiteBishop = White | Bishop;
+        public const Piece WhiteRook = White | Rook;
+        public const Piece WhiteQueen = White | Queen;
+        public const Piece WhiteKing = White | King;
+
+        public const Piece BlackPawn = Black | Pawn;
+        public const Piece BlackKnight = Black | Knight;
+        public const Piece BlackBishop = Black | Bishop;
+        public const Piece BlackRook = Black | Rook;
+        public const Piece BlackQueen = Black | Queen;
+        public const Piece BlackKing = Black | King;
+
+        public const int Count = WhiteKing + 1;
+        public const int NextPiece = 1 << 1;
 
         public static char ChessPieceToLetter(Piece chessPiece)
         {

@@ -471,7 +471,7 @@ namespace ChessDotNet.Search2
                 && ply > 0
             )
             {
-                var material = board.WhiteToMove ? board.WhiteMaterial : board.BlackMaterial;
+                var material = board.Material[board.ColorToMove];
                 if (material > SearchConstants.EndgameMaterial)
                 {
                     var nullDepthReduction = depth > 6 ? 3 : 2;
@@ -595,7 +595,7 @@ namespace ChessDotNet.Search2
                 //var childDepth = depth - 1;
                 var reduction = 0;
                 // LATE MOVE REDUCTION
-                threadState.Cutoff[move.WhiteToMoveNum][move.From][move.To] -= 1;
+                threadState.Cutoff[move.ColorToMove][move.From][move.To] -= 1;
                 if
                 (
                     _options.UseLateMoveReductions
@@ -617,7 +617,7 @@ namespace ChessDotNet.Search2
                     var opponentInCheck = _possibleMoves.AttacksService.IsPositionAttacked(board, opponentKingPos, !board.WhiteToMove);
                     if (!opponentInCheck)
                     {
-                        threadState.Cutoff[move.WhiteToMoveNum][move.From][move.To] = 50;
+                        threadState.Cutoff[move.ColorToMove][move.From][move.To] = 50;
                         _statistics.LateMoveReductions1++;
                         reduction++;
                         if (movesEvaluated > 6)
@@ -682,7 +682,7 @@ namespace ChessDotNet.Search2
 
                     if (childScore > alpha)
                     {
-                        threadState.Cutoff[move.WhiteToMoveNum][move.From][move.To] += 6;
+                        threadState.Cutoff[move.ColorToMove][move.From][move.To] += 6;
                         if (childScore >= beta)
                         {
                             _statistics.StoresBeta++;
@@ -704,7 +704,7 @@ namespace ChessDotNet.Search2
 
                         if (move.TakesPiece == ChessPiece.Empty)
                         {
-                            threadState.History[move.WhiteToMoveNum][move.From][move.To] += depth * depth;
+                            threadState.History[move.ColorToMove][move.From][move.To] += depth * depth;
                         }
 
                         alpha = childScore;
@@ -855,7 +855,7 @@ namespace ChessDotNet.Search2
                 //}
 
                 var takesMaterial = EvaluationService.Weights[move.TakesPiece];
-                var opponentMaterial = board.WhiteToMove ? board.BlackMaterial : board.WhiteMaterial;
+                var opponentMaterial = board.Material[board.ColorToMove ^ 1];
                 var resultMaterial = opponentMaterial - takesMaterial;
 
                 // DELTA PRUNING
@@ -896,7 +896,7 @@ namespace ChessDotNet.Search2
                     //if (!opponentInCheck)
                     {
 
-                        var seeScore = _see.See(board, move);
+                        var seeScore = seeScores[moveIndex];
                         if (seeScore < 0)
                         {
                             _statistics.SeePruning++;
