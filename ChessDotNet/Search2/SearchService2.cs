@@ -475,7 +475,7 @@ namespace ChessDotNet.Search2
                 if (material > SearchConstants.EndgameMaterial)
                 {
                     var nullDepthReduction = depth > 6 ? 3 : 2;
-                    var nullMove = new Move(0, 0, 0);
+                    var nullMove = new Move(0, 0, ChessPiece.Empty);
                     board.DoMove2(nullMove);
                     //var nullBoard = board.DoMove(nullMove);
                     var nullLog = SearchLog.New(nullMove);

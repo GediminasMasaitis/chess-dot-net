@@ -469,7 +469,7 @@ namespace ChessDotNet.Data
 
         public void DoMove2(Move move, bool test = false)
         {
-            Debug.Assert(move.ColorToMove == ColorToMove);
+            Debug.Assert(move.ColorToMove == ColorToMove || move.NullMove);
 
             if (test)
             {
@@ -604,98 +604,15 @@ namespace ChessDotNet.Data
                 Key ^= ZobristKeys.ZPieces[castlingRookPos][rookPiece];
                 Key ^= ZobristKeys.ZPieces[castlingRookNewPos][rookPiece];
             }
-            
-            if (move.Piece == ChessPiece.WhiteKing)
-            {
-                if ((CastlingPermissions & CastlingPermission.WhiteQueen) != CastlingPermission.None)
-                {
-                    //CastlingPermissions &= ~CastlingPermission.WhiteQueen;
-                    Key ^= ZobristKeys.ZCastle[(byte)CastlingPermission.WhiteQueen];
-                }
 
-                if ((CastlingPermissions & CastlingPermission.WhiteKing) != CastlingPermission.None)
-                {
-                    //CastlingPermissions &= ~CastlingPermission.WhiteKing;
-                    Key ^= ZobristKeys.ZCastle[(byte)CastlingPermission.WhiteKing];
-                }
-            }
-            else if (move.Piece == ChessPiece.WhiteRook)
-            {
-                if ((CastlingPermissions & CastlingPermission.WhiteQueen) != CastlingPermission.None && move.From == 0)
-                {
-                    //CastlingPermissions &= ~CastlingPermission.WhiteQueen;
-                    Key ^= ZobristKeys.ZCastle[(byte)CastlingPermission.WhiteQueen];
-                }
-
-                if ((CastlingPermissions & CastlingPermission.WhiteKing) != CastlingPermission.None && move.From == 7)
-                {
-                    //CastlingPermissions &= ~CastlingPermission.WhiteKing;
-                    Key ^= ZobristKeys.ZCastle[(byte)CastlingPermission.WhiteKing];
-                }
-            }
-            else if (move.Piece == ChessPiece.BlackKing)
-            {
-                if ((CastlingPermissions & CastlingPermission.BlackQueen) != CastlingPermission.None)
-                {
-                    //CastlingPermissions &= ~CastlingPermission.BlackQueen;
-                    Key ^= ZobristKeys.ZCastle[(byte)CastlingPermission.BlackQueen];
-                }
-
-                if ((CastlingPermissions & CastlingPermission.BlackKing) != CastlingPermission.None)
-                {
-                    //CastlingPermissions &= ~CastlingPermission.BlackKing;
-                    Key ^= ZobristKeys.ZCastle[(byte)CastlingPermission.BlackKing];
-                }
-            }
-            else if (move.Piece == ChessPiece.BlackRook)
-            {
-                if ((CastlingPermissions & CastlingPermission.BlackQueen) != CastlingPermission.None && move.From == 56)
-                {
-                    //CastlingPermissions &= ~CastlingPermission.BlackQueen;
-                    Key ^= ZobristKeys.ZCastle[(byte)CastlingPermission.BlackQueen];
-                }
-
-                if ((CastlingPermissions & CastlingPermission.BlackKing) != CastlingPermission.None && move.From == 63)
-                {
-                    //CastlingPermissions &= ~CastlingPermission.BlackKing;
-                    Key ^= ZobristKeys.ZCastle[(byte)CastlingPermission.BlackKing];
-                }
-            }
-
-            switch (move.To)
-            {
-                case 0:
-                    if ((CastlingPermissions & CastlingPermission.WhiteQueen) != CastlingPermission.None)
-                    {
-                        //CastlingPermissions &= ~CastlingPermission.WhiteQueen;
-                        Key ^= ZobristKeys.ZCastle[(byte)CastlingPermission.WhiteQueen];
-                    }
-                    break;
-                case 7:
-                    if ((CastlingPermissions & CastlingPermission.WhiteKing) != CastlingPermission.None)
-                    {
-                        //CastlingPermissions &= ~CastlingPermission.WhiteKing;
-                        Key ^= ZobristKeys.ZCastle[(byte)CastlingPermission.WhiteKing];
-                    }
-                    break;
-                case 56:
-                    if ((CastlingPermissions & CastlingPermission.BlackQueen) != CastlingPermission.None)
-                    {
-                        //CastlingPermissions &= ~CastlingPermission.BlackQueen;
-                        Key ^= ZobristKeys.ZCastle[(byte)CastlingPermission.BlackQueen];
-                    }
-                    break;
-                case 63:
-                    if ((CastlingPermissions & CastlingPermission.BlackKing) != CastlingPermission.None)
-                    {
-                        //CastlingPermissions &= ~CastlingPermission.BlackKing;
-                        Key ^= ZobristKeys.ZCastle[(byte)CastlingPermission.BlackKing];
-                    }
-                    break;
-            }
-
+            var originalPermissions = CastlingPermissions;
             CastlingPermissions &= CastleRevocationTable[move.From];
             CastlingPermissions &= CastleRevocationTable[move.To];
+            var revoked = CastlingPermissions ^ originalPermissions;
+            Key ^= ZobristKeys.ZCastle[(byte)revoked];
+
+            //Debug.Assert(Key == ZobristKeys.CalculateKey(this));
+
 
             //SyncCastleTo1();
             SyncExtraBitBoards();
