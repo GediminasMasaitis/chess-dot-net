@@ -29,8 +29,8 @@ namespace ChessDotNet.ConsoleTests
     {
         static async Task Main(string[] args)
         {
-            WritePieces();
             Init();
+            //WritePieces();
             //foreach (var file in BitboardConstants.Files)
             //{
             //    Console.WriteLine($"0x{file:X}ULL,");
@@ -53,7 +53,7 @@ namespace ChessDotNet.ConsoleTests
             //DoPerftClient();
             //DoPerft();
             //DoPerftSuite();
-            //await DoSearch2Async();
+            await DoSearch2Async();
             //TestSee();
 
             //Console.WriteLine(new BoardFactory().ParseFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").Print());

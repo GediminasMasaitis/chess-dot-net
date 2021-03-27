@@ -611,38 +611,9 @@ namespace ChessDotNet.Data
             var revoked = CastlingPermissions ^ originalPermissions;
             Key ^= ZobristKeys.ZCastle[(byte)revoked];
 
-            //Debug.Assert(Key == ZobristKeys.CalculateKey(this));
+            Debug.Assert(Key == ZobristKeys.CalculateKey(this));
 
-
-            //SyncCastleTo1();
             SyncExtraBitBoards();
-
-            //if (!newBoard.ExactlyEquals(this))
-            //{
-            //    var foo = clone.DoMove(move);
-            //    Console.WriteLine($"Fuck {Key}");
-            //    Debugger.Break();
-            //}
-
-            //if (!this.ExactlyEquals(newBoard))
-            //{
-            //    Console.WriteLine($"Fuck {Key}");
-            //    Debugger.Break();
-            //}
-
-            //UndoMove();
-
-            //if (!ExactlyEquals(clone))
-            //{
-            //    Console.WriteLine($"Fuck2 {Key}");
-            //    Debugger.Break();
-            //}
-
-            //if (!clone.ExactlyEquals(this))
-            //{
-            //    Console.WriteLine($"Fuck2 {Key}");
-            //    Debugger.Break();
-            //}
         }
 
         public Board Clone()

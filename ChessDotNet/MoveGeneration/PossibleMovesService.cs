@@ -259,7 +259,7 @@ namespace ChessDotNet.MoveGeneration
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void GetPotentialKingCaptures(Board board, Bitboard allowedSquareMask, Move[] moves, ref int moveCount)
         {
-            var kings = board.WhiteToMove ? board.BitBoard[ChessPiece.WhiteKing] : board.BitBoard[ChessPiece.BlackKing];
+            var kings = board.BitBoard[ChessPiece.King | board.ColorToMove];
             var chessPiece = board.WhiteToMove ? ChessPiece.WhiteKing : ChessPiece.BlackKing;
             GetPotentialJumpingMoves(board, allowedSquareMask, kings, BitboardConstants.KingJumps, chessPiece, moves, ref moveCount);
         }
@@ -267,7 +267,7 @@ namespace ChessDotNet.MoveGeneration
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void GetPotentialKingMoves(Board board, Move[] moves, ref int moveCount)
         {
-            var kings = board.WhiteToMove ? board.BitBoard[ChessPiece.WhiteKing] : board.BitBoard[ChessPiece.BlackKing];
+            var kings = board.BitBoard[ChessPiece.King | board.ColorToMove];
             var chessPiece = board.WhiteToMove ? ChessPiece.WhiteKing : ChessPiece.BlackKing;
             GetPotentialJumpingMoves(board, ~0UL, kings, BitboardConstants.KingJumps, chessPiece, moves, ref moveCount);
             GetPotentialCastlingMoves(board, moves, ref moveCount);
@@ -331,7 +331,7 @@ namespace ChessDotNet.MoveGeneration
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void GetPotentialKnightMoves(Board board, Bitboard allowedSquareMask, Move[] moves, ref int moveCount)
         {
-            var knights = board.WhiteToMove ? board.BitBoard[ChessPiece.WhiteKnight] : board.BitBoard[ChessPiece.BlackKnight];
+            var knights = board.BitBoard[ChessPiece.Knight | board.ColorToMove];
             var chessPiece = board.WhiteToMove ? ChessPiece.WhiteKnight : ChessPiece.BlackKnight;
             GetPotentialJumpingMoves(board, allowedSquareMask, knights, BitboardConstants.KnightJumps, chessPiece, moves, ref moveCount);
         }
@@ -367,25 +367,52 @@ namespace ChessDotNet.MoveGeneration
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void GetPotentialRookMoves(Board board, Bitboard allowedSquareMask, Move[] moves, ref int moveCount)
         {
-            var rooks = board.WhiteToMove ? board.BitBoard[ChessPiece.WhiteRook] : board.BitBoard[ChessPiece.BlackRook];
-            var chessPiece = board.WhiteToMove ? ChessPiece.WhiteRook : ChessPiece.BlackRook;
-            GetPotentialSlidingPieceMoves(board, rooks, chessPiece, allowedSquareMask, moves, ref moveCount);
+            var piece = (Piece)(ChessPiece.Rook | board.ColorToMove);
+            var piecesBitmask = board.BitBoard[piece];
+            var ownPieces = board.WhiteToMove ? board.WhitePieces : board.BlackPieces;
+            while (piecesBitmask != 0)
+            {
+                var position = piecesBitmask.BitScanForward();
+                Bitboard slide = SlideMoveGenerator.HorizontalVerticalSlide(board.AllPieces, position);
+                slide &= ~ownPieces;
+                slide &= allowedSquareMask;
+                BitmaskToMoves(board, slide, position, piece, moves, ref moveCount);
+                piecesBitmask &= ~(1UL << position);
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void GetPotentialBishopMoves(Board board, Bitboard allowedSquareMask, Move[] moves, ref int moveCount)
         {
-            var bishops = board.WhiteToMove ? board.BitBoard[ChessPiece.WhiteBishop] : board.BitBoard[ChessPiece.BlackBishop];
-            var chessPiece = board.WhiteToMove ? ChessPiece.WhiteBishop : ChessPiece.BlackBishop;
-            GetPotentialSlidingPieceMoves(board, bishops, chessPiece, allowedSquareMask, moves, ref moveCount);
+            var piece = (Piece)(ChessPiece.Bishop | board.ColorToMove);
+            var piecesBitmask = board.BitBoard[piece];
+            var ownPieces = board.WhiteToMove ? board.WhitePieces : board.BlackPieces;
+            while (piecesBitmask != 0)
+            {
+                var position = piecesBitmask.BitScanForward();
+                Bitboard slide = SlideMoveGenerator.DiagonalAntidiagonalSlide(board.AllPieces, position);
+                slide &= ~ownPieces;
+                slide &= allowedSquareMask;
+                BitmaskToMoves(board, slide, position, piece, moves, ref moveCount);
+                piecesBitmask &= ~(1UL << position);
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void GetPotentialQueenMoves(Board board, Bitboard allowedSquareMask, Move[] moves, ref int moveCount)
         {
-            var bishops = board.WhiteToMove ? board.BitBoard[ChessPiece.WhiteQueen] : board.BitBoard[ChessPiece.BlackQueen];
-            var chessPiece = board.WhiteToMove ? ChessPiece.WhiteQueen : ChessPiece.BlackQueen;
-            GetPotentialSlidingPieceMoves(board, bishops, chessPiece, allowedSquareMask, moves, ref moveCount);
+            var piece = (Piece)(ChessPiece.Queen | board.ColorToMove);
+            var piecesBitmask = board.BitBoard[piece];
+            var ownPieces = board.WhiteToMove ? board.WhitePieces : board.BlackPieces;
+            while (piecesBitmask != 0)
+            {
+                var position = piecesBitmask.BitScanForward();
+                Bitboard slide = SlideMoveGenerator.AllSlide(board.AllPieces, position);
+                slide &= ~ownPieces;
+                slide &= allowedSquareMask;
+                BitmaskToMoves(board, slide, position, piece, moves, ref moveCount);
+                piecesBitmask &= ~(1UL << position);
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -463,18 +490,8 @@ namespace ChessDotNet.MoveGeneration
             }
 
             var kingMove = move.Piece == ChessPiece.WhiteKing || move.Piece == ChessPiece.BlackKing;
-            var myKings = board.WhiteToMove ? board.BitBoard[ChessPiece.WhiteKing] : board.BitBoard[ChessPiece.BlackKing];
-            Position myKingPos;
-            if (kingMove)
-            {
-                myKings &= ~fromBitboard;
-                myKings |= toBitboard;
-                myKingPos = move.To;
-            }
-            else
-            {
-                myKingPos = myKings.BitScanForward();
-            }
+            Bitboard myKings = board.BitBoard[ChessPiece.King + board.ColorToMove];
+            Position myKingPos = kingMove ? move.To : myKings.BitScanForward();
 
             var invTakes = ~takesBitboard;
 
@@ -521,7 +538,7 @@ namespace ChessDotNet.MoveGeneration
                 return false;
             }
 
-            var diagonalAttack = AttacksService.SlideMoveGenerator.DiagonalAntidiagonalSlide(allPieces, myKingPos);
+            var diagonalAttack = SlideMoveGenerator.DiagonalAntidiagonalSlide(allPieces, myKingPos);
             if ((diagonalAttack & bishops) != 0)
             {
                 return false;
@@ -531,7 +548,7 @@ namespace ChessDotNet.MoveGeneration
                 return false;
             }
             
-            var verticalAttack = AttacksService.SlideMoveGenerator.HorizontalVerticalSlide(allPieces, myKingPos);
+            var verticalAttack = SlideMoveGenerator.HorizontalVerticalSlide(allPieces, myKingPos);
             if ((verticalAttack & rooks) != 0)
             {
                 return false;
@@ -544,6 +561,7 @@ namespace ChessDotNet.MoveGeneration
             return true;
         }
 
+        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void BitmaskToMoves(Board board, Bitboard bitmask, Position positionFrom, Piece piece, Move[] moves, ref int moveCount)
         {
             while (bitmask != 0)
