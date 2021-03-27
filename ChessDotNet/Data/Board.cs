@@ -103,6 +103,7 @@ namespace ChessDotNet.Data
 
         public int[] PieceCounts { get; set; }
         public Score[] Material { get; set; }
+        public Position[] KingPositions { get; set; }
 
         private static CastlingPermission[] CastleRevocationTable { get; set; }
 
@@ -368,6 +369,12 @@ namespace ChessDotNet.Data
                 ArrayBoard[move.To] = move.TakesPiece;
             }
 
+            // KING POS
+            if (move.Piece == ChessPiece.King + ColorToMove)
+            {
+                KingPositions[ColorToMove] = move.From;
+            }
+
             // TAKES
             if (move.TakesPiece > 0)
             {
@@ -530,13 +537,18 @@ namespace ChessDotNet.Data
             {
                 promotedPiece = move.Piece;
             }
-
-
+            
             // TO
             var toPosBitBoard = 1UL << move.To;
             ArrayBoard[move.To] = promotedPiece;
             BitBoard[promotedPiece] |= toPosBitBoard;
             Key ^= ZobristKeys.ZPieces[move.To][promotedPiece];
+
+            // KING POS
+            if (move.Piece == (ChessPiece.King | originalColorToMove))
+            {
+                KingPositions[originalColorToMove] = move.To;
+            }
 
             // TAKES
             if (move.TakesPiece > 0)

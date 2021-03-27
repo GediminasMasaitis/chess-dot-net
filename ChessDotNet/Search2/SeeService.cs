@@ -23,10 +23,10 @@ namespace ChessDotNet.Search2
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        Bitboard GetLeastValuablePiece(Board board, Bitboard attadef, bool whiteToMove, ref Piece piece)
+        Bitboard GetLeastValuablePiece(Board board, Bitboard attadef, byte colorToMove, ref Piece piece)
         {
-            Piece start = whiteToMove ? ChessPiece.WhitePawn : ChessPiece.BlackPawn;
-            Piece end = whiteToMove ? ChessPiece.WhiteKing : ChessPiece.BlackKing;
+            Piece start = (byte) (ChessPiece.Pawn | colorToMove);
+            Piece end = (byte)(ChessPiece.King | colorToMove);
             for (piece = start; piece <= end; piece += ChessPiece.NextPiece)
             {
                 var subset = attadef & board.BitBoard[piece];
@@ -75,7 +75,7 @@ namespace ChessDotNet.Search2
             //U64 mayXray = pawns | bishops | rooks | queen;
             var fromSet = 1UL << from;
             var occ = board.AllPieces;
-            var whiteToMove = board.WhiteToMove;
+            var colorToMove = board.ColorToMove;
             gain[depth] = EvaluationService.Weights[takesPiece];
             do
             {
@@ -93,8 +93,8 @@ namespace ChessDotNet.Search2
                 //{
                 //    attadef = _attacks.GetAttackersOf(board, to, white, occ);
                 //}
-                whiteToMove = !whiteToMove;
-                fromSet = GetLeastValuablePiece(board, attadef, whiteToMove, ref piece);
+                colorToMove ^= 1;
+                fromSet = GetLeastValuablePiece(board, attadef, colorToMove, ref piece);
             } while (fromSet != 0);
 
             while (--depth != 0)

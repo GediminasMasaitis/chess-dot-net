@@ -490,8 +490,9 @@ namespace ChessDotNet.MoveGeneration
             }
 
             var kingMove = move.Piece == ChessPiece.WhiteKing || move.Piece == ChessPiece.BlackKing;
-            Bitboard myKings = board.BitBoard[ChessPiece.King + board.ColorToMove];
-            Position myKingPos = kingMove ? move.To : myKings.BitScanForward();
+            Position myKingPos = kingMove ? move.To : board.KingPositions[board.ColorToMove];
+
+            //Position myKingPos = board.KingPositions[board.ColorToMove];
 
             var invTakes = ~takesBitboard;
 

@@ -32,37 +32,38 @@ namespace ChessDotNet.Search2
                 return 200_000_000;
             }
 
-            if (useSee && move.TakesPiece != ChessPiece.Empty)
+            if (move.TakesPiece != ChessPiece.Empty)
             {
-                //if (seeScore > 0)
-                //{
-                //    return seeScore * 100_000;
-                //    //return 116000000;
-                //}
-                //if (seeScore == 0)
-                //{
-                //    return 99 * 100_000;
-                //}
-                var mvvLvaScore = MVVLVAScoreCalculation.Scores[move.Piece][move.TakesPiece];
-                if (seeScore > 0)
+                if (useSee)
                 {
-                    //return 116_000_000;
-                    return mvvLvaScore;
-                }
-                if(seeScore == 0)
-                {
-                    return mvvLvaScore / 2;
-                }
-                return mvvLvaScore / 200;
-                return seeScore * -1_000;
-            }
+                    //if (seeScore > 0)
+                    //{
+                    //    return seeScore * 100_000;
+                    //    //return 116000000;
+                    //}
+                    //if (seeScore == 0)
+                    //{
+                    //    return 99 * 100_000;
+                    //}
+                    var mvvLvaScore = MVVLVAScoreCalculation.Scores[move.Piece][move.TakesPiece];
+                    if (seeScore > 0)
+                    {
+                        //return 116_000_000;
+                        return mvvLvaScore;
+                    }
 
-            if (!useSee)
-            {
-                var mvvLvaScore = MVVLVAScoreCalculation.Scores[move.Piece][move.TakesPiece];
-                if (mvvLvaScore > 0)
+                    if (seeScore == 0)
+                    {
+                        return mvvLvaScore / 2;
+                    }
+
+                    return mvvLvaScore / 200;
+                    //return seeScore * -1_000;
+                    //return mvvLvaScore - 200_000_000;
+                }
+                else
                 {
-                    //return 116000000;
+                    var mvvLvaScore = MVVLVAScoreCalculation.Scores[move.Piece][move.TakesPiece];
                     return mvvLvaScore;
                 }
             }

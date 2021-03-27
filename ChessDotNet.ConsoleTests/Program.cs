@@ -51,9 +51,9 @@ namespace ChessDotNet.ConsoleTests
             //TestRepetitions();
 
             //DoPerftClient();
-            //DoPerft();
+            DoPerft();
             //DoPerftSuite();
-            await DoSearch2Async();
+            //await DoSearch2Async();
             //TestSee();
 
             //Console.WriteLine(new BoardFactory().ParseFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").Print());

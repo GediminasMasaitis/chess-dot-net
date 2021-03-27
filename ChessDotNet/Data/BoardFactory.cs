@@ -22,12 +22,13 @@ namespace ChessDotNet.Data
             board.History2 = new UndoMove[2048];
             board.PieceCounts = new int[ChessPiece.Count];
             board.Material = new Score[2];
+            board.KingPositions = new Position[2];
 
             var boardPosition = 0;
             var fenPosition = 0;
             for (; fenPosition < fen.Length; fenPosition++)
             {
-                var fixedBoardPosition = (7 - boardPosition/8)*8 + boardPosition%8;
+                var fixedBoardPosition = (Position)((7 - boardPosition/8)*8 + boardPosition%8);
                 var ch = fen[fenPosition];
                 var pieceBitBoard = 1UL << fixedBoardPosition;
                 var success = TryParsePiece(ch, out var piece);
@@ -36,6 +37,14 @@ namespace ChessDotNet.Data
                     board.BitBoard[piece] |= pieceBitBoard;
                     board.ArrayBoard[fixedBoardPosition] = piece;
                     board.PieceCounts[piece]++;
+                    if (piece == ChessPiece.WhiteKing)
+                    {
+                        board.KingPositions[ChessPiece.White] = fixedBoardPosition;
+                    }
+                    else if (piece == ChessPiece.BlackKing)
+                    {
+                        board.KingPositions[ChessPiece.Black] = fixedBoardPosition;
+                    }
                     boardPosition++;
                     continue;
                 }
