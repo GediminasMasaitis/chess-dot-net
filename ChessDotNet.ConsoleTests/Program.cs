@@ -30,7 +30,7 @@ namespace ChessDotNet.ConsoleTests
         static async Task Main(string[] args)
         {
             Init();
-            //WritePieces();
+            WritePieces();
             //foreach (var file in BitboardConstants.Files)
             //{
             //    Console.WriteLine($"0x{file:X}ULL,");
@@ -51,10 +51,11 @@ namespace ChessDotNet.ConsoleTests
             //TestRepetitions();
 
             //DoPerftClient();
-            DoPerft();
+            //DoPerft();
             //DoPerftSuite();
-            //await DoSearch2Async();
+            await DoSearch2Async();
             //TestSee();
+            //TestEval2();
 
             //Console.WriteLine(new BoardFactory().ParseFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").Print());
             //var pos = 27;
@@ -65,18 +66,26 @@ namespace ChessDotNet.ConsoleTests
             Console.ReadLine();
         }
 
+        public static void TestEval2()
+        {
+            //var board = MakeBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+            var board = MakeBoard("r3r1kb/p2bp2p/1q1p1npB/5NQ1/2p1P1P1/2N2P2/PPP5/2KR3R w - - 0 1");
+            var eval2 = new EvaluationService2();
+            var score = eval2.Evaluate(board);
+
+        }
+
         public static void WritePieces()
         {
-            Console.WriteLine(ZobristKeys.ZWhiteToMove);
-            //Console.WriteLine($"{nameof(ChessPiece.White)}: {ChessPiece.White}");
-            //Console.WriteLine($"{nameof(ChessPiece.Black)}: {ChessPiece.Black}");
-            //Console.WriteLine($"{nameof(ChessPiece.Empty)}: {ChessPiece.Empty}");
-            //Console.WriteLine($"{nameof(ChessPiece.Pawn)}: {ChessPiece.Pawn}");
-            //Console.WriteLine($"{nameof(ChessPiece.Knight)}: {ChessPiece.Knight}");
-            //Console.WriteLine($"{nameof(ChessPiece.Bishop)}: {ChessPiece.Bishop}");
-            //Console.WriteLine($"{nameof(ChessPiece.Rook)}: {ChessPiece.Rook}");
-            //Console.WriteLine($"{nameof(ChessPiece.Queen)}: {ChessPiece.Queen}");
-            //Console.WriteLine($"{nameof(ChessPiece.King)}: {ChessPiece.King}");
+            Console.WriteLine($"{nameof(ChessPiece.White)}: {ChessPiece.White}");
+            Console.WriteLine($"{nameof(ChessPiece.Black)}: {ChessPiece.Black}");
+            Console.WriteLine($"{nameof(ChessPiece.Empty)}: {ChessPiece.Empty}");
+            Console.WriteLine($"{nameof(ChessPiece.Pawn)}: {ChessPiece.Pawn}");
+            Console.WriteLine($"{nameof(ChessPiece.Knight)}: {ChessPiece.Knight}");
+            Console.WriteLine($"{nameof(ChessPiece.Bishop)}: {ChessPiece.Bishop}");
+            Console.WriteLine($"{nameof(ChessPiece.Rook)}: {ChessPiece.Rook}");
+            Console.WriteLine($"{nameof(ChessPiece.Queen)}: {ChessPiece.Queen}");
+            Console.WriteLine($"{nameof(ChessPiece.King)}: {ChessPiece.King}");
             Console.WriteLine($"{nameof(ChessPiece.WhitePawn)}: {ChessPiece.WhitePawn}");
             Console.WriteLine($"{nameof(ChessPiece.WhiteKnight)}: {ChessPiece.WhiteKnight}");
             Console.WriteLine($"{nameof(ChessPiece.WhiteBishop)}: {ChessPiece.WhiteBishop}");
@@ -304,8 +313,10 @@ namespace ChessDotNet.ConsoleTests
 
         private static void TestMove()
         {
-            var fact = new BoardFactory();
-            var board = fact.ParseFEN("rnbqkbnr/p1pppppp/8/8/1p6/3P4/PPPKPPPP/RNBQ1BNR w kq -");
+            var board = MakeBoard("rnbqkbnr/pppppppp/8/8/8/3P4/PPP1PPPP/RNBQKBNR b KQkq -");
+            //board.DoMove2(new Move(ChessPosition.D2, ChessPosition.D3, ChessPiece.WhitePawn));
+            //board.UndoMove();
+            Console.WriteLine(board.Print());
             var slideMoveGenerator = new MagicBitboardsService();
             //var evaluationService = new EvaluationService();
             //Console.WriteLine(evaluationService.Evaluate(board));

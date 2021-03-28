@@ -8,8 +8,11 @@ namespace ChessDotNet.Data
     public static class ChessPiece
     {
         public const Piece Color = 1;
-        public const Piece White = 1;
-        public const Piece Black = 0;
+        public const Piece White = 0;
+        public const Piece Black = 1;
+        public const Piece NoColor = 2;
+
+
         public const Piece Empty = 0;
 
         public const Piece Pawn = 2 << 1;
@@ -33,7 +36,7 @@ namespace ChessDotNet.Data
         public const Piece BlackQueen = Black | Queen;
         public const Piece BlackKing = Black | King;
 
-        public const int Count = WhiteKing + 1;
+        public const int Count = 16;
         public const int NextPiece = 1 << 1;
 
         public static char ChessPieceToLetter(Piece chessPiece)

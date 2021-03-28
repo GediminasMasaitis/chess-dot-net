@@ -64,10 +64,12 @@ namespace ChessDotNet.Data
             }
 
             fenPosition++;
-            if (fen[fenPosition] == 'w')
+            board.WhiteToMove = fen[fenPosition] switch
             {
-                board.WhiteToMove = true;
-            }
+                'w' => true,
+                'b' => false,
+                _ => throw new Exception("Unknown color")
+            };
 
             fenPosition += 2;
 

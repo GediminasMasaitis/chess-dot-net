@@ -78,8 +78,8 @@ namespace ChessDotNet.Data
         public byte ColorToMove { get; set; }
         public bool WhiteToMove
         {
-            get => Convert.ToBoolean(ColorToMove);
-            set => ColorToMove = Convert.ToByte(value);
+            get => ColorToMove == ChessPiece.White;
+            set => ColorToMove = value ? ChessPiece.White : ChessPiece.Black;
         }
 
         public CastlingPermission CastlingPermissions { get; set; }

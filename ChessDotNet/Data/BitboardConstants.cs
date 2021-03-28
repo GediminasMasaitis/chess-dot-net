@@ -18,10 +18,12 @@ namespace ChessDotNet.Data
         public static Position KnightSpanPosition { get; private set; }
         public static Bitboard KingSpan { get; private set; }
         public static Position KingSpanPosition { get; private set; }
-        public static Bitboard WhitePawnSpan { get; private set; }
-        public static Position WhitePawnSpanPosition { get; private set; }
-        public static Bitboard BlackPawnSpan { get; private set; }
-        public static Position BlackPawnSpanPosition { get; private set; }
+
+        public static Bitboard DiagonalSpan { get; private set; }
+        public static Bitboard VerticalSpan { get; private set; }
+
+        public static Bitboard[] PawnSpans { get; private set; }
+        public static Position[] PawnSpanPositions { get; private set; }
         public static Bitboard[] Files { get; private set; }
         public static Bitboard[] Ranks { get; private set; }
         public static Bitboard[] Diagonals { get; private set; }
@@ -41,6 +43,9 @@ namespace ChessDotNet.Data
 
         public static Bitboard[] KnightJumps { get; private set; }
         public static Bitboard[] KingJumps { get; private set; }
+        public static Bitboard[] DiagonalJumps { get; private set; }
+        public static Bitboard[] VerticalJumps { get; private set; }
+        public static Bitboard[] VerticalDiagonalJumps { get; private set; }
         public static Bitboard[,] PawnJumps { get; private set; }
 
         public static void Init()
@@ -53,11 +58,15 @@ namespace ChessDotNet.Data
             KingSpan = 460039UL;
             KingSpanPosition = 9;
 
-            WhitePawnSpan = 1280;
-            WhitePawnSpanPosition = 1;
+            PawnSpans = new Bitboard[2];
+            PawnSpanPositions = new Position[2];
+            PawnSpans[ChessPiece.White] = 1280;
+            PawnSpanPositions[ChessPiece.White] = 1;
+            PawnSpans[ChessPiece.Black] = 5;
+            PawnSpanPositions[ChessPiece.Black] = 9;
 
-            BlackPawnSpan = 5;
-            BlackPawnSpanPosition = 9;
+            DiagonalSpan = (1UL << 0) | (1UL << 2) | (1UL << 16) | (1UL << 18);
+            VerticalSpan = (1UL << 1) | (1UL << 8) | (1UL << 10) | (1UL << 17);
 
             var files = new Bitboard[8];
             for(var i = 0; i < 8; i++)
@@ -142,12 +151,24 @@ namespace ChessDotNet.Data
             KnightJumps = new Bitboard[64];
             KingJumps = new Bitboard[64];
             PawnJumps = new ulong[2, 64];
+            DiagonalJumps = new Bitboard[64];
+            VerticalJumps = new Bitboard[64];
+            VerticalDiagonalJumps = new Bitboard[64];
+
             for (Position i = 0; i < 64; i++)
             {
                 KnightJumps[i] = GetAttackedByJumpingPiece(i, KnightSpan, KnightSpanPosition);
                 KingJumps[i] = GetAttackedByJumpingPiece(i, KingSpan, KingSpanPosition);
-                PawnJumps[0, i] = GetAttackedByJumpingPiece(i, BlackPawnSpan, BlackPawnSpanPosition);
-                PawnJumps[1, i] = GetAttackedByJumpingPiece(i, WhitePawnSpan, WhitePawnSpanPosition);
+                for (int j = 0; j < 2; j++)
+                {
+                    var span = PawnSpans[j];
+                    var position = PawnSpanPositions[j];
+                    PawnJumps[j, i] = GetAttackedByJumpingPiece(i, span, position);
+                }
+
+                DiagonalJumps[i] = GetAttackedByJumpingPiece(i, DiagonalSpan, 9);
+                VerticalJumps[i] = GetAttackedByJumpingPiece(i, VerticalSpan, 9);
+                VerticalDiagonalJumps[i] = GetAttackedByJumpingPiece(i, VerticalSpan | DiagonalSpan, 9);
             }
         }
 
