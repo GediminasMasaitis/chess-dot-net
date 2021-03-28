@@ -96,15 +96,7 @@ namespace ChessDotNet.Hashing
             {
                 key ^= ZEnPassant[board.EnPassantFileIndex];
             }
-
-            //for (var i = 0; i < 4; i++)
-            //{
-            //    if (board.CastlingPermissions[i])
-            //    {
-            //        key ^= ZCastle[i];
-            //    }
-            //}
-
+            
             if ((board.CastlingPermissions & CastlingPermission.WhiteQueen) != CastlingPermission.None)
             {
                 key ^= ZCastle[(byte)CastlingPermission.WhiteQueen];
@@ -127,6 +119,20 @@ namespace ChessDotNet.Hashing
                 key ^= ZWhiteToMove;
             }
 
+            return key;
+        }
+
+        public static ulong CalculatePawnKey(Board board)
+        {
+            var key = 0UL;
+            for (var i = 0; i < 64; i++)
+            {
+                var piece = board.ArrayBoard[i];
+                if((piece & ~ChessPiece.Color) == ChessPiece.Pawn)
+                {
+                    key ^= ZPieces[i][piece];
+                }
+            }
             return key;
         }
 

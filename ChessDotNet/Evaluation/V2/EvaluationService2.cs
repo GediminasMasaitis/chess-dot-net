@@ -13,12 +13,15 @@ namespace ChessDotNet.Evaluation.V2
     {
         private readonly EvaluationData _e;
         private readonly EvalHashTable _evalTable;
+        private EvalHashTable _pawnTable;
 
         public EvaluationService2(EvaluationData e)
         {
             _e = e;
             _evalTable = new EvalHashTable();
             _evalTable.SetSize(16 * 1024 * 1024);
+            _pawnTable = new EvalHashTable();
+            _pawnTable.SetSize(16 * 1024 * 1024);
         }
 
         public int Evaluate(Board board)
@@ -118,28 +121,32 @@ namespace ChessDotNet.Evaluation.V2
             for (Piece sq = 0; sq < 64; sq++)
             {
                 var originalPiece = b.ArrayBoard[sq];
-                if (originalPiece != ChessPiece.Empty)
+                if (originalPiece == ChessPiece.Empty)
                 {
-                    (var color, var piece) = EvaluationData.GetColorAndPiece(originalPiece);
-                    switch (piece)
-                    {
-                        case EvaluationData.PAWN: // pawns are evaluated separately
-                            break;
-                        case EvaluationData.KNIGHT:
-                            EvalKnight(b, eb, v, sq, color);
-                            break;
-                        case EvaluationData.BISHOP:
-                            EvalBishop(b, eb, v, sq, color);
-                            break;
-                        case EvaluationData.ROOK:
-                            EvalRook(b, eb, v, sq, color);
-                            break;
-                        case EvaluationData.QUEEN:
-                            EvalQueen(b, eb, v, sq, color);
-                            break;
-                        case EvaluationData.KING:
-                            break;
-                    }
+                    continue;
+                }
+
+                var color = (byte)(originalPiece & ChessPiece.Color);
+                var convertedPiece = EvaluationData.ConvertPiece(originalPiece);
+                switch (convertedPiece
+)
+                {
+                    case EvaluationData.PAWN: // pawns are evaluated separately
+                        break;
+                    case EvaluationData.KNIGHT:
+                        EvalKnight(b, eb, v, sq, color);
+                        break;
+                    case EvaluationData.BISHOP:
+                        EvalBishop(b, eb, v, sq, color);
+                        break;
+                    case EvaluationData.ROOK:
+                        EvalRook(b, eb, v, sq, color);
+                        break;
+                    case EvaluationData.QUEEN:
+                        EvalQueen(b, eb, v, sq, color);
+                        break;
+                    case EvaluationData.KING:
+                        break;
                 }
             }
 
@@ -723,8 +730,6 @@ namespace ChessDotNet.Evaluation.V2
 
         int getPawnScore(Board b, EvaluationBoard eb)
         {
-            int result;
-
             /**************************************************************************
             *  This function wraps hashing mechanism around evalPawnStructure().      *
             *  Please note  that since we use the pawn hashtable, evalPawnStructure() *
@@ -734,13 +739,15 @@ namespace ChessDotNet.Evaluation.V2
             *  would have been done elsewhere.                                        *
             **************************************************************************/
 
-            //int probeval = ttpawn_probe();
-            //if (probeval != INVALID)
-            //    return probeval;
+            var success = _pawnTable.TryProbe(b.PawnKey, out var hashScore);
+            if (success)
+            {
+                return hashScore;
+            }
 
-            result = evalPawnStructure(b, eb);
-            //ttpawn_save(result);
-            return result;
+            var score = evalPawnStructure(b, eb);
+            _pawnTable.Store(b.PawnKey, score);
+            return score ;
         }
 
         int evalPawnStructure(Board b, EvaluationBoard eb)

@@ -1,5 +1,8 @@
-﻿namespace ChessDotNet.Evaluation.V2
+﻿using System.Runtime.InteropServices;
+
+namespace ChessDotNet.Evaluation.V2
 {
+    [StructLayout(LayoutKind.Sequential, Pack = 4)]
     public struct EvalHashTableEntry
     {
         public ulong Key { get; }

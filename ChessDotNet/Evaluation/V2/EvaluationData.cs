@@ -56,36 +56,46 @@ namespace ChessDotNet.Evaluation.V2
         public static readonly int[] eighth = new int[2] { 7, 0 };
         public static readonly int[] stepFwd = new int[2] { NORTH, SOUTH };
         public static readonly int[] stepBck = new int[2] { SOUTH, NORTH };
-
-        public static (byte, byte) GetColorAndPiece(int piece)
+        
+        public static byte ConvertPiece(int piece)
         {
             switch (piece)
             {
-                case ChessPiece.WhitePawn: return (ChessPiece.White, PAWN);
-                case ChessPiece.WhiteKnight: return (ChessPiece.White, KNIGHT);
-                case ChessPiece.WhiteBishop: return (ChessPiece.White, BISHOP);
-                case ChessPiece.WhiteRook: return (ChessPiece.White, ROOK);
-                case ChessPiece.WhiteQueen: return (ChessPiece.White, QUEEN);
-                case ChessPiece.WhiteKing: return (ChessPiece.White, KING);
-                case ChessPiece.BlackPawn: return (ChessPiece.Black, PAWN);
-                case ChessPiece.BlackKnight: return (ChessPiece.Black, KNIGHT);
-                case ChessPiece.BlackBishop: return (ChessPiece.Black, BISHOP);
-                case ChessPiece.BlackRook: return (ChessPiece.Black, ROOK);
-                case ChessPiece.BlackQueen: return (ChessPiece.Black, QUEEN);
-                case ChessPiece.BlackKing: return (ChessPiece.Black, KING);
+                case ChessPiece.WhitePawn:
+                case ChessPiece.BlackPawn:
+                    return PAWN;
+
+                case ChessPiece.WhiteKnight:
+                case ChessPiece.BlackKnight:
+                    return KNIGHT;
+
+                case ChessPiece.WhiteBishop:
+                case ChessPiece.BlackBishop:
+                    return BISHOP;
+
+                case ChessPiece.WhiteRook:
+                case ChessPiece.BlackRook:
+                    return ROOK;
+
+                case ChessPiece.WhiteQueen:
+                case ChessPiece.BlackQueen:
+                    return QUEEN;
+
+                case ChessPiece.WhiteKing:
+                case ChessPiece.BlackKing:
+                    return KING;
             }
 
             throw new Exception();
         }
 
         public readonly int[] PIECE_VALUE = new int[6];
-        public readonly int[] SORT_VALUE = new int[6];
 
         /* Piece-square tables - we use size of the board representation,
         not 0..63, to avoid re-indexing. Initialization routine, however,
         uses 0..63 format for clarity */
-        public readonly int[,,] mgPst = new int[6, 2, 64];
-        public readonly int[,,] egPst = new int[6, 2, 64];
+        public readonly int[][][] mgPst = new int[6][][];
+        public readonly int[][][] egPst = new int[6][][];
 
         /* piece-square tables for pawn structure */
 
@@ -361,17 +371,6 @@ namespace ChessDotNet.Evaluation.V2
             PIECE_VALUE[BISHOP] = 335;
             PIECE_VALUE[KNIGHT] = 325;
             PIECE_VALUE[PAWN] = 100;
-            
-            /*************************************************
-            * Values used for sorting captures are the same  *
-            * as normal piece values, except for a king.     *
-            *************************************************/
-
-            for (int i = 0; i < 6; ++i)
-            {
-                SORT_VALUE[i] = PIECE_VALUE[i];
-            }
-            SORT_VALUE[KING] = SORT_KING;
         }
 
         void setSquaresNearKing()
@@ -411,47 +410,58 @@ namespace ChessDotNet.Evaluation.V2
 
         void setPcsq()
         {
-
-            for (int i = 0; i < 64; ++i)
+            for (int i = 0; i < 6; i++)
             {
+                mgPst[i] = new int[2][];
+                egPst[i] = new int[2][];
 
-                weak_pawn[ChessPiece.White, inv_sq[i]] = weak_pawn_pcsq[i];
-                weak_pawn[ChessPiece.Black, i] = weak_pawn_pcsq[i];
-                passed_pawn[ChessPiece.White, inv_sq[i]] = passed_pawn_pcsq[i];
-                passed_pawn[ChessPiece.Black, i] = passed_pawn_pcsq[i];
+                for (int j = 0; j < 2; j++)
+                {
+                    mgPst[i][j] = new int[64];
+                    egPst[i][j] = new int[64];
+                }
+            }
+
+            for (int pos = 0; pos < 64; ++pos)
+            {
+                var invPos = inv_sq[pos];
+                weak_pawn[ChessPiece.White, invPos] = weak_pawn_pcsq[pos];
+                weak_pawn[ChessPiece.Black, pos] = weak_pawn_pcsq[pos];
+                passed_pawn[ChessPiece.White, invPos] = passed_pawn_pcsq[pos];
+                passed_pawn[ChessPiece.Black, pos] = passed_pawn_pcsq[pos];
 
                 /* protected passers are slightly stronger than ordinary passers */
 
-                protected_passer[ChessPiece.White, inv_sq[i]] = (passed_pawn_pcsq[i] * 10) / 8;
-                protected_passer[ChessPiece.Black, i] = (passed_pawn_pcsq[i] * 10) / 8;
+                protected_passer[ChessPiece.White, invPos] = (passed_pawn_pcsq[pos] * 10) / 8;
+                protected_passer[ChessPiece.Black, pos] = (passed_pawn_pcsq[pos] * 10) / 8;
 
                 /* now set the piece/square tables for each color and piece type */
 
-                mgPst[PAWN, ChessPiece.White, inv_sq[i]] = pawn_pcsq_mg[i];
-                mgPst[PAWN, ChessPiece.Black, i] = pawn_pcsq_mg[i];
-                mgPst[KNIGHT, ChessPiece.White, inv_sq[i]] = knight_pcsq_mg[i];
-                mgPst[KNIGHT, ChessPiece.Black, i] = knight_pcsq_mg[i];
-                mgPst[BISHOP, ChessPiece.White, inv_sq[i]] = bishop_pcsq_mg[i];
-                mgPst[BISHOP, ChessPiece.Black, i] = bishop_pcsq_mg[i];
-                mgPst[ROOK, ChessPiece.White, inv_sq[i]] = rook_pcsq_mg[i];
-                mgPst[ROOK, ChessPiece.Black, i] = rook_pcsq_mg[i];
-                mgPst[QUEEN, ChessPiece.White, inv_sq[i]] = queen_pcsq_mg[i];
-                mgPst[QUEEN, ChessPiece.Black, i] = queen_pcsq_mg[i];
-                mgPst[KING, ChessPiece.White, inv_sq[i]] = king_pcsq_mg[i];
-                mgPst[KING, ChessPiece.Black, i] = king_pcsq_mg[i];
+                mgPst[PAWN][ChessPiece.White][invPos] = pawn_pcsq_mg[pos];
+                mgPst[PAWN][ChessPiece.Black][pos] = pawn_pcsq_mg[pos];
+                mgPst[KNIGHT][ChessPiece.White][invPos] = knight_pcsq_mg[pos];
+                mgPst[KNIGHT][ChessPiece.Black][pos] = knight_pcsq_mg[pos];
+                mgPst[BISHOP][ChessPiece.White][invPos] = bishop_pcsq_mg[pos];
+                mgPst[BISHOP][ChessPiece.Black][pos] = bishop_pcsq_mg[pos];
+                mgPst[ROOK][ChessPiece.White][invPos] = rook_pcsq_mg[pos];
+                mgPst[ROOK][ChessPiece.Black][pos] = rook_pcsq_mg[pos];
+                mgPst[QUEEN][ChessPiece.White][invPos] = queen_pcsq_mg[pos];
+                mgPst[QUEEN][ChessPiece.Black][pos] = queen_pcsq_mg[pos];
+                mgPst[KING][ChessPiece.White][invPos] = king_pcsq_mg[pos];
+                mgPst[KING][ChessPiece.Black][pos] = king_pcsq_mg[pos];
 
-                egPst[PAWN, ChessPiece.White, inv_sq[i]] = pawn_pcsq_eg[i];
-                egPst[PAWN, ChessPiece.Black, i] = pawn_pcsq_eg[i];
-                egPst[KNIGHT, ChessPiece.White, inv_sq[i]] = knight_pcsq_eg[i];
-                egPst[KNIGHT, ChessPiece.Black, i] = knight_pcsq_eg[i];
-                egPst[BISHOP, ChessPiece.White, inv_sq[i]] = bishop_pcsq_eg[i];
-                egPst[BISHOP, ChessPiece.Black, i] = bishop_pcsq_eg[i];
-                egPst[ROOK, ChessPiece.White, inv_sq[i]] = rook_pcsq_eg[i];
-                egPst[ROOK, ChessPiece.Black, i] = rook_pcsq_eg[i];
-                egPst[QUEEN, ChessPiece.White, inv_sq[i]] = queen_pcsq_eg[i];
-                egPst[QUEEN, ChessPiece.Black, i] = queen_pcsq_eg[i];
-                egPst[KING, ChessPiece.White, inv_sq[i]] = king_pcsq_eg[i];
-                egPst[KING, ChessPiece.Black, i] = king_pcsq_eg[i];
+                egPst[PAWN][ChessPiece.White][invPos] = pawn_pcsq_eg[pos];
+                egPst[PAWN][ChessPiece.Black][pos] = pawn_pcsq_eg[pos];
+                egPst[KNIGHT][ChessPiece.White][invPos] = knight_pcsq_eg[pos];
+                egPst[KNIGHT][ChessPiece.Black][pos] = knight_pcsq_eg[pos];
+                egPst[BISHOP][ChessPiece.White][invPos] = bishop_pcsq_eg[pos];
+                egPst[BISHOP][ChessPiece.Black][pos] = bishop_pcsq_eg[pos];
+                egPst[ROOK][ChessPiece.White][invPos] = rook_pcsq_eg[pos];
+                egPst[ROOK][ChessPiece.Black][pos] = rook_pcsq_eg[pos];
+                egPst[QUEEN][ChessPiece.White][invPos] = queen_pcsq_eg[pos];
+                egPst[QUEEN][ChessPiece.Black][pos] = queen_pcsq_eg[pos];
+                egPst[KING][ChessPiece.White][invPos] = king_pcsq_eg[pos];
+                egPst[KING][ChessPiece.Black][pos] = king_pcsq_eg[pos];
             }
         }
 

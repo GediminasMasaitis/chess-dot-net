@@ -38,7 +38,9 @@ namespace ChessDotNet.Evaluation.V2
                 {
                     continue;
                 }
-                (var color, var convertedPiece) = EvaluationData.GetColorAndPiece(piece);
+
+                var color = (byte)(piece & ChessPiece.Color);
+                var convertedPiece = EvaluationData.ConvertPiece(piece);
                 fillSq(color, convertedPiece, i);
             }
         }
@@ -84,8 +86,8 @@ namespace ChessDotNet.Evaluation.V2
             }
 
             // update piece-square value
-            pcsq_mg[color] += e.mgPst[piece, color, sq];
-            pcsq_eg[color] += e.egPst[piece, color, sq];
+            pcsq_mg[color] += e.mgPst[piece][color][sq];
+            pcsq_eg[color] += e.egPst[piece][color][sq];
 
             // update hash key
             //b.hash ^= zobrist.piecesquare[piece][color][sq];

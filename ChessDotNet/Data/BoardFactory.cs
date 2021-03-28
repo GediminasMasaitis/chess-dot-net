@@ -130,6 +130,7 @@ namespace ChessDotNet.Data
             //board.SyncPiecesCount();
             board.SyncMaterial();
             board.Key = ZobristKeys.CalculateKey(board);
+            board.PawnKey = ZobristKeys.CalculatePawnKey(board);
             return board;
         }
 

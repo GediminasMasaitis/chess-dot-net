@@ -42,7 +42,7 @@ namespace ChessDotNet.Data
         public int EnPassantRankIndex { get; set; }
         public Bitboard EnPassantFile { get; set; }
         public ZobristKey Key { get; set; }
-
+        public ZobristKey PawnKey { get; set; }
         public int LastTookPieceHistoryIndex { get; set; }
 
         public int[] PieceCounts { get; set; }
@@ -268,6 +268,7 @@ namespace ChessDotNet.Data
             EnPassantFile = EnPassantFileIndex >= 0 ? BitboardConstants.Files[history.EnPassantFileIndex] : 0;
             CastlingPermissions = history.CastlingPermission;
             Key = history.Key;
+            PawnKey = history.PawnKey;
             LastTookPieceHistoryIndex = history.FiftyMoveRule;
 
             var originalColorToMove = ColorToMove;
@@ -430,9 +431,10 @@ namespace ChessDotNet.Data
             //var clone = Clone();
             //var newBoard = DoMove(move);
 
-            // history
+            // HISTORY
             History2[HistoryDepth].Move = move;
             History2[HistoryDepth].Key = Key;
+            History2[HistoryDepth].PawnKey = PawnKey;
             History2[HistoryDepth].CastlingPermission = CastlingPermissions;
             History2[HistoryDepth].EnPassantFileIndex = EnPassantFileIndex;
             History2[HistoryDepth].EnPassantRankIndex = EnPassantRankIndex;
@@ -468,6 +470,12 @@ namespace ChessDotNet.Data
             BitBoard[move.Piece] &= ~fromPosBitBoard;
             Key ^= ZobristKeys.ZPieces[move.From][move.Piece];
 
+            var isPawn = (move.Piece & ~ChessPiece.Color) == ChessPiece.Pawn;
+            if (isPawn)
+            {
+                PawnKey ^= ZobristKeys.ZPieces[move.From][move.Piece];
+            }
+
             Piece promotedPiece;
             if (move.PawnPromoteTo != ChessPiece.Empty)
             {
@@ -487,13 +495,17 @@ namespace ChessDotNet.Data
             ArrayBoard[move.To] = promotedPiece;
             BitBoard[promotedPiece] |= toPosBitBoard;
             Key ^= ZobristKeys.ZPieces[move.To][promotedPiece];
+            if (isPawn && move.PawnPromoteTo == ChessPiece.Empty)
+            {
+                PawnKey ^= ZobristKeys.ZPieces[move.To][move.Piece];
+            }
 
             // KING POS
             if (move.Piece == (ChessPiece.King | originalColorToMove))
             {
                 KingPositions[originalColorToMove] = move.To;
             }
-
+            
             // TAKES
             if (move.TakesPiece > 0)
             {
@@ -501,6 +513,10 @@ namespace ChessDotNet.Data
                 {
                     BitBoard[move.TakesPiece] &= ~toPosBitBoard;
                     Key ^= ZobristKeys.ZPieces[move.To][move.TakesPiece];
+                    if((move.TakesPiece & ~ChessPiece.Color) == ChessPiece.Pawn)
+                    {
+                        PawnKey ^= ZobristKeys.ZPieces[move.To][move.TakesPiece];
+                    }
                 }
                 LastTookPieceHistoryIndex = HistoryDepth - 1;
                 PieceCounts[move.TakesPiece]--;
@@ -525,6 +541,7 @@ namespace ChessDotNet.Data
                 BitBoard[move.TakesPiece] &= ~killedPawnBitBoard;
                 ArrayBoard[killedPawnPos] = ChessPiece.Empty;
                 Key ^= ZobristKeys.ZPieces[killedPawnPos][move.TakesPiece];
+                PawnKey ^= ZobristKeys.ZPieces[killedPawnPos][move.TakesPiece];
             }
 
             // PAWN DOUBLE MOVES
@@ -587,6 +604,7 @@ namespace ChessDotNet.Data
             clone.EnPassantRankIndex = EnPassantRankIndex;
             clone.EnPassantFile = EnPassantFile;
             clone.Key = Key;
+            clone.PawnKey = PawnKey;
             //clone.History = board.History; // TODO
             clone.LastTookPieceHistoryIndex = LastTookPieceHistoryIndex;
             clone.PieceCounts = (int[])PieceCounts.Clone();
@@ -607,6 +625,13 @@ namespace ChessDotNet.Data
             Debug.Assert(lhsKey == rhsKey);
             Debug.Assert(lhs.Key == lhsKey);
             Debug.Assert(rhs.Key == rhsKey);
+
+            var lhsPawnKey = ZobristKeys.CalculatePawnKey(lhs);
+            var rhsPawnKey = ZobristKeys.CalculatePawnKey(rhs);
+            Debug.Assert(lhsPawnKey == rhsPawnKey);
+            Debug.Assert(lhs.PawnKey == lhsPawnKey);
+            Debug.Assert(rhs.PawnKey == rhsPawnKey);
+
             Debug.Assert(lhs.WhiteToMove == rhs.WhiteToMove);
             Debug.Assert(lhs.ColorToMove == rhs.ColorToMove);
 
