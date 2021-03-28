@@ -52,9 +52,9 @@ namespace ChessDotNet.ConsoleTests
             //TestRepetitions();
 
             //DoPerftClient();
-            //DoPerft();
+            DoPerft();
             //DoPerftSuite();
-            await DoSearch2Async();
+            //await DoSearch2Async();
             //TestSee();
             //TestEval2();
 

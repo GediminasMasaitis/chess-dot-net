@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using System.Text;
 using ChessDotNet.Data;
 using ChessDotNet.Hashing;
@@ -120,32 +121,31 @@ namespace ChessDotNet.Evaluation.V2
 
             for (Piece sq = 0; sq < 64; sq++)
             {
-                var originalPiece = b.ArrayBoard[sq];
-                if (originalPiece == ChessPiece.Empty)
+                var piece = b.ArrayBoard[sq];
+                if (piece == ChessPiece.Empty)
                 {
                     continue;
                 }
 
-                var color = (byte)(originalPiece & ChessPiece.Color);
-                var convertedPiece = EvaluationData.ConvertPiece(originalPiece);
-                switch (convertedPiece
-)
+                var color = (byte)(piece & ChessPiece.Color);
+                var pieceNoColor = (byte)(piece & ~ChessPiece.Color);
+                switch (pieceNoColor)
                 {
-                    case EvaluationData.PAWN: // pawns are evaluated separately
+                    case ChessPiece.Pawn: // pawns are evaluated separately
                         break;
-                    case EvaluationData.KNIGHT:
+                    case ChessPiece.Knight:
                         EvalKnight(b, eb, v, sq, color);
                         break;
-                    case EvaluationData.BISHOP:
+                    case ChessPiece.Bishop:
                         EvalBishop(b, eb, v, sq, color);
                         break;
-                    case EvaluationData.ROOK:
+                    case ChessPiece.Rook:
                         EvalRook(b, eb, v, sq, color);
                         break;
-                    case EvaluationData.QUEEN:
+                    case ChessPiece.Queen:
                         EvalQueen(b, eb, v, sq, color);
                         break;
-                    case EvaluationData.KING:
+                    case ChessPiece.King:
                         break;
                 }
             }
@@ -217,15 +217,15 @@ namespace ChessDotNet.Evaluation.V2
                     return 0;
                 }
 
-                if (eb.pawn_material[weaker] == 0 && (eb.piece_material[stronger] == 2 * _e.PIECE_VALUE[EvaluationData.KNIGHT]))
+                if (eb.pawn_material[weaker] == 0 && (eb.piece_material[stronger] == 2 * _e.PIECE_VALUE[ChessPiece.Knight]))
                 {
                     return 0;
                 }
 
                 if
                 (
-                    eb.piece_material[stronger] == _e.PIECE_VALUE[EvaluationData.ROOK]
-                    && eb.piece_material[weaker] == _e.PIECE_VALUE[EvaluationData.BISHOP]
+                    eb.piece_material[stronger] == _e.PIECE_VALUE[ChessPiece.Rook]
+                    && eb.piece_material[weaker] == _e.PIECE_VALUE[ChessPiece.Bishop]
                 )
                 {
                     result /= 2;
@@ -233,8 +233,8 @@ namespace ChessDotNet.Evaluation.V2
 
                 if
                 (
-                    eb.piece_material[stronger] == _e.PIECE_VALUE[EvaluationData.ROOK]
-                    && eb.piece_material[weaker] == _e.PIECE_VALUE[EvaluationData.BISHOP]
+                    eb.piece_material[stronger] == _e.PIECE_VALUE[ChessPiece.Rook]
+                    && eb.piece_material[weaker] == _e.PIECE_VALUE[ChessPiece.Bishop]
                 )
                 {
                     result /= 2;
@@ -242,8 +242,8 @@ namespace ChessDotNet.Evaluation.V2
 
                 if
                 (
-                    eb.piece_material[stronger] == _e.PIECE_VALUE[EvaluationData.ROOK] + _e.PIECE_VALUE[EvaluationData.BISHOP]
-                    && eb.piece_material[stronger] == _e.PIECE_VALUE[EvaluationData.ROOK]
+                    eb.piece_material[stronger] == _e.PIECE_VALUE[ChessPiece.Rook] + _e.PIECE_VALUE[ChessPiece.Bishop]
+                    && eb.piece_material[stronger] == _e.PIECE_VALUE[ChessPiece.Rook]
                 )
                 {
                     result /= 2;
@@ -251,8 +251,8 @@ namespace ChessDotNet.Evaluation.V2
 
                 if
                 (
-                    eb.piece_material[stronger] == _e.PIECE_VALUE[EvaluationData.ROOK] + _e.PIECE_VALUE[EvaluationData.KNIGHT]
-                    && eb.piece_material[stronger] == _e.PIECE_VALUE[EvaluationData.ROOK]
+                    eb.piece_material[stronger] == _e.PIECE_VALUE[ChessPiece.Rook] + _e.PIECE_VALUE[ChessPiece.Knight]
+                    && eb.piece_material[stronger] == _e.PIECE_VALUE[ChessPiece.Rook]
                 )
                 {
                     result /= 2;
@@ -414,8 +414,8 @@ namespace ChessDotNet.Evaluation.V2
 
             if (eb.pawns_on_file[side, sqCol] == 0)
             {
-                if (eb.pawns_on_file[side ^ 1, sqCol] == 0)
-                { // fully open file
+                if (eb.pawns_on_file[side ^ 1, sqCol] == 0) // fully open file
+                {
                     v.mgMob[side] += EvaluationData.ROOK_OPEN;
                     v.egMob[side] += EvaluationData.ROOK_OPEN;
                     if (Math.Abs(sqCol - (b.KingPositions[side ^ 1] & 7)) < 2)
@@ -423,8 +423,8 @@ namespace ChessDotNet.Evaluation.V2
                         v.attWeight[side] += 1;
                     }
                 }
-                else
-                {                                    // half open file
+                else // half open file
+                {
                     v.mgMob[side] += EvaluationData.ROOK_HALF;
                     v.egMob[side] += EvaluationData.ROOK_HALF;
                     if (Math.Abs(sqCol - (b.KingPositions[side ^ 1] & 7)) < 2)
@@ -495,10 +495,10 @@ namespace ChessDotNet.Evaluation.V2
 
             if ((side == ChessPiece.White && sqRow > 1) || (side == ChessPiece.Black && sqRow < 6))
             {
-                if (isPiece(b, side, EvaluationData.KNIGHT, REL_SQ(side, ChessPosition.B1))) v.positionalThemes[side] -= 2;
-                if (isPiece(b, side, EvaluationData.BISHOP, REL_SQ(side, ChessPosition.C1))) v.positionalThemes[side] -= 2;
-                if (isPiece(b, side, EvaluationData.BISHOP, REL_SQ(side, ChessPosition.F1))) v.positionalThemes[side] -= 2;
-                if (isPiece(b, side, EvaluationData.KNIGHT, REL_SQ(side, ChessPosition.G1))) v.positionalThemes[side] -= 2;
+                if (isPiece(b, side, ChessPiece.Knight, REL_SQ(side, ChessPosition.B1))) v.positionalThemes[side] -= 2;
+                if (isPiece(b, side, ChessPiece.Bishop, REL_SQ(side, ChessPosition.C1))) v.positionalThemes[side] -= 2;
+                if (isPiece(b, side, ChessPiece.Bishop, REL_SQ(side, ChessPosition.F1))) v.positionalThemes[side] -= 2;
+                if (isPiece(b, side, ChessPiece.Knight, REL_SQ(side, ChessPosition.G1))) v.positionalThemes[side] -= 2;
             }
 
             /**************************************************************************
@@ -614,117 +614,100 @@ namespace ChessDotNet.Evaluation.V2
             return result;
         }
 
-        static bool isPiece(Board b, int color, int piece, int position)
+        bool isPiece(Board b, int color, int pieceNoColor, int position)
         {
-            var p = b.ArrayBoard[position];
-            switch (p)
-            {
-                case ChessPiece.WhitePawn: return color == ChessPiece.White && piece == EvaluationData.PAWN;
-                case ChessPiece.WhiteKnight: return color == ChessPiece.White && piece == EvaluationData.KNIGHT;
-                case ChessPiece.WhiteBishop: return color == ChessPiece.White && piece == EvaluationData.BISHOP;
-                case ChessPiece.WhiteRook: return color == ChessPiece.White && piece == EvaluationData.ROOK;
-                case ChessPiece.WhiteQueen: return color == ChessPiece.White && piece == EvaluationData.QUEEN;
-                case ChessPiece.WhiteKing: return color == ChessPiece.White && piece == EvaluationData.KING;
-
-                case ChessPiece.BlackPawn: return color == ChessPiece.Black && piece == EvaluationData.PAWN;
-                case ChessPiece.BlackKnight: return color == ChessPiece.Black && piece == EvaluationData.KNIGHT;
-                case ChessPiece.BlackBishop: return color == ChessPiece.Black && piece == EvaluationData.BISHOP;
-                case ChessPiece.BlackRook: return color == ChessPiece.Black && piece == EvaluationData.ROOK;
-                case ChessPiece.BlackQueen: return color == ChessPiece.Black && piece == EvaluationData.QUEEN;
-                case ChessPiece.BlackKing: return color == ChessPiece.Black && piece == EvaluationData.KING;
-            }
-
-            return false;
+            var piece = b.ArrayBoard[position];
+            return (piece & ~ChessPiece.Color) == pieceNoColor && (piece & ChessPiece.Color) == color;
         }
 
-        int REL_SQ(int cl, int sq)
+        int REL_SQ(int color, int position)
         {
-            return ((cl) == (ChessPiece.White) ? (sq) : (EvaluationData.inv_sq[sq]));
+            return EvaluationData.RelativePositions[color][position];
         }
 
         void blockedPieces(Board b, EvaluationScores v, EvaluationBoard eb, int side)
         {
 
-            int oppo = side == 0 ? 1 : 0;
+            int oppo = side ^ 1;
 
             // central pawn blocked, bishop hard to develop
-            if (isPiece(b, side, EvaluationData.BISHOP, REL_SQ(side, ChessPosition.C1))
-            && isPiece(b, side, EvaluationData.PAWN, REL_SQ(side, ChessPosition.D2))
+            if (isPiece(b, side, ChessPiece.Bishop, REL_SQ(side, ChessPosition.C1))
+            && isPiece(b, side, ChessPiece.Pawn, REL_SQ(side, ChessPosition.D2))
             && b.ArrayBoard[REL_SQ(side, ChessPosition.D3)] != ChessPiece.Empty)
                 v.blockages[side] -= EvaluationData.P_BLOCK_CENTRAL_PAWN;
 
-            if (isPiece(b, side, EvaluationData.BISHOP, REL_SQ(side, ChessPosition.F1))
-            && isPiece(b, side, EvaluationData.PAWN, REL_SQ(side, ChessPosition.E2))
+            if (isPiece(b, side, ChessPiece.Bishop, REL_SQ(side, ChessPosition.F1))
+            && isPiece(b, side, ChessPiece.Pawn, REL_SQ(side, ChessPosition.E2))
             && b.ArrayBoard[REL_SQ(side, ChessPosition.E3)] != ChessPiece.Empty)
                 v.blockages[side] -= EvaluationData.P_BLOCK_CENTRAL_PAWN;
 
             // trapped knight
-            if (isPiece(b, side, EvaluationData.KNIGHT, REL_SQ(side, ChessPosition.A8))
-            && (isPiece(b, oppo, EvaluationData.PAWN, REL_SQ(side, ChessPosition.A7)) || isPiece(b, oppo, EvaluationData.PAWN, REL_SQ(side, ChessPosition.C7))))
+            if (isPiece(b, side, ChessPiece.Knight, REL_SQ(side, ChessPosition.A8))
+            && (isPiece(b, oppo, ChessPiece.Pawn, REL_SQ(side, ChessPosition.A7)) || isPiece(b, oppo, ChessPiece.Pawn, REL_SQ(side, ChessPosition.C7))))
                 v.blockages[side] -= EvaluationData.P_KNIGHT_TRAPPED_A8;
 
-            if (isPiece(b, side, EvaluationData.KNIGHT, REL_SQ(side, ChessPosition.H8))
-            && (isPiece(b, oppo, EvaluationData.PAWN, REL_SQ(side, ChessPosition.H7)) || isPiece(b, oppo, EvaluationData.PAWN, REL_SQ(side, ChessPosition.F7))))
+            if (isPiece(b, side, ChessPiece.Knight, REL_SQ(side, ChessPosition.H8))
+            && (isPiece(b, oppo, ChessPiece.Pawn, REL_SQ(side, ChessPosition.H7)) || isPiece(b, oppo, ChessPiece.Pawn, REL_SQ(side, ChessPosition.F7))))
                 v.blockages[side] -= EvaluationData.P_KNIGHT_TRAPPED_A8;
 
-            if (isPiece(b, side, EvaluationData.KNIGHT, REL_SQ(side, ChessPosition.A7))
-            && isPiece(b, oppo, EvaluationData.PAWN, REL_SQ(side, ChessPosition.A6))
-            && isPiece(b, oppo, EvaluationData.PAWN, REL_SQ(side, ChessPosition.B7)))
+            if (isPiece(b, side, ChessPiece.Knight, REL_SQ(side, ChessPosition.A7))
+            && isPiece(b, oppo, ChessPiece.Pawn, REL_SQ(side, ChessPosition.A6))
+            && isPiece(b, oppo, ChessPiece.Pawn, REL_SQ(side, ChessPosition.B7)))
                 v.blockages[side] -= EvaluationData.P_KNIGHT_TRAPPED_A7;
 
-            if (isPiece(b, side, EvaluationData.KNIGHT, REL_SQ(side, ChessPosition.H7))
-            && isPiece(b, oppo, EvaluationData.PAWN, REL_SQ(side, ChessPosition.H6))
-            && isPiece(b, oppo, EvaluationData.PAWN, REL_SQ(side, ChessPosition.G7)))
+            if (isPiece(b, side, ChessPiece.Knight, REL_SQ(side, ChessPosition.H7))
+            && isPiece(b, oppo, ChessPiece.Pawn, REL_SQ(side, ChessPosition.H6))
+            && isPiece(b, oppo, ChessPiece.Pawn, REL_SQ(side, ChessPosition.G7)))
                 v.blockages[side] -= EvaluationData.P_KNIGHT_TRAPPED_A7;
 
             // knight blocking queenside pawns
-            if (isPiece(b, side, EvaluationData.KNIGHT, REL_SQ(side, ChessPosition.C3))
-            && isPiece(b, side, EvaluationData.PAWN, REL_SQ(side, ChessPosition.C2))
-            && isPiece(b, side, EvaluationData.PAWN, REL_SQ(side, ChessPosition.D4))
-            && !isPiece(b, side, EvaluationData.PAWN, REL_SQ(side, ChessPosition.E4)))
+            if (isPiece(b, side, ChessPiece.Knight, REL_SQ(side, ChessPosition.C3))
+            && isPiece(b, side, ChessPiece.Pawn, REL_SQ(side, ChessPosition.C2))
+            && isPiece(b, side, ChessPiece.Pawn, REL_SQ(side, ChessPosition.D4))
+            && !isPiece(b, side, ChessPiece.Pawn, REL_SQ(side, ChessPosition.E4)))
                 v.blockages[side] -= EvaluationData.P_C3_KNIGHT;
 
             // trapped bishop
-            if (isPiece(b, side, EvaluationData.BISHOP, REL_SQ(side, ChessPosition.A7))
-            && isPiece(b, oppo, EvaluationData.PAWN, REL_SQ(side, ChessPosition.B6)))
+            if (isPiece(b, side, ChessPiece.Bishop, REL_SQ(side, ChessPosition.A7))
+            && isPiece(b, oppo, ChessPiece.Pawn, REL_SQ(side, ChessPosition.B6)))
                 v.blockages[side] -= EvaluationData.P_BISHOP_TRAPPED_A7;
 
-            if (isPiece(b, side, EvaluationData.BISHOP, REL_SQ(side, ChessPosition.H7))
-            && isPiece(b, oppo, EvaluationData.PAWN, REL_SQ(side, ChessPosition.G6)))
+            if (isPiece(b, side, ChessPiece.Bishop, REL_SQ(side, ChessPosition.H7))
+            && isPiece(b, oppo, ChessPiece.Pawn, REL_SQ(side, ChessPosition.G6)))
                 v.blockages[side] -= EvaluationData.P_BISHOP_TRAPPED_A7;
 
-            if (isPiece(b, side, EvaluationData.BISHOP, REL_SQ(side, ChessPosition.B8))
-            && isPiece(b, oppo, EvaluationData.PAWN, REL_SQ(side, ChessPosition.C7)))
+            if (isPiece(b, side, ChessPiece.Bishop, REL_SQ(side, ChessPosition.B8))
+            && isPiece(b, oppo, ChessPiece.Pawn, REL_SQ(side, ChessPosition.C7)))
                 v.blockages[side] -= EvaluationData.P_BISHOP_TRAPPED_A7;
 
-            if (isPiece(b, side, EvaluationData.BISHOP, REL_SQ(side, ChessPosition.G8))
-            && isPiece(b, oppo, EvaluationData.PAWN, REL_SQ(side, ChessPosition.F7)))
+            if (isPiece(b, side, ChessPiece.Bishop, REL_SQ(side, ChessPosition.G8))
+            && isPiece(b, oppo, ChessPiece.Pawn, REL_SQ(side, ChessPosition.F7)))
                 v.blockages[side] -= EvaluationData.P_BISHOP_TRAPPED_A7;
 
-            if (isPiece(b, side, EvaluationData.BISHOP, REL_SQ(side, ChessPosition.A6))
-            && isPiece(b, oppo, EvaluationData.PAWN, REL_SQ(side, ChessPosition.B5)))
+            if (isPiece(b, side, ChessPiece.Bishop, REL_SQ(side, ChessPosition.A6))
+            && isPiece(b, oppo, ChessPiece.Pawn, REL_SQ(side, ChessPosition.B5)))
                 v.blockages[side] -= EvaluationData.P_BISHOP_TRAPPED_A6;
 
-            if (isPiece(b, side, EvaluationData.BISHOP, REL_SQ(side, ChessPosition.H6))
-            && isPiece(b, oppo, EvaluationData.PAWN, REL_SQ(side, ChessPosition.G5)))
+            if (isPiece(b, side, ChessPiece.Bishop, REL_SQ(side, ChessPosition.H6))
+            && isPiece(b, oppo, ChessPiece.Pawn, REL_SQ(side, ChessPosition.G5)))
                 v.blockages[side] -= EvaluationData.P_BISHOP_TRAPPED_A6;
 
             // bishop on initial sqare supporting castled king
-            if (isPiece(b, side, EvaluationData.BISHOP, REL_SQ(side, ChessPosition.F1))
-            && isPiece(b, side, EvaluationData.KING, REL_SQ(side, ChessPosition.G1)))
+            if (isPiece(b, side, ChessPiece.Bishop, REL_SQ(side, ChessPosition.F1))
+            && isPiece(b, side, ChessPiece.King, REL_SQ(side, ChessPosition.G1)))
                 v.positionalThemes[side] += EvaluationData.RETURNING_BISHOP;
 
-            if (isPiece(b, side, EvaluationData.BISHOP, REL_SQ(side, ChessPosition.C1))
-            && isPiece(b, side, EvaluationData.KING, REL_SQ(side, ChessPosition.B1)))
+            if (isPiece(b, side, ChessPiece.Bishop, REL_SQ(side, ChessPosition.C1))
+            && isPiece(b, side, ChessPiece.King, REL_SQ(side, ChessPosition.B1)))
                 v.positionalThemes[side] += EvaluationData.RETURNING_BISHOP;
 
             // uncastled king blocking own rook
-            if ((isPiece(b, side, EvaluationData.KING, REL_SQ(side, ChessPosition.F1)) || isPiece(b, side, EvaluationData.KING, REL_SQ(side, ChessPosition.G1)))
-            && (isPiece(b, side, EvaluationData.ROOK, REL_SQ(side, ChessPosition.H1)) || isPiece(b, side, EvaluationData.ROOK, REL_SQ(side, ChessPosition.G1))))
+            if ((isPiece(b, side, ChessPiece.King, REL_SQ(side, ChessPosition.F1)) || isPiece(b, side, ChessPiece.King, REL_SQ(side, ChessPosition.G1)))
+            && (isPiece(b, side, ChessPiece.Rook, REL_SQ(side, ChessPosition.H1)) || isPiece(b, side, ChessPiece.Rook, REL_SQ(side, ChessPosition.G1))))
                 v.blockages[side] -= EvaluationData.P_KING_BLOCKS_ROOK;
 
-            if ((isPiece(b, side, EvaluationData.KING, REL_SQ(side, ChessPosition.C1)) || isPiece(b, side, EvaluationData.KING, REL_SQ(side, ChessPosition.B1)))
-            && (isPiece(b, side, EvaluationData.ROOK, REL_SQ(side, ChessPosition.A1)) || isPiece(b, side, EvaluationData.ROOK, REL_SQ(side, ChessPosition.B1))))
+            if ((isPiece(b, side, ChessPiece.King, REL_SQ(side, ChessPosition.C1)) || isPiece(b, side, ChessPiece.King, REL_SQ(side, ChessPosition.B1)))
+            && (isPiece(b, side, ChessPiece.Rook, REL_SQ(side, ChessPosition.A1)) || isPiece(b, side, ChessPiece.Rook, REL_SQ(side, ChessPosition.B1))))
                 v.blockages[side] -= EvaluationData.P_KING_BLOCKS_ROOK;
         }
 
@@ -889,22 +872,22 @@ namespace ChessDotNet.Evaluation.V2
             var col = sq & 7;
 
 
-            if (col > 0 && isPiece(b, side, EvaluationData.PAWN, sq + EvaluationData.WEST))
+            if (col > 0 && isPiece(b, side, ChessPiece.Pawn, sq + EvaluationData.WEST))
             {
                 return true;
             }
 
-            if (col < 7 && isPiece(b, side, EvaluationData.PAWN, sq + EvaluationData.EAST))
+            if (col < 7 && isPiece(b, side, ChessPiece.Pawn, sq + EvaluationData.EAST))
             {
                 return true;
             }
 
-            if (col > 0 && isPiece(b, side, EvaluationData.PAWN, sq + step + EvaluationData.WEST))
+            if (col > 0 && isPiece(b, side, ChessPiece.Pawn, sq + step + EvaluationData.WEST))
             {
                 return true;
             }
 
-            if (col < 7 && isPiece(b, side, EvaluationData.PAWN, sq + step + EvaluationData.EAST))
+            if (col < 7 && isPiece(b, side, ChessPiece.Pawn, sq + step + EvaluationData.EAST))
             {
                 return true;
             }

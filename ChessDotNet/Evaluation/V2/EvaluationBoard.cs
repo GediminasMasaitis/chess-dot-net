@@ -38,22 +38,22 @@ namespace ChessDotNet.Evaluation.V2
                 {
                     continue;
                 }
-
-                var color = (byte)(piece & ChessPiece.Color);
-                var convertedPiece = EvaluationData.ConvertPiece(piece);
-                fillSq(color, convertedPiece, i);
+                fillSq(piece, i);
             }
         }
 
-        void fillSq(byte color, byte piece, int sq)
+        void fillSq(byte piece, int sq)
         {
+            var color = (byte)(piece & ChessPiece.Color);
+            var pieceNoColor = (byte)(piece & ~ChessPiece.Color);
+
             /**************************************************************************
             * Pawn structure changes slower than piece position, which allows reusing *
             * some data, both in pawn and piece evaluation. For that reason we do     *
             * some extra work here, expecting to gain extra speed elsewhere.          *
             **************************************************************************/
 
-            if (piece == EvaluationData.PAWN)
+            if (pieceNoColor == ChessPiece.Pawn)
             {
                 // update pawn material
                 pawn_material[color] += e.PIECE_VALUE[piece];
@@ -86,8 +86,8 @@ namespace ChessDotNet.Evaluation.V2
             }
 
             // update piece-square value
-            pcsq_mg[color] += e.mgPst[piece][color][sq];
-            pcsq_eg[color] += e.egPst[piece][color][sq];
+            pcsq_mg[color] += e.mgPst[piece][sq];
+            pcsq_eg[color] += e.egPst[piece][sq];
 
             // update hash key
             //b.hash ^= zobrist.piecesquare[piece][color][sq];
