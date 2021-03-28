@@ -11,6 +11,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using ChessDotNet.Data;
 using ChessDotNet.Evaluation;
+using ChessDotNet.Evaluation.V2;
 using ChessDotNet.Fen;
 using ChessDotNet.Hashing;
 using ChessDotNet.Init;
@@ -30,7 +31,7 @@ namespace ChessDotNet.ConsoleTests
         static async Task Main(string[] args)
         {
             Init();
-            WritePieces();
+            //WritePieces();
             //foreach (var file in BitboardConstants.Files)
             //{
             //    Console.WriteLine($"0x{file:X}ULL,");
@@ -70,7 +71,7 @@ namespace ChessDotNet.ConsoleTests
         {
             //var board = MakeBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
             var board = MakeBoard("r3r1kb/p2bp2p/1q1p1npB/5NQ1/2p1P1P1/2N2P2/PPP5/2KR3R w - - 0 1");
-            var eval2 = new EvaluationService2();
+            var eval2 = new EvaluationService2(new EvaluationData());
             var score = eval2.Evaluate(board);
 
         }
@@ -202,7 +203,10 @@ namespace ChessDotNet.ConsoleTests
             var fenSerializer = new FenSerializerService();
             var slideMoveGenerator = new MagicBitboardsService();
             //var slideMoveGenerator = new HyperbolaQuintessence();
-            var evaluationService = new EvaluationService();
+
+            var evaluationService = new EvaluationService2(new EvaluationData());
+            //var evaluationService = new EvaluationService();
+
             var attacksService = new AttacksService(slideMoveGenerator);
             var movesService = new PossibleMovesService(attacksService, slideMoveGenerator);
             var searchService = new SearchService2(movesService, evaluationService);

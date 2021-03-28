@@ -28,7 +28,7 @@ namespace ChessDotNet.Data
             key |= Convert.ToUInt32(enPassant) << 28;
             //key |= Convert.ToUInt64((piece == ChessPiece.WhiteKing || piece == ChessPiece.BlackKing) && Math.Abs(from - to) == 2) << 41;
             key |= Convert.ToUInt32(castle) << 29;
-            key |= Convert.ToUInt32(piece == 0) << 30;
+            key |= Convert.ToUInt32(piece == ChessPiece.Empty) << 30;
             key |= Convert.ToUInt32(piece & ChessPiece.Color) << 31;
             Value = key;
 
@@ -52,7 +52,7 @@ namespace ChessDotNet.Data
         public bool EnPassant => ((Value >> 28) & 0x01) == 1;
         public bool Castle => ((Value >> 29) & 0x01) == 1;
         public bool NullMove => ((Value >> 30) & 0x01) == 1;
-        public bool WhiteToMove => ((Value >> 31) & 0x01) == 1;
+        //public bool WhiteToMove => ((Value >> 31) & 0x01) == 1;
         public ulong ColorToMove => (Value >> 31) & 0x01;
 
         //public int MVVLVAScore => TakesPiece > 0 ? MVVLVAScoreCalculation.Scores[Piece, TakesPiece] : 0;

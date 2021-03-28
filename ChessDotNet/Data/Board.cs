@@ -17,62 +17,6 @@ using TTFlag = System.Byte;
 
 namespace ChessDotNet.Data
 {
-    [Flags]
-    public enum CastlingPermission : byte
-    {
-        None = 0,
-
-        WhiteQueen = 1 << 0,
-        WhiteKing = 1 << 1,
-
-        BlackQueen = 1 << 2,
-        BlackKing = 1 << 3,
-        
-        All = WhiteKing | WhiteQueen | BlackKing | BlackQueen
-    }
-
-    public struct UndoMove
-    {
-        public Move Move { get; set; }
-        public CastlingPermission CastlingPermission { get; set; }
-        public int EnPassantFileIndex { get; set; }
-        public int EnPassantRankIndex { get; set; }
-        public int FiftyMoveRule { get; set; }
-        public ZobristKey Key { get; set; }
-    }
-
-    //public struct UndoMove
-    //{
-    //    private ushort _extra;
-
-    //    public Move Move { get; }
-    //    public CastlingPermission CastlingPermission => (CastlingPermission)(_extra & 0x0F);
-
-    //    public int EnPassantFileIndex => (_extra >> 4) & 0x07;
-
-    //    public int EnPassantRankIndex => (_extra >> 7) & 0x07;
-    //    public int FiftyMoveRule => (_extra >> 10);
-    //    public ZobristKey Key { get; }
-
-    //    public UndoMove
-    //    (
-    //        Move move,
-    //        CastlingPermission castlingPermission,
-    //        int enPassantFileIndex,
-    //        int enPassantRankIndex,
-    //        int fiftyMoveRule,
-    //        ulong key
-    //    ) : this()
-    //    {
-    //        Move = move;
-    //        _extra |= (ushort)castlingPermission;
-    //        _extra |= (ushort)(enPassantFileIndex << 4);
-    //        _extra |= (ushort)(enPassantRankIndex << 7);
-    //        _extra |= (ushort)(fiftyMoveRule << 10);
-    //        Key = key;
-    //    }
-    //}
-
     public class Board
     {
         public byte ColorToMove { get; set; }
@@ -299,12 +243,12 @@ namespace ChessDotNet.Data
         private void TestUndoMove()
         {
             var clone = Clone();
-            Debug.Assert(ExactlyEquals(this, clone));
+            TestBoard(this, clone);
             var entry = clone.History2[HistoryDepth - 1];
             var move = entry.Move;
             clone.UndoMove(false);
             clone.DoMove2(move, false);
-            Debug.Assert(ExactlyEquals(this, clone));
+            TestBoard(this, clone);
         }
 
         public void UndoMove(bool test = false)
@@ -461,10 +405,10 @@ namespace ChessDotNet.Data
         public void TestMove(Move move)
         {
             var clone = Clone();
-            Debug.Assert(ExactlyEquals(this, clone));
+            TestBoard(this, clone);
             clone.DoMove2(move, false);
             clone.UndoMove(false);
-            Debug.Assert(ExactlyEquals(this, clone));
+            TestBoard(this, clone);
         }
 
         public Board DoMove(Move move)
@@ -647,7 +591,7 @@ namespace ChessDotNet.Data
             clone.LastTookPieceHistoryIndex = LastTookPieceHistoryIndex;
             clone.PieceCounts = (int[])PieceCounts.Clone();
             clone.Material = (Score[])Material.Clone();
-
+            clone.KingPositions = (Position[])KingPositions.Clone();
             clone.History2 = (UndoMove[])History2.Clone();
             clone.HistoryDepth = HistoryDepth;
             clone.CastlingPermissions = CastlingPermissions;
@@ -656,7 +600,7 @@ namespace ChessDotNet.Data
             return clone;
         }
 
-        public bool ExactlyEquals(Board lhs, Board rhs)
+        public void TestBoard(Board lhs, Board rhs)
         {
             var lhsKey = ZobristKeys.CalculateKey(lhs);
             var rhsKey = ZobristKeys.CalculateKey(rhs);
@@ -677,7 +621,8 @@ namespace ChessDotNet.Data
             Debug.Assert(lhs.BlackPieces == rhs.BlackPieces);
             Debug.Assert(lhs.EmptySquares == rhs.EmptySquares);
             Debug.Assert(lhs.AllPieces == rhs.AllPieces);
-
+            Debug.Assert(lhs.KingPositions[0] == rhs.KingPositions[0]);
+            Debug.Assert(lhs.KingPositions[1] == rhs.KingPositions[1]);
 
 
             for (int i = 0; i < lhs.ArrayBoard.Length; i++)
@@ -698,91 +643,40 @@ namespace ChessDotNet.Data
             Debug.Assert(lhs.CastlingPermissions == rhs.CastlingPermissions);
             Debug.Assert(lhs.HistoryDepth == rhs.HistoryDepth);
 
-            //for (var i = 0; i < History2.Length; i++)
             for (var i = 0; i < lhs.HistoryDepth; i++)
             {
                 var history1 = lhs.History2[i];
                 var history2 = rhs.History2[i];
-                if (!UndoMoveExactlyEqual(history1, history2))
-                {
-                    return false;
-                }
+                TestUndoMove(history1, history2);
             }
+        }
+
+        private bool TestUndoMove(UndoMove lhs, UndoMove rhs)
+        {
+            Debug.Assert(lhs.EnPassantFileIndex == rhs.EnPassantFileIndex);
+            Debug.Assert(lhs.EnPassantRankIndex == rhs.EnPassantRankIndex);
+            Debug.Assert(lhs.FiftyMoveRule == rhs.FiftyMoveRule);
+            Debug.Assert(lhs.Key == rhs.Key);
+            Debug.Assert(lhs.CastlingPermission == rhs.CastlingPermission);
+            TestMove(lhs.Move, rhs.Move);
 
             return true;
         }
 
-        private bool UndoMoveExactlyEqual(UndoMove lhs, UndoMove rhs)
+        private void TestMove(Move lhs, Move rhs)
         {
-            if (lhs.EnPassantFileIndex != rhs.EnPassantFileIndex)
-            {
-                return false;
-            }
-            if (lhs.EnPassantRankIndex != rhs.EnPassantRankIndex)
-            {
-                return false;
-            }
-            if (lhs.FiftyMoveRule != rhs.FiftyMoveRule)
-            {
-                return false;
-            }
-            if (lhs.Key != rhs.Key)
-            {
-                return false;
-            }
-            if (lhs.CastlingPermission != rhs.CastlingPermission)
-            {
-                return false;
-            }
-
-            if (!MoveExactlyEqual(lhs.Move, rhs.Move))
-            {
-                return false;
-            }
-
-            return true;
-        }
-
-        private bool MoveExactlyEqual(Move lhs, Move rhs)
-        {
-            if (lhs.From != rhs.From)
-            {
-                return false;
-            }
-            if (lhs.To != rhs.To)
-            {
-                return false;
-            }
-            if (lhs.Piece != rhs.Piece)
-            {
-                return false;
-            }
-            if (lhs.TakesPiece != rhs.TakesPiece)
-            {
-                return false;
-            }
-            if (lhs.PawnPromoteTo != rhs.PawnPromoteTo)
-            {
-                return false;
-            }
-            if (lhs.EnPassant != rhs.EnPassant)
-            {
-                return false;
-            }
-            if (lhs.Castle != rhs.Castle)
-            {
-                return false;
-            }
-            if (lhs.Key != rhs.Key)
-            {
-                return false;
-            }
-            if (lhs.Key2 != rhs.Key2)
-            {
-                return false;
-            }
-
-            return true;
+            Debug.Assert(lhs.From == rhs.From);
+            Debug.Assert(lhs.To == rhs.To);
+            Debug.Assert(lhs.Piece == rhs.Piece);
+            Debug.Assert(lhs.TakesPiece == rhs.TakesPiece);
+            Debug.Assert(lhs.PawnPromoteTo == rhs.PawnPromoteTo);
+            Debug.Assert(lhs.EnPassant == rhs.EnPassant);
+            Debug.Assert(lhs.Castle == rhs.Castle);
+            Debug.Assert(lhs.NullMove == rhs.NullMove);
+            Debug.Assert(lhs.ColorToMove == rhs.ColorToMove);
+            Debug.Assert(lhs.Castle == rhs.Castle);
+            Debug.Assert(lhs.Key == rhs.Key);
+            Debug.Assert(lhs.Key2 == rhs.Key2);
         }
 
         public void SyncMaterial()

@@ -7,6 +7,7 @@ using System.Windows.Input;
 using ChessDotNet.Common;
 using ChessDotNet.Data;
 using ChessDotNet.Evaluation;
+using ChessDotNet.Evaluation.V2;
 using ChessDotNet.MoveGeneration;
 using ChessDotNet.MoveGeneration.SlideGeneration;
 using ChessDotNet.Protocols;
@@ -21,7 +22,7 @@ namespace ChessDotNet
 
         private BoardFactory BoardFact { get; set; }
         private ISlideMoveGenerator Hyperbola { get; set; }
-        private EvaluationService Evaluation { get; set; }
+        private IEvaluationService Evaluation { get; set; }
         private AttacksService Attacks { get; set; }
         private PossibleMovesService Moves { get; set; }
         public SearchService2 Search { get; set; }
@@ -32,7 +33,7 @@ namespace ChessDotNet
         {
             Options = new SearchOptions();
             var slideMoveGenerator = new MagicBitboardsService();
-            var evaluationService = new EvaluationService();
+            var evaluationService = new EvaluationService2(new EvaluationData());
             var attacksService = new AttacksService(slideMoveGenerator);
             var movesService = new PossibleMovesService(attacksService, slideMoveGenerator);
             var searchService = new SearchService2(movesService, evaluationService);

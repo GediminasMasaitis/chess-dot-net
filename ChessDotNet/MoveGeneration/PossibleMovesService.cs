@@ -472,6 +472,15 @@ namespace ChessDotNet.MoveGeneration
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsKingSafeAfterMoveTest(Board board, Move move)
+        {
+            board.DoMove2(move);
+            var attacked = AttacksService.IsPositionAttacked(board, board.KingPositions[board.ColorToMove ^ 1], board.WhiteToMove);
+            board.UndoMove();
+            return !attacked;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsKingSafeAfterMove(Board board, Move move)
         {
             Bitboard allPieces = board.AllPieces;

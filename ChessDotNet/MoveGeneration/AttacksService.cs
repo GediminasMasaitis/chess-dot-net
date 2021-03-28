@@ -174,10 +174,10 @@ namespace ChessDotNet.MoveGeneration
             var kingAttack = BitboardConstants.KingJumps[position];
             result |= kingAttack & kings;
 
-            var whitePawnAttack = BitboardConstants.PawnJumps[0, position];
+            var whitePawnAttack = BitboardConstants.PawnJumps[ChessPiece.Black, position];
             result |= whitePawnAttack & whitePawns;
 
-            var blackPawnAttack = BitboardConstants.PawnJumps[1, position];
+            var blackPawnAttack = BitboardConstants.PawnJumps[ChessPiece.White, position];
             result |= blackPawnAttack & blackPawns;
 
             var diagonalAttack = SlideMoveGenerator.DiagonalAntidiagonalSlide(allPieces, position);
@@ -226,7 +226,7 @@ namespace ChessDotNet.MoveGeneration
             var kingAttack = BitboardConstants.KingJumps[position];
             result |= kingAttack & kings;
             
-            var pawnIndex = byWhite ? 0 : 1;
+            var pawnIndex = byWhite ? ChessPiece.Black : ChessPiece.White;
             var pawnAttack = BitboardConstants.PawnJumps[pawnIndex, position];
             result |= pawnAttack & pawns;
 
@@ -284,7 +284,7 @@ namespace ChessDotNet.MoveGeneration
                 return true;
             }
 
-            var pawnIndex = byWhite ? 0 : 1;
+            var pawnIndex = byWhite ? ChessPiece.Black : ChessPiece.White;
             var pawnAttack = BitboardConstants.PawnJumps[pawnIndex, position];
             if ((pawnAttack & pawns) != 0)
             {

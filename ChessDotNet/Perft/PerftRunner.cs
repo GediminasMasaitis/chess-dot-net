@@ -107,9 +107,9 @@ namespace ChessDotNet.Perft
             var verificationResults = GetResults(_verificationClient, fen, depth);
             var verificationNodes = verificationResults.Sum(entry => entry.Value.Nodes);
             Out($", Verification nodes: {verificationNodes}");
-            var speed = testNodes / stopwatch.Elapsed.TotalSeconds;
-            var speedDisplay = GetSpeedDisplay(speed);
-            Out($", {stopwatch.Elapsed.TotalMilliseconds} ms ({speedDisplay})");
+            var speed = (long)(testNodes / stopwatch.Elapsed.TotalSeconds);
+            //var speedDisplay = GetSpeedDisplay(speed);
+            Out($", {stopwatch.Elapsed.TotalMilliseconds} ms ({speed.ToUserFriendly()}N/s)");
             OutLine();
             
             foreach (var testResult in testResults.Values)

@@ -25,7 +25,7 @@ namespace ChessDotNet.Search2
         public event Action<SearchInfo> SearchInfo;
 
         private readonly PossibleMovesService _possibleMoves;
-        private readonly EvaluationService _evaluation;
+        private readonly IEvaluationService _evaluation;
         private readonly SearchState _state;
         private readonly SearchStopper _stopper;
         private readonly MoveOrderingService _moveOrdering;
@@ -38,7 +38,7 @@ namespace ChessDotNet.Search2
         public SearchService2
         (
             PossibleMovesService possibleMoves,
-            EvaluationService evaluation
+            IEvaluationService evaluation
         )
         {
             _possibleMoves = possibleMoves;
@@ -259,6 +259,10 @@ namespace ChessDotNet.Search2
             var principalVariation = _state.PrincipalVariationTable.GetPrincipalVariation();
             var principalVariationStr = principalVariation.ToPositionsString();
             Console.WriteLine($"PV: {principalVariationStr}");
+            var nodes = _statistics.NodesSearched;
+            var elapsed = _stopper.GetSearchedTime() / 1000;
+            var nps = (long)(nodes / elapsed);
+            Console.WriteLine($"NPS: {nps.ToUserFriendly()}");
 
             //if (transpositionTablePv.Count == 0)
             //{

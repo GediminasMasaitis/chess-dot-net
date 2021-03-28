@@ -1,5 +1,4 @@
-﻿using System;
-using ChessDotNet.Data;
+﻿using ChessDotNet.Data;
 
 namespace ChessDotNet.Evaluation
 {

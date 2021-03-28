@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using ChessDotNet.Data;
+using ChessDotNet.Evaluation;
 using ChessDotNet.MoveGeneration;
 using ChessDotNet.Search2;
 
@@ -45,6 +46,8 @@ namespace ChessDotNet.Perft
             return results;
         }
 
+        private IEvaluationService _eval = new EvaluationService();
+
         private IEnumerable<MoveAndNodes> GetMovesAndNodeRoot(int depth)
         {
             if (depth == 0)
@@ -60,6 +63,7 @@ namespace ChessDotNet.Perft
                 var move = possibleMoves[i];
                 //_currentBoard.TestMove(move);
                 _currentBoard.DoMove2(move);
+                //_eval.Evaluate(_currentBoard);
                 var nodes = GetNodesInner(_currentBoard, depth - 1);
                 //var nodes = 1;
                 _currentBoard.UndoMove();
@@ -68,7 +72,7 @@ namespace ChessDotNet.Perft
                 yield return moveAndNodes;
             }
         }
-
+        
         private int GetNodesInner(Board board, int depth)
         {
             if (depth == 0)
@@ -90,6 +94,7 @@ namespace ChessDotNet.Perft
                 var move = possibleMoves[i];
                 //board.TestMove(move);
                 board.DoMove2(move);
+                //_eval.Evaluate(_currentBoard);
                 var childNodes = GetNodesInner(board, depth - 1);
                 board.UndoMove();
                 nodes += childNodes;
