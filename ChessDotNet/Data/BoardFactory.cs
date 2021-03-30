@@ -22,6 +22,8 @@ namespace ChessDotNet.Data
             board.History2 = new UndoMove[2048];
             board.PieceCounts = new int[ChessPiece.Count];
             board.Material = new Score[2];
+            board.PawnMaterial = new Score[2];
+            board.PieceMaterial = new Score[2];
             board.KingPositions = new Position[2];
 
             var boardPosition = 0;

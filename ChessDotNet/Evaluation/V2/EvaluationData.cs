@@ -62,10 +62,8 @@ namespace ChessDotNet.Evaluation.V2
 
         public static readonly int[] seventh = new int[2] { 6, 1 };
         public static readonly int[] eighth = new int[2] { 7, 0 };
-        public static readonly int[] stepFwd = new int[2] { NORTH, SOUTH };
-        public static readonly int[] stepBck = new int[2] { SOUTH, NORTH };
         
-        public readonly int[] PIECE_VALUE = new int[ChessPiece.Count];
+        public static readonly int[] PIECE_VALUE = new int[ChessPiece.Count];
 
         /* Piece-square tables - we use size of the board representation,
         not 0..63, to avoid re-indexing. Initialization routine, however,
@@ -76,10 +74,10 @@ namespace ChessDotNet.Evaluation.V2
         /* piece-square tables for pawn structure */
 
         public readonly int[,] weak_pawn = new int[2, 64]; // isolated and backward pawns are scored in the same way
-        public readonly int[,] passed_pawn = new int[2, 64];
-        public readonly int[,] protected_passer = new int[2, 64];
+        public readonly int[][] passed_pawn = new int[2][];
+        public readonly int[][] protected_passer = new int[2][];
 
-        public readonly int[,,] sqNearK = new int[2, 64, 64];
+        public readonly bool[,,] sqNearK = new bool[2, 64, 64];
 
         /* single values - letter p before a name signifies a penalty */
 
@@ -315,19 +313,24 @@ namespace ChessDotNet.Evaluation.V2
         };
 
         /* adjustements of piece value based on the number of own pawns */
-        public readonly int[] n_adj = new int[9] { -20, -16, -12, -8, -4, 0, 4, 8, 12 };
-        public readonly int[] r_adj = new int[9] { 15, 12, 9, 6, 3, 0, -3, -6, -9 };
+        // TODO: Make it go up to 64
+        public readonly int[] n_adj = new int[] { -20, -16, -12, -8, -4, 0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44 };
+        public readonly int[] r_adj = new int[] { 15, 12, 9, 6, 3, 0, -3, -6, -9, -12, -15, -18, -21, -24, -27, -30, -33 };
 
         //public int[][] vector = new int[5][];
 
         public EvaluationData()
         {
-            SetWeights();
             setSquaresNearKing();
             setPcsq();
         }
 
-        void SetWeights()
+        static EvaluationData()
+        {
+            SetWeights();
+        }
+
+        static void SetWeights()
         {
             /********************************************************************************
             *  We use material values by IM Larry Kaufman with additional + 10 for a Bishop *
@@ -359,31 +362,48 @@ namespace ChessDotNet.Evaluation.V2
             {
                 for (int j = 0; j < 64; ++j)
                 {
-                    sqNearK[ChessPiece.White, i, j] = 0;
-                    sqNearK[ChessPiece.Black, i, j] = 0;
+                    sqNearK[ChessPiece.White, i, j] = false;
+                    sqNearK[ChessPiece.Black, i, j] = false;
 
                     /* squares constituting the ring around both kings */
-                    if (j == i + NORTH || j == i + SOUTH
-                                          || j == i + EAST || j == i + WEST
-                                          || j == i + NW || j == i + NE
-                                          || j == i + SW || j == i + SE)
+                    if
+                    (
+                        j == i + NORTH
+                        || j == i + SOUTH
+                        || j == i + EAST
+                        || j == i + WEST
+                        || j == i + NW
+                        || j == i + NE
+                        || j == i + SW 
+                        || j == i + SE
+                    )
                     {
 
-                        sqNearK[ChessPiece.White, i, j] = 1;
-                        sqNearK[ChessPiece.Black, i, j] = 1;
+                        sqNearK[ChessPiece.White, i, j] = true;
+                        sqNearK[ChessPiece.Black, i, j] = true;
                     }
 
                     /* squares in front of the white king ring */
-                    if (j == i + NORTH + NORTH
+                    if
+                    (
+                        j == i + NORTH + NORTH
                         || j == i + NORTH + NE
-                        || j == i + NORTH + NW)
-                        sqNearK[ChessPiece.White, i, j] = 1;
+                        || j == i + NORTH + NW
+                    )
+                    {
+                        sqNearK[ChessPiece.White, i, j] = true;
+                    }
 
                     /* squares in front og the black king ring */
-                    if (j == i + SOUTH + SOUTH
+                    if
+                    (
+                        j == i + SOUTH + SOUTH
                         || j == i + SOUTH + SE
-                        || j == i + SOUTH + SW)
-                        sqNearK[ChessPiece.Black, i, j] = 1; // TODO: BLACK??
+                        || j == i + SOUTH + SW
+                    )
+                    {
+                        sqNearK[ChessPiece.Black, i, j] = true; // TODO: BLACK??
+                    }
                 }
             }
         }
@@ -394,6 +414,13 @@ namespace ChessDotNet.Evaluation.V2
             {
                 mgPst[i] = new int[64];
                 egPst[i] = new int[64];
+
+            }
+
+            for (int i = 0; i < 2; i++)
+            {
+                passed_pawn[i] = new int[64];
+                protected_passer[i] = new int[64];
             }
 
             for (int pos = 0; pos < 64; ++pos)
@@ -401,13 +428,13 @@ namespace ChessDotNet.Evaluation.V2
                 var invPos = inv_sq[pos];
                 weak_pawn[ChessPiece.White, invPos] = weak_pawn_pcsq[pos];
                 weak_pawn[ChessPiece.Black, pos] = weak_pawn_pcsq[pos];
-                passed_pawn[ChessPiece.White, invPos] = passed_pawn_pcsq[pos];
-                passed_pawn[ChessPiece.Black, pos] = passed_pawn_pcsq[pos];
+                passed_pawn[ChessPiece.White][invPos] = passed_pawn_pcsq[pos];
+                passed_pawn[ChessPiece.Black][pos] = passed_pawn_pcsq[pos];
 
                 /* protected passers are slightly stronger than ordinary passers */
 
-                protected_passer[ChessPiece.White, invPos] = (passed_pawn_pcsq[pos] * 10) / 8;
-                protected_passer[ChessPiece.Black, pos] = (passed_pawn_pcsq[pos] * 10) / 8;
+                protected_passer[ChessPiece.White][invPos] = (passed_pawn_pcsq[pos] * 10) / 8;
+                protected_passer[ChessPiece.Black][pos] = (passed_pawn_pcsq[pos] * 10) / 8;
 
                 /* now set the piece/square tables for each color and piece type */
 

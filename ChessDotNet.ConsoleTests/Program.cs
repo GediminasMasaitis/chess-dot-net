@@ -52,9 +52,10 @@ namespace ChessDotNet.ConsoleTests
             //TestRepetitions();
 
             //DoPerftClient();
-            DoPerft();
+            //DoPerft();
             //DoPerftSuite();
-            //await DoSearch2Async();
+            DoSearch2Async();
+            //DoSpeedTest();
             //TestSee();
             //TestEval2();
 
@@ -186,7 +187,26 @@ namespace ChessDotNet.ConsoleTests
             perftRunner.Test(fen, 7);
         }
 
-        private static async Task DoSearch2Async()
+        private static void DoSpeedTest()
+        {
+            var board = MakeBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+            var eval = new EvaluationService2(new EvaluationData());
+            var scores = new EvaluationScores();
+            var sw = new Stopwatch();
+            sw.Start();
+            var num = 100000000;
+            for (var i = 0; i < num; i++)
+            {
+                //eval.evalPawnStructure(board, evaluationBoard);
+                //eval.Evaluate(board);
+                //eval.EvalRook(board, evaluationBoard, scores, 0, ChessPiece.White);
+            }
+            sw.Stop();
+            var speed = (long)(num / sw.Elapsed.TotalSeconds);
+            Console.WriteLine($"{speed.ToUserFriendly()}e/s");
+        }
+
+        private static void DoSearch2Async()
         {
             Console.WriteLine(Marshal.SizeOf<Move>());
             Console.WriteLine(Marshal.SizeOf<TranspositionTableEntry>());
@@ -220,8 +240,8 @@ namespace ChessDotNet.ConsoleTests
             options.Debug = true;
             var stopwatch = new Stopwatch();
             var cancellationTokenSource = new CancellationTokenSource();
-            var searchTask = Task.Run(() =>
-            {
+            //var searchTask = Task.Run(() =>
+            //{
                 for (int i = 0; i < 1; i++)
                 {
                     stopwatch.Restart();
@@ -230,9 +250,9 @@ namespace ChessDotNet.ConsoleTests
                     searchService.NewGame();
                     Console.WriteLine($"Total time: {stopwatch.Elapsed.TotalMilliseconds} ms");
                 }
-            });
+            //});
             HandleInterrupt(cancellationTokenSource);
-            await searchTask;
+            //await searchTask;
             var foo = 123;
         }
 

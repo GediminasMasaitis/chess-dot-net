@@ -45,6 +45,22 @@ namespace ChessDotNet
         }
 #endif
 
+#if NET5_0
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int BitCount(this ulong bb)
+        {
+            return BitOperations.PopCount(bb);
+        }
+#else
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int BitCount(this ulong bb)
+        {
+            ulong result = bb - ((bb >> 1) & 0x5555555555555555UL);
+            result = (result & 0x3333333333333333UL) + ((result >> 2) & 0x3333333333333333UL);
+            return (byte)(unchecked(((result + (result >> 4)) & 0xF0F0F0F0F0F0F0FUL) * 0x101010101010101UL) >> 56);
+        }
+#endif
+
 
         public static IEnumerable<int> GetOnes(this ulong bb)
         {

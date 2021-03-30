@@ -7,16 +7,14 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ChessDotNet", "ChessDotNet\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ChessDotNet.ConsoleTests", "ChessDotNet.ConsoleTests\ChessDotNet.ConsoleTests.csproj", "{C08512A5-47AA-4F11-BD9A-B52F38D0F6FA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChessDotNet.BoardVisualizer", "ChessDotNet.BoardVisualizer\ChessDotNet.BoardVisualizer.csproj", "{84B0870A-071A-430A-B6B5-6D26F5AEE8F1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ChessDotNet.BoardVisualizer", "ChessDotNet.BoardVisualizer\ChessDotNet.BoardVisualizer.csproj", "{84B0870A-071A-430A-B6B5-6D26F5AEE8F1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChessDotNet.ConsoleRunner", "ChessDotNet.ConsoleRunner\ChessDotNet.ConsoleRunner.csproj", "{9B1C5495-301C-4B20-8930-C943D3256F34}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ChessDotNet.ConsoleRunner", "ChessDotNet.ConsoleRunner\ChessDotNet.ConsoleRunner.csproj", "{9B1C5495-301C-4B20-8930-C943D3256F34}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{0462EEF1-6892-423B-95A5-EF9059C19766}"
 	ProjectSection(SolutionItems) = preProject
 		TODO.txt = TODO.txt
 	EndProjectSection
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ChessDotNet.Cpp", "ChessDotNet.Cpp\ChessDotNet.Cpp.vcxproj", "{DB2A20B7-C80D-4F15-83E0-FA46C883BBEC}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ChessDotNet.Common", "ChessDotNet.Common\ChessDotNet.Common.csproj", "{561AE429-EBD1-4423-AFB2-C6300BC31EEC}"
 EndProject
@@ -60,10 +58,6 @@ Global
 		{9B1C5495-301C-4B20-8930-C943D3256F34}.Release|Any CPU.Build.0 = Release|Any CPU
 		{9B1C5495-301C-4B20-8930-C943D3256F34}.Release|x64.ActiveCfg = Release|x64
 		{9B1C5495-301C-4B20-8930-C943D3256F34}.Release|x64.Build.0 = Release|x64
-		{DB2A20B7-C80D-4F15-83E0-FA46C883BBEC}.Debug|Any CPU.ActiveCfg = Debug|Win32
-		{DB2A20B7-C80D-4F15-83E0-FA46C883BBEC}.Debug|x64.ActiveCfg = Debug|x64
-		{DB2A20B7-C80D-4F15-83E0-FA46C883BBEC}.Release|Any CPU.ActiveCfg = Release|Win32
-		{DB2A20B7-C80D-4F15-83E0-FA46C883BBEC}.Release|x64.ActiveCfg = Release|x64
 		{561AE429-EBD1-4423-AFB2-C6300BC31EEC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{561AE429-EBD1-4423-AFB2-C6300BC31EEC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{561AE429-EBD1-4423-AFB2-C6300BC31EEC}.Debug|x64.ActiveCfg = Debug|x64

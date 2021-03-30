@@ -1,8 +1,11 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Text;
+using ChessDotNet.Common;
 using ChessDotNet.Data;
 using ChessDotNet.Hashing;
+using ChessDotNet.MoveGeneration;
 using ChessDotNet.MoveGeneration.SlideGeneration;
 using Score = System.Int32;
 using Position = System.Byte;
@@ -14,7 +17,9 @@ namespace ChessDotNet.Evaluation.V2
     {
         private readonly EvaluationData _e;
         private readonly EvalHashTable _evalTable;
-        private EvalHashTable _pawnTable;
+        private readonly EvalHashTable _pawnTable;
+        private readonly AttacksService _attacks;
+        private readonly ISlideMoveGenerator _slideGenerator;
 
         public EvaluationService2(EvaluationData e)
         {
@@ -23,6 +28,8 @@ namespace ChessDotNet.Evaluation.V2
             _evalTable.SetSize(16 * 1024 * 1024);
             _pawnTable = new EvalHashTable();
             _pawnTable.SetSize(16 * 1024 * 1024);
+            _slideGenerator = new MagicBitboardsService();
+            _attacks = new AttacksService(_slideGenerator);
         }
 
         public int Evaluate(Board board)
@@ -35,18 +42,25 @@ namespace ChessDotNet.Evaluation.V2
             }
 
             var v = new EvaluationScores();
-            var eb = new EvaluationBoard(_e);
-            eb.Fill(board);
-            var score = eval(board, v, eb);
+            //var eb = new EvaluationBoard(_e, _attacks);
+            //eb.Fill(board);
+            var score = eval(board, v);
             _evalTable.Store(board.Key, score);
             //printEval(board, e, eb, v, score);
             return score;
         }
 
-        private int eval(Board b, EvaluationScores v, EvaluationBoard eb)
+        private int eval(Board b, EvaluationScores v)
         {
-            int result = 0, mgScore = 0, egScore = 0;
-            int stronger, weaker;
+            int result = 0;
+            int mgScore = 0;
+            int egScore = 0;
+            int stronger = 0;
+            int weaker = 0;
+
+            var pawnControl = new ulong[2];
+            pawnControl[ChessPiece.White] = _attacks.GetAttackedByPawns(b.BitBoard[ChessPiece.WhitePawn], true);
+            pawnControl[ChessPiece.Black] = _attacks.GetAttackedByPawns(b.BitBoard[ChessPiece.BlackPawn], false);
 
             /**************************************************************************
             *  Clear all eval data                                                    *
@@ -70,23 +84,14 @@ namespace ChessDotNet.Evaluation.V2
             }
 
             /************************************************************************** 
-            *  Sum the incrementally counted material and piece/square table values   *
-            **************************************************************************/
-
-            mgScore = eb.piece_material[ChessPiece.White] + eb.pawn_material[ChessPiece.White] + eb.pcsq_mg[ChessPiece.White]
-                    - eb.piece_material[ChessPiece.Black] - eb.pawn_material[ChessPiece.Black] - eb.pcsq_mg[ChessPiece.Black];
-            egScore = eb.piece_material[ChessPiece.White] + eb.pawn_material[ChessPiece.White] + eb.pcsq_eg[ChessPiece.White]
-                    - eb.piece_material[ChessPiece.Black] - eb.pawn_material[ChessPiece.Black] - eb.pcsq_eg[ChessPiece.Black];
-
-            /************************************************************************** 
             * add king's pawn shield score and evaluate part of piece blockage score  *
             * (the rest of the latter will be done via piece eval)                    *
             **************************************************************************/
 
             v.kingShield[ChessPiece.White] = wKingShield(b);
             v.kingShield[ChessPiece.Black] = bKingShield(b);
-            blockedPieces(b, v, eb, ChessPiece.White);
-            blockedPieces(b, v, eb, ChessPiece.Black);
+            blockedPieces(b, v, ChessPiece.White);
+            blockedPieces(b, v, ChessPiece.Black);
             mgScore += (v.kingShield[ChessPiece.White] - v.kingShield[ChessPiece.Black]);
 
             /* tempo bonus */
@@ -112,43 +117,25 @@ namespace ChessDotNet.Evaluation.V2
             v.adjustMaterial[ChessPiece.White] += _e.r_adj[b.PieceCounts[ChessPiece.WhitePawn]] * b.PieceCounts[ChessPiece.WhiteRook];
             v.adjustMaterial[ChessPiece.Black] += _e.r_adj[b.PieceCounts[ChessPiece.BlackPawn]] * b.PieceCounts[ChessPiece.BlackRook];
 
-            var pawnScore = getPawnScore(b, eb);
+            var pawnScore = getPawnScore(b, pawnControl);
             result += pawnScore;
 
             /**************************************************************************
             *  Evaluate pieces                                                        *
             **************************************************************************/
 
-            for (Piece sq = 0; sq < 64; sq++)
-            {
-                var piece = b.ArrayBoard[sq];
-                if (piece == ChessPiece.Empty)
-                {
-                    continue;
-                }
+            EvaluatePieces(b, v, pawnControl);
 
-                var color = (byte)(piece & ChessPiece.Color);
-                var pieceNoColor = (byte)(piece & ~ChessPiece.Color);
-                switch (pieceNoColor)
-                {
-                    case ChessPiece.Pawn: // pawns are evaluated separately
-                        break;
-                    case ChessPiece.Knight:
-                        EvalKnight(b, eb, v, sq, color);
-                        break;
-                    case ChessPiece.Bishop:
-                        EvalBishop(b, eb, v, sq, color);
-                        break;
-                    case ChessPiece.Rook:
-                        EvalRook(b, eb, v, sq, color);
-                        break;
-                    case ChessPiece.Queen:
-                        EvalQueen(b, eb, v, sq, color);
-                        break;
-                    case ChessPiece.King:
-                        break;
-                }
-            }
+
+            /************************************************************************** 
+            *  Sum the incrementally counted material and piece/square table values   *
+            **************************************************************************/
+
+            mgScore += b.PieceMaterial[ChessPiece.White] + b.PawnMaterial[ChessPiece.White] + v.PieceSquaresMidgame[ChessPiece.White]
+                      - b.PieceMaterial[ChessPiece.Black] - b.PawnMaterial[ChessPiece.Black] - v.PieceSquaresMidgame[ChessPiece.Black];
+            egScore += b.PieceMaterial[ChessPiece.White] + b.PawnMaterial[ChessPiece.White] + v.PieceSquaresEndgame[ChessPiece.White]
+                      - b.PieceMaterial[ChessPiece.Black] - b.PawnMaterial[ChessPiece.Black] - v.PieceSquaresEndgame[ChessPiece.Black];
+
 
             /**************************************************************************
             *  Merge  midgame  and endgame score. We interpolate between  these  two  *
@@ -209,23 +196,23 @@ namespace ChessDotNet.Evaluation.V2
                 weaker = ChessPiece.White;
             }
 
-            if (eb.pawn_material[stronger] == 0)
+            if (b.PawnMaterial[stronger] == 0)
             {
 
-                if (eb.piece_material[stronger] < 400)
+                if (b.PieceMaterial[stronger] < 400)
                 {
                     return 0;
                 }
 
-                if (eb.pawn_material[weaker] == 0 && (eb.piece_material[stronger] == 2 * _e.PIECE_VALUE[ChessPiece.Knight]))
+                if (b.PawnMaterial[weaker] == 0 && (b.PieceMaterial[stronger] == 2 * EvaluationData.PIECE_VALUE[ChessPiece.Knight]))
                 {
                     return 0;
                 }
 
                 if
                 (
-                    eb.piece_material[stronger] == _e.PIECE_VALUE[ChessPiece.Rook]
-                    && eb.piece_material[weaker] == _e.PIECE_VALUE[ChessPiece.Bishop]
+                    b.PieceMaterial[stronger] == EvaluationData.PIECE_VALUE[ChessPiece.Rook]
+                    && b.PieceMaterial[weaker] == EvaluationData.PIECE_VALUE[ChessPiece.Knight] // TODO FIXED
                 )
                 {
                     result /= 2;
@@ -233,8 +220,8 @@ namespace ChessDotNet.Evaluation.V2
 
                 if
                 (
-                    eb.piece_material[stronger] == _e.PIECE_VALUE[ChessPiece.Rook]
-                    && eb.piece_material[weaker] == _e.PIECE_VALUE[ChessPiece.Bishop]
+                    b.PieceMaterial[stronger] == EvaluationData.PIECE_VALUE[ChessPiece.Rook]
+                    && b.PieceMaterial[weaker] == EvaluationData.PIECE_VALUE[ChessPiece.Bishop]
                 )
                 {
                     result /= 2;
@@ -242,8 +229,8 @@ namespace ChessDotNet.Evaluation.V2
 
                 if
                 (
-                    eb.piece_material[stronger] == _e.PIECE_VALUE[ChessPiece.Rook] + _e.PIECE_VALUE[ChessPiece.Bishop]
-                    && eb.piece_material[stronger] == _e.PIECE_VALUE[ChessPiece.Rook]
+                    b.PieceMaterial[stronger] == EvaluationData.PIECE_VALUE[ChessPiece.Rook] + EvaluationData.PIECE_VALUE[ChessPiece.Knight]
+                    && b.PieceMaterial[weaker] == EvaluationData.PIECE_VALUE[ChessPiece.Rook]
                 )
                 {
                     result /= 2;
@@ -251,8 +238,8 @@ namespace ChessDotNet.Evaluation.V2
 
                 if
                 (
-                    eb.piece_material[stronger] == _e.PIECE_VALUE[ChessPiece.Rook] + _e.PIECE_VALUE[ChessPiece.Knight]
-                    && eb.piece_material[stronger] == _e.PIECE_VALUE[ChessPiece.Rook]
+                    b.PieceMaterial[stronger] == EvaluationData.PIECE_VALUE[ChessPiece.Rook] + EvaluationData.PIECE_VALUE[ChessPiece.Bishop]
+                    && b.PieceMaterial[weaker] == EvaluationData.PIECE_VALUE[ChessPiece.Rook]
                 )
                 {
                     result /= 2;
@@ -269,7 +256,70 @@ namespace ChessDotNet.Evaluation.V2
             return result;
         }
 
-        void EvalKnight(Board b, EvaluationBoard eb, EvaluationScores v, Position sq, Piece side)
+        void EvaluatePieces(Board b, EvaluationScores v, ulong[] pawnControl)
+        {
+            for (Piece color = 0; color <= 1; color++)
+            {
+                var pawn = ChessPiece.Pawn + color;
+                var pawns = b.BitBoard[pawn];
+                while (pawns != 0)
+                {
+                    var pos = pawns.BitScanForward();
+                    v.PieceSquaresMidgame[color] += _e.mgPst[pawn][pos];
+                    v.PieceSquaresEndgame[color] += _e.egPst[pawn][pos];
+                    pawns &= ~(1UL << pos);
+                }
+
+                var knight = ChessPiece.Knight + color;
+                var knights = b.BitBoard[knight];
+                while (knights != 0)
+                {
+                    var pos = knights.BitScanForward();
+                    EvalKnight(b, v, pos, color, pawnControl);
+                    v.PieceSquaresMidgame[color] += _e.mgPst[knight][pos];
+                    v.PieceSquaresEndgame[color] += _e.egPst[knight][pos];
+                    knights &= ~(1UL << pos);
+                }
+
+                var bishop = ChessPiece.Bishop + color;
+                var bishops = b.BitBoard[bishop];
+                while (bishops != 0)
+                {
+                    var pos = bishops.BitScanForward();
+                    EvalBishop(b, v, pos, color, pawnControl);
+                    v.PieceSquaresMidgame[color] += _e.mgPst[bishop][pos];
+                    v.PieceSquaresEndgame[color] += _e.egPst[bishop][pos];
+                    bishops &= ~(1UL << pos);
+                }
+
+                var rook = ChessPiece.Rook + color;
+                var rooks = b.BitBoard[rook];
+                while (rooks != 0)
+                {
+                    var pos = rooks.BitScanForward();
+                    EvalRook(b, v, pos, color);
+                    v.PieceSquaresMidgame[color] += _e.mgPst[rook][pos];
+                    v.PieceSquaresEndgame[color] += _e.egPst[rook][pos];
+                    rooks &= ~(1UL << pos);
+                }
+
+                var queen = ChessPiece.Queen + color;
+                var queens = b.BitBoard[queen];
+                while (queens != 0)
+                {
+                    var pos = queens.BitScanForward();
+                    EvalQueen(b, v, pos, color);
+                    v.PieceSquaresMidgame[color] += _e.mgPst[queen][pos];
+                    v.PieceSquaresEndgame[color] += _e.egPst[queen][pos];
+                    queens &= ~(1UL << pos);
+                }
+
+                v.PieceSquaresMidgame[color] += _e.mgPst[ChessPiece.King + color][b.KingPositions[color]];
+                v.PieceSquaresEndgame[color] += _e.egPst[ChessPiece.King + color][b.KingPositions[color]];
+            }
+        }
+
+        void EvalKnight(Board b, EvaluationScores v, Position sq, Piece side, ulong[] pawnControl)
         {
             int att = 0;
             int mob = 0;
@@ -281,28 +331,15 @@ namespace ChessDotNet.Evaluation.V2
             **************************************************************************/
 
             var jumps = BitboardConstants.KnightJumps[sq];
-            while (jumps != 0)
-            {
-                var pos = jumps.BitScanForward();
-                var piece = b.ArrayBoard[pos];
-                var color = piece & ChessPiece.Color;
-                if (piece == ChessPiece.Empty || color != side)
-                {
-                    // we exclude mobility to squares controlled by enemy pawns
-                    // but don't penalize possible captures
-                    if (eb.pawn_ctrl[side ^ 1, pos] == 0)
-                    {
-                        ++mob;
-                    }
+            var opponent = side == ChessPiece.White ? b.BlackPieces : b.WhitePieces;
+            var emptyOrOpponent = (b.EmptySquares | opponent) & jumps;
 
-                    if (_e.sqNearK[side ^ 1, b.KingPositions[side ^ 1], pos] != 0)
-                    {
-                        ++att; // this knight is attacking zone around enemy king
-                    }
-                }
-                jumps &= ~(1UL << pos);
-            }
-            
+            var uncontrolled = emptyOrOpponent & ~pawnControl[side ^ 1];
+            mob += uncontrolled.BitCount();
+
+            var emptyOrOpponentNearKing = emptyOrOpponent & BitboardConstants.KingExtendedJumps[side ^ 1][b.KingPositions[side ^ 1]];
+            att += emptyOrOpponentNearKing.BitCount();
+
             /**************************************************************************
             *  Evaluate mobility. We try to do it in such a way that zero represents  *
             *  average mobility, but  our formula of doing so is a puer guess.        *
@@ -330,7 +367,7 @@ namespace ChessDotNet.Evaluation.V2
             v.egTropism[side] += 3 * tropism;
         }
 
-        void EvalBishop(Board b, EvaluationBoard eb, EvaluationScores v, Position sq, Piece side)
+        void EvalBishop(Board b, EvaluationScores v, Position sq, Piece side, ulong[] pawnControl)
         {
 
             int att = 0;
@@ -339,35 +376,16 @@ namespace ChessDotNet.Evaluation.V2
             /**************************************************************************
             *  Collect data about mobility and king attacks                           *
             **************************************************************************/
-            var mb = new MagicBitboardsService();
-            var slide = mb.DiagonalAntidiagonalSlide(b.AllPieces, sq);
-            while (slide != 0)
-            {
-                var pos = slide.BitScanForward();
-                var piece = b.ArrayBoard[pos];
-                var color = piece & ChessPiece.Color;
-                if (piece == ChessPiece.Empty)
-                {
-                    if (eb.pawn_ctrl[side ^ 1, pos] == 0)
-                    {
-                        ++mob;
-                    }
-                    // we exclude mobility to squares controlled by enemy pawns
-                    if (_e.sqNearK[side ^ 1, b.KingPositions[side ^ 1], pos] != 0)
-                    {
-                        ++att;
-                    }
-                }
-                else if(color != side)
-                {
-                    mob++;
-                    if (_e.sqNearK[side ^ 1, b.KingPositions[side ^ 1], pos] != 0)
-                    {
-                        ++att; // this knight is attacking zone around enemy king
-                    }
-                }
-                slide &= ~(1UL << pos);
-            }
+            var slide = _slideGenerator.DiagonalAntidiagonalSlide(b.AllPieces, sq);
+
+            var emptyUncontrolled = b.EmptySquares & ~pawnControl[side ^ 1] & slide;
+            mob += emptyUncontrolled.BitCount();
+
+            var opponent = (side == ChessPiece.White ? b.BlackPieces : b.WhitePieces) & slide;
+            mob += opponent.BitCount();
+
+            var emptyOrOpponentNearKing = (b.EmptySquares | opponent) & BitboardConstants.KingExtendedJumps[side ^ 1][b.KingPositions[side ^ 1]] & slide;
+            att += emptyOrOpponentNearKing.BitCount();
 
             v.mgMob[side] += 3 * (mob - 7);
             v.egMob[side] += 3 * (mob - 7);
@@ -383,7 +401,7 @@ namespace ChessDotNet.Evaluation.V2
             v.egTropism[side] += 1 * tropism;
         }
 
-        void EvalRook(Board b, EvaluationBoard eb, EvaluationScores v, Position sq, Piece side)
+        public void EvalRook(Board b, EvaluationScores v, Position sq, Piece side)
         {
 
             int att = 0;
@@ -397,10 +415,21 @@ namespace ChessDotNet.Evaluation.V2
             *  to attack along that rank or if enemy king is cut off on 8th rank      *
             /*************************************************************************/
 
+            //if
+            //(
+            //    sqRow == EvaluationData.seventh[side]
+            //    && (eb.pawns_on_rank[side ^ 1, EvaluationData.seventh[side]] > 0 || (b.KingPositions[side ^ 1]) == EvaluationData.eighth[side])
+            //)
+
+            var seventh = EvaluationData.seventh[side];
+            var eighth = EvaluationData.eighth[side];
             if
             (
-                sqRow == EvaluationData.seventh[side]
-                && (eb.pawns_on_rank[side ^ 1, EvaluationData.seventh[side]] > 0 || (b.KingPositions[side ^ 1]) == EvaluationData.eighth[side])
+                sqRow == seventh
+                && (
+                    (b.BitBoard[ChessPiece.Pawn + side ^ 1] & BitboardConstants.Ranks[seventh]) != 0
+                    || (b.BitBoard[ChessPiece.King + side ^ 1] & BitboardConstants.Ranks[eighth]) != 0
+                )
             )
             {
                 v.mgMob[side] += 20;
@@ -411,10 +440,12 @@ namespace ChessDotNet.Evaluation.V2
             *  Bonus for open and half-open files is merged with mobility score.      *
             *  Bonus for open files targetting enemy king is added to attWeight[]     *
             /*************************************************************************/
-
-            if (eb.pawns_on_file[side, sqCol] == 0)
+            var file = BitboardConstants.Files[sqCol];
+            var ownPawnsOnFile = b.BitBoard[ChessPiece.Pawn + side] & file;
+            if (ownPawnsOnFile == 0)
             {
-                if (eb.pawns_on_file[side ^ 1, sqCol] == 0) // fully open file
+                var opponentPawnsOnFile = b.BitBoard[ChessPiece.Pawn + side ^ 1] & file;
+                if (opponentPawnsOnFile == 0) // fully open file
                 {
                     v.mgMob[side] += EvaluationData.ROOK_OPEN;
                     v.egMob[side] += EvaluationData.ROOK_OPEN;
@@ -438,24 +469,15 @@ namespace ChessDotNet.Evaluation.V2
             *  Collect data about mobility and king attacks                           *
             **************************************************************************/
 
-            var mb = new MagicBitboardsService();
-            var slide = mb.HorizontalVerticalSlide(b.AllPieces, sq);
-            while (slide != 0)
-            {
-                var pos = slide.BitScanForward();
-                var piece = b.ArrayBoard[pos];
-                var color = piece & ChessPiece.Color;
-                if (piece == ChessPiece.Empty || color != side)
-                {
-                    mob++;
-                    if (_e.sqNearK[side ^ 1, b.KingPositions[side ^ 1], pos] != 0)
-                    {
-                        ++att; // this knight is attacking zone around enemy king
-                    }
-                }
-                slide &= ~(1UL << pos);
-            }
-            
+            var slide = _slideGenerator.HorizontalVerticalSlide(b.AllPieces, sq);
+
+            var opponent = side == ChessPiece.White ? b.BlackPieces : b.WhitePieces;
+            var emptyOrOpponent = (b.EmptySquares | opponent) & slide;
+            mob += emptyOrOpponent.BitCount();
+
+            var emptyOrOpponentNearKing = emptyOrOpponent & BitboardConstants.KingExtendedJumps[side ^ 1][b.KingPositions[side ^ 1]];
+            att += emptyOrOpponentNearKing.BitCount();
+
             v.mgMob[side] += 2 * (mob - 7);
             v.egMob[side] += 4 * (mob - 7);
 
@@ -470,19 +492,24 @@ namespace ChessDotNet.Evaluation.V2
             v.egTropism[side] += 1 * tropism;
         }
 
-        void EvalQueen(Board b, EvaluationBoard eb, EvaluationScores v, Position sq, Piece side)
+        void EvalQueen(Board b, EvaluationScores v, Position sq, Piece side)
         {
 
             int att = 0;
             int mob = 0;
 
-            var sqCol = sq & 7;
+            //var sqCol = sq & 7;
             var sqRow = sq >> 3;
 
+            var seventh = EvaluationData.seventh[side];
+            var eighth = EvaluationData.eighth[side];
             if
             (
-                sqRow == EvaluationData.seventh[side]
-                && (eb.pawns_on_rank[side ^ 1, EvaluationData.seventh[side]] > 0 || (b.KingPositions[side ^ 1]) == EvaluationData.eighth[side])
+                sqRow == seventh
+                && (
+                    (b.BitBoard[ChessPiece.Pawn + side ^ 1] & BitboardConstants.Ranks[seventh]) != 0
+                    || (b.BitBoard[ChessPiece.King + side ^ 1] & BitboardConstants.Ranks[eighth]) != 0
+                )
             )
             {
                 v.mgMob[side] += 5;
@@ -507,21 +534,13 @@ namespace ChessDotNet.Evaluation.V2
 
             var mb = new MagicBitboardsService();
             var slide = mb.AllSlide(b.AllPieces, sq);
-            while (slide != 0)
-            {
-                var pos = slide.BitScanForward();
-                var piece = b.ArrayBoard[pos];
-                var color = piece & ChessPiece.Color;
-                if (piece == ChessPiece.Empty || color != side)
-                {
-                    mob++;
-                    if (_e.sqNearK[side ^ 1, b.KingPositions[side ^ 1], pos] != 0)
-                    {
-                        ++att; // this knight is attacking zone around enemy king
-                    }
-                }
-                slide &= ~(1UL << pos);
-            }
+
+            var opponent = side == ChessPiece.White ? b.BlackPieces : b.WhitePieces;
+            var emptyOrOpponent = (b.EmptySquares | opponent) & slide;
+            mob += emptyOrOpponent.BitCount();
+
+            var emptyOrOpponentNearKing = emptyOrOpponent & BitboardConstants.KingExtendedJumps[side ^ 1][b.KingPositions[side ^ 1]];
+            att += emptyOrOpponentNearKing.BitCount();
 
             v.mgMob[side] += 1 * (mob - 14);
             v.egMob[side] += 2 * (mob - 14);
@@ -545,8 +564,7 @@ namespace ChessDotNet.Evaluation.V2
         int wKingShield(Board b)
         {
             int result = 0;
-            var kingBitboard = b.BitBoard[ChessPiece.WhiteKing];
-            var kingPos = kingBitboard.BitScanForward();
+            var kingPos = b.KingPositions[ChessPiece.White];
             var col = kingPos & 7;
 
             /* king on the kingside */
@@ -582,8 +600,7 @@ namespace ChessDotNet.Evaluation.V2
         int bKingShield(Board b)
         {
             int result = 0;
-            var kingBitboard = b.BitBoard[ChessPiece.BlackKing];
-            var kingPos = kingBitboard.BitScanForward();
+            var kingPos = b.KingPositions[ChessPiece.Black];
             var col = kingPos & 7;
 
             /* king on the kingside */
@@ -625,7 +642,7 @@ namespace ChessDotNet.Evaluation.V2
             return EvaluationData.RelativePositions[color][position];
         }
 
-        void blockedPieces(Board b, EvaluationScores v, EvaluationBoard eb, int side)
+        void blockedPieces(Board b, EvaluationScores v, int side)
         {
 
             int oppo = side ^ 1;
@@ -711,7 +728,7 @@ namespace ChessDotNet.Evaluation.V2
                 v.blockages[side] -= EvaluationData.P_KING_BLOCKS_ROOK;
         }
 
-        int getPawnScore(Board b, EvaluationBoard eb)
+        int getPawnScore(Board b, ulong[] pawnControl)
         {
             /**************************************************************************
             *  This function wraps hashing mechanism around evalPawnStructure().      *
@@ -728,36 +745,45 @@ namespace ChessDotNet.Evaluation.V2
                 return hashScore;
             }
 
-            var score = evalPawnStructure(b, eb);
+            var score = evalPawnStructure(b, pawnControl);
             _pawnTable.Store(b.PawnKey, score);
-            return score ;
+            return score;
         }
 
-        int evalPawnStructure(Board b, EvaluationBoard eb)
+        public int evalPawnStructure(Board b, ulong[] pawnControl)
         {
             int result = 0;
 
-            for (byte sq = 0; sq < 64; sq++)
+            var whitePawns = b.BitBoard[ChessPiece.WhitePawn];
+            while (whitePawns != 0)
             {
-                var piece = b.ArrayBoard[sq];
-                if (piece == ChessPiece.WhitePawn || piece == ChessPiece.BlackPawn)
-                {
-                    var color = (Position)(piece & ChessPiece.Color);
-                    if (color == ChessPiece.White)
-                    {
-                        result += EvalPawn(b, eb, sq, ChessPiece.White);
-                    }
-                    else
-                    {
-                        result -= EvalPawn(b, eb, sq, ChessPiece.Black);
-                    }
-                }
+                var sq = whitePawns.BitScanForward();
+                var pawnBitboard = 1UL << sq;
+
+                //var pawnResult = EvalPawnOld(b, eb, sq, ChessPiece.White);
+                var pawnResult = EvalPawn(b, sq, ChessPiece.White, pawnControl, pawnBitboard);
+                result += pawnResult;
+
+                whitePawns &= ~pawnBitboard;
+            }
+
+            var blackPawns = b.BitBoard[ChessPiece.BlackPawn];
+            while (blackPawns != 0)
+            {
+                var sq = blackPawns.BitScanForward();
+                var pawnBitboard = 1UL << sq;
+
+                //var pawnResult = EvalPawnOld(b, eb, sq, ChessPiece.White);
+                var pawnResult = EvalPawn(b, sq, ChessPiece.Black, pawnControl, pawnBitboard);
+                result -= pawnResult;
+
+                blackPawns &= ~pawnBitboard;
             }
 
             return result;
         }
 
-        int EvalPawn(Board b, EvaluationBoard eb, Position sq, byte side)
+        int EvalPawn(Board b, byte sq, byte side, ulong[] pawnControl, ulong bitboard)
         {
             int result = 0;
             var flagIsPassed = true; // we will be trying to disprove that
@@ -771,56 +797,30 @@ namespace ChessDotNet.Evaluation.V2
             *   a flag on finding that our pawn is opposed by enemy pawn.             *
             **************************************************************************/
 
-            if (eb.pawn_ctrl[side, sq] > 0) // if a pawn is attacked by a pawn, it is not
+            // TODO: MISTAKE HERE - should be [side ^ 1]
+            if ((bitboard & pawnControl[side ^ 1]) != 0)
             {
-                flagIsPassed = false; // passed (not sure if it's the best decision)
+                flagIsPassed = false;
             }
 
-            var nextSq = sq + EvaluationData.stepFwd[side];
+            var inFront = BitboardConstants.ColumnInFront[side][sq];
+            var ownPawnsInFront = inFront & b.BitBoard[ChessPiece.Pawn + side];
+            result -= ownPawnsInFront.BitCount() * 20;
 
-            while (nextSq > 0 && nextSq < 64)
-            {
-                var nextPiece = b.ArrayBoard[nextSq];
-                if (nextPiece == ChessPiece.WhitePawn || nextPiece == ChessPiece.BlackPawn)
-                { // either opposed by enemy pawn or doubled
-                    var color = (Position)(nextPiece & ChessPiece.Color);
-                    flagIsPassed = false;
-                    if (color == side)
-                    {
-                        result -= 20;       // doubled pawn penalty
-                    }
-                    else
-                    {
-                        flagIsOpposed = true;  // flag our pawn as opposed
-                    }
-                }
+            var opponentPawnsInFront = inFront & b.BitBoard[ChessPiece.Pawn + (side ^ 1)];
+            flagIsOpposed = opponentPawnsInFront != 0;
 
-                if (eb.pawn_ctrl[side ^ 1, nextSq] > 0)
-                {
-                    flagIsPassed = false;
-                }
-
-                nextSq += EvaluationData.stepFwd[side];
-            }
+            var pawnControlledInFront = inFront & (pawnControl[side ^ 1] | ownPawnsInFront | opponentPawnsInFront);
+            flagIsPassed &= pawnControlledInFront == 0;
 
             /**************************************************************************
             *   Another loop, going backwards and checking whether pawn has support.  *
             *   Here we can at least break out of it for speed optimization.          *
             **************************************************************************/
 
-            nextSq = sq + EvaluationData.stepFwd[side]; // so that a pawn in a duo will not be considered weak
-
-            while (nextSq > 0 && nextSq < 64)
-            {
-
-                if (eb.pawn_ctrl[side,nextSq] > 0)
-                {
-                    flagIsWeak = false;
-                    break;
-                }
-
-                nextSq += EvaluationData.stepBck[side];
-            }
+            var behind = BitboardConstants.ColumnSortOfBehind[side][sq];
+            var ownControlledBehind = behind & pawnControl[side];
+            flagIsWeak = ownControlledBehind == 0;
 
             /**************************************************************************
             *  Evaluate passed pawns, scoring them higher if they are protected       *
@@ -829,14 +829,15 @@ namespace ChessDotNet.Evaluation.V2
 
             if (flagIsPassed)
             {
-                var pawnSupported = isPawnSupported(b, sq, side);
+                var pawnSupported = IsPawnSupported(b, sq, side);
+
                 if (pawnSupported)
                 {
-                    result += _e.protected_passer[side, sq];
+                    result += _e.protected_passer[side][sq];
                 }
                 else
                 {
-                    result += _e.passed_pawn[side, sq];
+                    result += _e.passed_pawn[side][sq];
                 }
             }
 
@@ -857,56 +858,26 @@ namespace ChessDotNet.Evaluation.V2
             return result;
         }
 
-        bool isPawnSupported(Board b, Position sq, Piece side)
+        private bool IsPawnSupported(Board board, Position pos, Piece color)
         {
-            int step;
-            if (side == ChessPiece.White)
-            {
-                step = EvaluationData.SOUTH;
-            }
-            else
-            {
-                step = EvaluationData.NORTH;
-            }
-
-            var col = sq & 7;
-
-
-            if (col > 0 && isPiece(b, side, ChessPiece.Pawn, sq + EvaluationData.WEST))
-            {
-                return true;
-            }
-
-            if (col < 7 && isPiece(b, side, ChessPiece.Pawn, sq + EvaluationData.EAST))
-            {
-                return true;
-            }
-
-            if (col > 0 && isPiece(b, side, ChessPiece.Pawn, sq + step + EvaluationData.WEST))
-            {
-                return true;
-            }
-
-            if (col < 7 && isPiece(b, side, ChessPiece.Pawn, sq + step + EvaluationData.EAST))
-            {
-                return true;
-            }
-
-            return false;
+            var supportMask = BitboardConstants.PawnSupportJumps[color][pos];
+            var pawns = board.BitBoard[ChessPiece.Pawn + color];
+            var supported = (supportMask & pawns) != 0;
+            return supported;
         }
 
-        void printEval(Board b, EvaluationData e, EvaluationBoard eb, EvaluationScores v, Score score)
+        void printEval(Board b, EvaluationData e, EvaluationScores v, Score score)
         {
             var builder = new StringBuilder();
             builder.Append("------------------------------------------\n");
             builder.Append($"Total value (for side to move): {score}\n");
-            builder.Append($"Material balance       : {eb.piece_material[ChessPiece.White] + eb.pawn_material[ChessPiece.White] - eb.piece_material[ChessPiece.Black] - eb.pawn_material[ChessPiece.Black]} \n");
+            builder.Append($"Material balance       : {b.PieceMaterial[ChessPiece.White] + b.PawnMaterial[ChessPiece.White] - b.PieceMaterial[ChessPiece.Black] - b.PawnMaterial[ChessPiece.Black]} \n");
             builder.Append("Material adjustement   : ");
             printEvalFactor(builder, v.adjustMaterial[ChessPiece.White], v.adjustMaterial[ChessPiece.Black]);
             builder.Append("Mg Piece/square tables : ");
-            printEvalFactor(builder, eb.pcsq_mg[ChessPiece.White], eb.pcsq_mg[ChessPiece.Black]);
+            printEvalFactor(builder, v.PieceSquaresMidgame[ChessPiece.White], v.PieceSquaresMidgame[ChessPiece.Black]);
             builder.Append("Eg Piece/square tables : ");
-            printEvalFactor(builder, eb.pcsq_eg[ChessPiece.White], eb.pcsq_eg[ChessPiece.Black]);
+            printEvalFactor(builder, v.PieceSquaresEndgame[ChessPiece.White], v.PieceSquaresEndgame[ChessPiece.Black]);
             builder.Append("Mg Mobility            : ");
             printEvalFactor(builder, v.mgMob[ChessPiece.White], v.mgMob[ChessPiece.Black]);
             builder.Append("Eg Mobility            : ");

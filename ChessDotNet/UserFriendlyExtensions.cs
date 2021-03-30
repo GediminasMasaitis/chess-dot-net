@@ -5,7 +5,7 @@ using System.Text;
 
 namespace ChessDotNet
 {
-    internal static class UserFriendlyExtensions
+    public static class UserFriendlyExtensions
     {
         public static string TrimNumber(long number, double divisor, string sufffix)
         {

@@ -90,7 +90,7 @@ namespace ChessDotNet.MoveGeneration
             return allJumps;
         }
 
-        private ulong GetAttackedByPawns(Bitboard myPawns, bool whiteToMove)
+        public ulong GetAttackedByPawns(Bitboard myPawns, bool whiteToMove)
         {
             ulong pawnsLeft;
             ulong pawnsRight;

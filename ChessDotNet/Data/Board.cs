@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using ChessDotNet.Evaluation;
+using ChessDotNet.Evaluation.V2;
 using ChessDotNet.Fen;
 using ChessDotNet.Hashing;
 using ChessDotNet.Testing;
@@ -48,6 +49,8 @@ namespace ChessDotNet.Data
         public int[] PieceCounts { get; set; }
         public Score[] Material { get; set; }
         public Position[] KingPositions { get; set; }
+        public Score[] PawnMaterial { get; set; }
+        public Score[] PieceMaterial { get; set; }
 
         private static CastlingPermission[] CastleRevocationTable { get; set; }
 
@@ -288,6 +291,7 @@ namespace ChessDotNet.Data
             ArrayBoard[move.From] = move.Piece;
             BitBoard[move.Piece] |= fromPosBitBoard;
 
+            // PROMOTIONS
             Piece promotedPiece;
             if (move.PawnPromoteTo != ChessPiece.Empty)
             {
@@ -296,6 +300,8 @@ namespace ChessDotNet.Data
                 PieceCounts[promotedPiece]--;
                 Material[ColorToMove] += EvaluationService.Weights[ChessPiece.Pawn];
                 Material[ColorToMove] -= EvaluationService.Weights[promotedPiece];
+                PawnMaterial[ColorToMove] += EvaluationData.PIECE_VALUE[ChessPiece.Pawn];
+                PieceMaterial[ColorToMove] -= EvaluationData.PIECE_VALUE[promotedPiece];
             }
             else
             {
@@ -329,6 +335,15 @@ namespace ChessDotNet.Data
                 }
                 PieceCounts[move.TakesPiece]++;
                 Material[originalColorToMove] += EvaluationService.Weights[move.TakesPiece];
+                var takesPawn = (move.TakesPiece & ~ChessPiece.Color) == ChessPiece.Pawn;
+                if (takesPawn)
+                {
+                    PawnMaterial[originalColorToMove] += EvaluationData.PIECE_VALUE[move.TakesPiece];
+                }
+                else
+                {
+                    PieceMaterial[originalColorToMove] += EvaluationData.PIECE_VALUE[move.TakesPiece];
+                }
             }
 
             // EN PASSANT
@@ -471,19 +486,27 @@ namespace ChessDotNet.Data
             Key ^= ZobristKeys.ZPieces[move.From][move.Piece];
 
             var isPawn = (move.Piece & ~ChessPiece.Color) == ChessPiece.Pawn;
+            var takesPawn = (move.TakesPiece & ~ChessPiece.Color) == ChessPiece.Pawn;
             if (isPawn)
             {
                 PawnKey ^= ZobristKeys.ZPieces[move.From][move.Piece];
             }
 
+
+            // PROMOTIONS
             Piece promotedPiece;
             if (move.PawnPromoteTo != ChessPiece.Empty)
             {
                 promotedPiece = move.PawnPromoteTo;
+
                 PieceCounts[move.Piece]--;
                 PieceCounts[promotedPiece]++;
+
                 Material[originalColorToMove] -= EvaluationService.Weights[ChessPiece.Pawn];
                 Material[originalColorToMove] += EvaluationService.Weights[promotedPiece];
+
+                PawnMaterial[originalColorToMove] -= EvaluationData.PIECE_VALUE[ChessPiece.Pawn];
+                PieceMaterial[originalColorToMove] += EvaluationData.PIECE_VALUE[promotedPiece];
             }
             else
             {
@@ -513,7 +536,7 @@ namespace ChessDotNet.Data
                 {
                     BitBoard[move.TakesPiece] &= ~toPosBitBoard;
                     Key ^= ZobristKeys.ZPieces[move.To][move.TakesPiece];
-                    if((move.TakesPiece & ~ChessPiece.Color) == ChessPiece.Pawn)
+                    if(takesPawn)
                     {
                         PawnKey ^= ZobristKeys.ZPieces[move.To][move.TakesPiece];
                     }
@@ -521,6 +544,14 @@ namespace ChessDotNet.Data
                 LastTookPieceHistoryIndex = HistoryDepth - 1;
                 PieceCounts[move.TakesPiece]--;
                 Material[ColorToMove] -= EvaluationService.Weights[move.TakesPiece];
+                if (takesPawn)
+                {
+                    PawnMaterial[ColorToMove] -= EvaluationData.PIECE_VALUE[move.TakesPiece];
+                }
+                else
+                {
+                    PieceMaterial[ColorToMove] -= EvaluationData.PIECE_VALUE[move.TakesPiece];
+                }
             }
 
             // EN PASSANT
@@ -609,6 +640,8 @@ namespace ChessDotNet.Data
             clone.LastTookPieceHistoryIndex = LastTookPieceHistoryIndex;
             clone.PieceCounts = (int[])PieceCounts.Clone();
             clone.Material = (Score[])Material.Clone();
+            clone.PawnMaterial = (Score[])Material.Clone();
+            clone.PieceMaterial = (Score[])Material.Clone();
             clone.KingPositions = (Position[])KingPositions.Clone();
             clone.History2 = (UndoMove[])History2.Clone();
             clone.HistoryDepth = HistoryDepth;
@@ -665,6 +698,8 @@ namespace ChessDotNet.Data
             Debug.Assert(lhs.LastTookPieceHistoryIndex == rhs.LastTookPieceHistoryIndex);
             Debug.Assert(lhs.PieceCounts.SequenceEqual(rhs.PieceCounts));
             Debug.Assert(lhs.Material.SequenceEqual(rhs.Material));
+            Debug.Assert(lhs.PawnMaterial.SequenceEqual(rhs.PawnMaterial));
+            Debug.Assert(lhs.PieceMaterial.SequenceEqual(rhs.PieceMaterial));
             Debug.Assert(lhs.CastlingPermissions == rhs.CastlingPermissions);
             Debug.Assert(lhs.HistoryDepth == rhs.HistoryDepth);
 
@@ -710,6 +745,15 @@ namespace ChessDotNet.Data
             {
                 var color = piece & ChessPiece.Color;
                 Material[color] += PieceCounts[piece] * EvaluationService.Weights[piece];
+                var isPawn = (piece & ~ChessPiece.Color) == ChessPiece.Pawn;
+                if (isPawn)
+                {
+                    PawnMaterial[color] += PieceCounts[piece] * EvaluationData.PIECE_VALUE[piece];
+                }
+                else
+                {
+                    PieceMaterial[color] += PieceCounts[piece] * EvaluationData.PIECE_VALUE[piece];
+                }
             }
         }
 

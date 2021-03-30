@@ -23,7 +23,14 @@ namespace ChessDotNet.Data
         public static Bitboard VerticalSpan { get; private set; }
 
         public static Bitboard[] PawnSpans { get; private set; }
-        public static Position[] PawnSpanPositions { get; private set; }
+        public static Position[] PawnPositions { get; private set; }
+
+        public static Bitboard[] KingExtendedSpans { get; private set; }
+        public static Position[] KingExtendedPositions { get; private set; }
+
+        public static Bitboard[] PawnSupportSpans { get; private set; }
+        public static Position[] PawnSupportPositions { get; private set; }
+
         public static Bitboard[] Files { get; private set; }
         public static Bitboard[] Ranks { get; private set; }
         public static Bitboard[] Diagonals { get; private set; }
@@ -43,10 +50,14 @@ namespace ChessDotNet.Data
 
         public static Bitboard[] KnightJumps { get; private set; }
         public static Bitboard[] KingJumps { get; private set; }
-        public static Bitboard[] DiagonalJumps { get; private set; }
-        public static Bitboard[] VerticalJumps { get; private set; }
-        public static Bitboard[] VerticalDiagonalJumps { get; private set; }
+        //public static Bitboard[] DiagonalJumps { get; private set; }
+        //public static Bitboard[] VerticalJumps { get; private set; }
+        //public static Bitboard[] VerticalDiagonalJumps { get; private set; }
         public static Bitboard[,] PawnJumps { get; private set; }
+        public static Bitboard[][] KingExtendedJumps { get; private set; }
+        public static Bitboard[][] PawnSupportJumps { get; private set; }
+        public static Bitboard[][] ColumnInFront { get; private set; }
+        public static Bitboard[][] ColumnSortOfBehind { get; private set; }
 
         public static void Init()
         {
@@ -59,11 +70,25 @@ namespace ChessDotNet.Data
             KingSpanPosition = 9;
 
             PawnSpans = new Bitboard[2];
-            PawnSpanPositions = new Position[2];
+            PawnPositions = new Position[2];
             PawnSpans[ChessPiece.White] = 1280;
-            PawnSpanPositions[ChessPiece.White] = 1;
+            PawnPositions[ChessPiece.White] = 1;
             PawnSpans[ChessPiece.Black] = 5;
-            PawnSpanPositions[ChessPiece.Black] = 9;
+            PawnPositions[ChessPiece.Black] = 9;
+
+            KingExtendedSpans = new Bitboard[2];
+            KingExtendedPositions = new Position[2];
+            KingExtendedSpans[ChessPiece.White] = KingSpan | (1UL << 24) | (1UL << 25) | (1UL << 26);
+            KingExtendedPositions[ChessPiece.White] = 9;
+            KingExtendedSpans[ChessPiece.Black] = (KingSpan << 8) | (1UL << 0) | (1UL << 1) | (1UL << 2);
+            KingExtendedPositions[ChessPiece.Black] = 17;
+            
+            PawnSupportSpans = new Bitboard[2];
+            PawnSupportPositions = new Position[2];
+            PawnSupportSpans[ChessPiece.White] = (1UL << 0) | (1UL << 2) | (1UL << 8) | (1UL << 10);
+            PawnSupportPositions[ChessPiece.White] = 9;
+            PawnSupportSpans[ChessPiece.Black] = (1UL << 0) | (1UL << 2) | (1UL << 8) | (1UL << 10);
+            PawnSupportPositions[ChessPiece.Black] = 1;
 
             DiagonalSpan = (1UL << 0) | (1UL << 2) | (1UL << 16) | (1UL << 18);
             VerticalSpan = (1UL << 1) | (1UL << 8) | (1UL << 10) | (1UL << 17);
@@ -151,9 +176,16 @@ namespace ChessDotNet.Data
             KnightJumps = new Bitboard[64];
             KingJumps = new Bitboard[64];
             PawnJumps = new ulong[2, 64];
-            DiagonalJumps = new Bitboard[64];
-            VerticalJumps = new Bitboard[64];
-            VerticalDiagonalJumps = new Bitboard[64];
+            //DiagonalJumps = new Bitboard[64];
+            //VerticalJumps = new Bitboard[64];
+            //VerticalDiagonalJumps = new Bitboard[64];
+            KingExtendedJumps = new ulong[2][];
+            PawnSupportJumps = new ulong[2][];
+            for (int i = 0; i < 2; i++)
+            {
+                KingExtendedJumps[i] = new ulong[64];
+                PawnSupportJumps[i] = new ulong[64];
+            }
 
             for (Position i = 0; i < 64; i++)
             {
@@ -161,14 +193,71 @@ namespace ChessDotNet.Data
                 KingJumps[i] = GetAttackedByJumpingPiece(i, KingSpan, KingSpanPosition);
                 for (int j = 0; j < 2; j++)
                 {
-                    var span = PawnSpans[j];
-                    var position = PawnSpanPositions[j];
-                    PawnJumps[j, i] = GetAttackedByJumpingPiece(i, span, position);
+                    var pawnSpan = PawnSpans[j];
+                    var pawnPosition = PawnPositions[j];
+                    PawnJumps[j, i] = GetAttackedByJumpingPiece(i, pawnSpan, pawnPosition);
+
+                    var kingExtendedSpan = KingExtendedSpans[j];
+                    var kingExtendedPosition = KingExtendedPositions[j];
+                    KingExtendedJumps[j][i] = GetAttackedByJumpingPiece(i, kingExtendedSpan, kingExtendedPosition);
+
+                    var pawnSupportSpan = PawnSupportSpans[j];
+                    var pawnSupportPosition = PawnSupportPositions[j];
+                    PawnSupportJumps[j][i] = GetAttackedByJumpingPiece(i, pawnSupportSpan, pawnSupportPosition);
                 }
 
-                DiagonalJumps[i] = GetAttackedByJumpingPiece(i, DiagonalSpan, 9);
-                VerticalJumps[i] = GetAttackedByJumpingPiece(i, VerticalSpan, 9);
-                VerticalDiagonalJumps[i] = GetAttackedByJumpingPiece(i, VerticalSpan | DiagonalSpan, 9);
+                //DiagonalJumps[i] = GetAttackedByJumpingPiece(i, DiagonalSpan, 9);
+                //VerticalJumps[i] = GetAttackedByJumpingPiece(i, VerticalSpan, 9);
+                //VerticalDiagonalJumps[i] = GetAttackedByJumpingPiece(i, VerticalSpan | DiagonalSpan, 9);
+            }
+
+            ColumnInFront = new ulong[2][];
+            ColumnSortOfBehind = new ulong[2][];
+            for (int i = 0; i < 2; i++)
+            {
+                ColumnInFront[i] = new ulong[64];
+                ColumnSortOfBehind[i] = new ulong[64];
+            }
+
+            for (int i = 0; i < 64; i++)
+            {
+                var col = i & 7;
+                var row = i >> 3;
+                var bitboard = 0UL;
+                for (int j = row + 1; j < 8; j++)
+                {
+                    bitboard |= 1UL << (col + j * 8);
+                }
+                ColumnInFront[ChessPiece.White][i] = bitboard;
+
+                bitboard = 0;
+                for (int j = row - 1; j >= 0; j--)
+                {
+                    bitboard |= 1UL << (col + j * 8);
+                }
+                ColumnInFront[ChessPiece.Black][i] = bitboard;
+
+                bitboard = 0;
+                for (int j = row + 1; j >= 0; j--)
+                {
+                    if (j > 7)
+                    {
+                        continue;
+                    }
+                    bitboard |= 1UL << (col + j * 8);
+                }
+                ColumnSortOfBehind[ChessPiece.White][i] = bitboard;
+
+                bitboard = 0;
+                for (int j = row - 1; j < 8; j++)
+                {
+                    if (j < 0)
+                    {
+                        continue;
+                    }
+                    bitboard |= 1UL << (col + j * 8);
+                }
+                ColumnSortOfBehind[ChessPiece.Black][i] = bitboard;
             }
         }
 
@@ -185,6 +274,7 @@ namespace ChessDotNet.Data
             }
 
             jumps &= ~(position % 8 < 4 ? BitboardConstants.Files[6] | BitboardConstants.Files[7] : BitboardConstants.Files[0] | BitboardConstants.Files[1]);
+            jumps &= ~((position >> 3) < 4 ? BitboardConstants.Ranks[6] | BitboardConstants.Ranks[7] : BitboardConstants.Ranks[0] | BitboardConstants.Ranks[1]);
             return jumps;
         }
     }
