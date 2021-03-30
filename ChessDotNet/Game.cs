@@ -18,8 +18,6 @@ namespace ChessDotNet
 {
     public class Game
     {
-        public SearchOptions Options { get; set; }
-
         private BoardFactory BoardFact { get; set; }
         private ISlideMoveGenerator Hyperbola { get; set; }
         private IEvaluationService Evaluation { get; set; }
@@ -31,7 +29,6 @@ namespace ChessDotNet
 
         public Game()
         {
-            Options = new SearchOptions();
             var slideMoveGenerator = new MagicBitboardsService();
             var evaluationService = new EvaluationService2(new EvaluationData());
             var attacksService = new AttacksService(slideMoveGenerator);
@@ -81,7 +78,7 @@ namespace ChessDotNet
             {
                 SetStartingPos();
             }
-            var searchResult = Search.Run(CurrentBoard, searchParameters, Options);
+            var searchResult = Search.Run(CurrentBoard, searchParameters);
             CurrentBoard.DoMove2(searchResult[0]);
             return searchResult;
         }

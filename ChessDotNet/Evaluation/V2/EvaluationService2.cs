@@ -20,9 +20,11 @@ namespace ChessDotNet.Evaluation.V2
         private readonly EvalHashTable _pawnTable;
         private readonly AttacksService _attacks;
         private readonly ISlideMoveGenerator _slideGenerator;
+        private readonly EvaluationScores _evaluationScores;
 
         public EvaluationService2(EvaluationData e)
         {
+            _evaluationScores = new EvaluationScores();
             _e = e;
             _evalTable = new EvalHashTable();
             _evalTable.SetSize(16 * 1024 * 1024);
@@ -34,20 +36,26 @@ namespace ChessDotNet.Evaluation.V2
 
         public int Evaluate(Board board)
         {
-            //var key = ZobristKeys.CalculateKey(board);
-            var success = _evalTable.TryProbe(board.Key, out var hashScore);
-            if (success)
+            if (EngineOptions.UseEvalHashTable)
             {
-                return hashScore;
-            }
+                var success = _evalTable.TryProbe(board.Key, out var hashScore);
+                if (success)
+                {
+                    return hashScore;
+                }
 
-            var v = new EvaluationScores();
-            //var eb = new EvaluationBoard(_e, _attacks);
-            //eb.Fill(board);
-            var score = eval(board, v);
-            _evalTable.Store(board.Key, score);
-            //printEval(board, e, eb, v, score);
-            return score;
+                var score = eval(board, _evaluationScores);
+                _evalTable.Store(board.Key, score);
+                //printEval(board, e, eb, v, score);
+                return score;
+            }
+            else
+            {
+                var score = eval(board, _evaluationScores);
+                _evalTable.Store(board.Key, score);
+                //printEval(board, e, eb, v, score);
+                return score;
+            }
         }
 
         private int eval(Board b, EvaluationScores v)
@@ -66,22 +74,10 @@ namespace ChessDotNet.Evaluation.V2
             *  Clear all eval data                                                    *
             **************************************************************************/
 
+            _evaluationScores.Clear();
+            
             v.gamePhase = b.PieceCounts[ChessPiece.WhiteKnight] + b.PieceCounts[ChessPiece.WhiteBishop] + 2 * b.PieceCounts[ChessPiece.WhiteRook] + 4 * b.PieceCounts[ChessPiece.WhiteQueen]
                         + b.PieceCounts[ChessPiece.BlackKnight] + b.PieceCounts[ChessPiece.BlackBishop] + 2 * b.PieceCounts[ChessPiece.BlackRook] + 4 * b.PieceCounts[ChessPiece.BlackQueen];
-
-            for (int side = 0; side <= 1; side++)
-            {
-                v.mgMob[side] = 0;
-                v.egMob[side] = 0;
-                v.attCnt[side] = 0;
-                v.attWeight[side] = 0;
-                v.mgTropism[side] = 0;
-                v.egTropism[side] = 0;
-                v.adjustMaterial[side] = 0;
-                v.blockages[side] = 0;
-                v.positionalThemes[side] = 0;
-                v.kingShield[side] = 0;
-            }
 
             /************************************************************************** 
             * add king's pawn shield score and evaluate part of piece blockage score  *
@@ -739,15 +735,23 @@ namespace ChessDotNet.Evaluation.V2
             *  would have been done elsewhere.                                        *
             **************************************************************************/
 
-            var success = _pawnTable.TryProbe(b.PawnKey, out var hashScore);
-            if (success)
+            if (EngineOptions.UsePawnHashTable)
             {
-                return hashScore;
-            }
+                var success = _pawnTable.TryProbe(b.PawnKey, out var hashScore);
+                if (success)
+                {
+                    return hashScore;
+                }
 
-            var score = evalPawnStructure(b, pawnControl);
-            _pawnTable.Store(b.PawnKey, score);
-            return score;
+                var score = evalPawnStructure(b, pawnControl);
+                _pawnTable.Store(b.PawnKey, score);
+                return score;
+            }
+            else
+            {
+                var score = evalPawnStructure(b, pawnControl);
+                return score;
+            }
         }
 
         public int evalPawnStructure(Board b, ulong[] pawnControl)

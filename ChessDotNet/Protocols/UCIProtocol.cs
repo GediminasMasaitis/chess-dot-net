@@ -27,7 +27,7 @@ namespace ChessDotNet.Protocols
 
         private void OnOnSearchInfo(SearchInfo searchInfo)
         {
-            if (!_game.Options.SearchInfo)
+            if (!EngineOptions.SearchInfo)
             {
                 return;
             }
@@ -49,7 +49,7 @@ namespace ChessDotNet.Protocols
                     ConfigureUCI();
                     break;
                 case "setoption":
-                    SetOption(_game.Options, words);
+                    SetOption(words);
                     break;
                 case "isready":
                     Output("readyok");
@@ -172,16 +172,16 @@ namespace ChessDotNet.Protocols
             OnExit?.Invoke(errorCode);
         }
 
-        private void SetOption(SearchOptions options, string[] words)
+        private void SetOption(string[] words)
         {
             var name = words[2];
             var value = words[4];
 
-            var optionsType = options.GetType();
+            var optionsType = typeof(EngineOptions);
             var property = optionsType.GetProperty(name);
-            var type = property.PropertyType;
-            var convertedValue = Convert.ChangeType(value, type);
-            property.SetValue(options, convertedValue);
+            var propertyType = property.PropertyType;
+            var convertedValue = Convert.ChangeType(value, propertyType);
+            property.SetValue(null, convertedValue);
         }
         
         private void ConfigureUCI()
@@ -189,13 +189,13 @@ namespace ChessDotNet.Protocols
             Output("id name Chess.NET");
             Output("id author Gediminas Masaitis");
             Output(string.Empty);
-            PrintOptions(_game.Options);
+            PrintOptions();
             Output("uciok");
         }
 
-        private void PrintOptions(SearchOptions options)
+        private void PrintOptions()
         {
-            var optionsType = options.GetType();
+            var optionsType = typeof(EngineOptions);
             var properties = optionsType.GetProperties();
             foreach (var property in properties)
             {
@@ -204,7 +204,7 @@ namespace ChessDotNet.Protocols
                 var name = property.Name;
                 builder.Append($"option name {name}");
 
-                var value = property.GetValue(options);
+                var value = property.GetValue(null);
                 string typeStr;
                 string valueStr;
                 switch (value)

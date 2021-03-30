@@ -18,6 +18,7 @@
 
         public void Clear()
         {
+            gamePhase = 0;
             for (int side = 0; side <= 1; side++)
             {
                 mgMob[side] = 0;

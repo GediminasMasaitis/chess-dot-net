@@ -236,8 +236,7 @@ namespace ChessDotNet.ConsoleTests
             //searchParameters.WhiteTime = 1000;
             searchParameters.Infinite = true;
             //searchParameters.MaxDepth = 9;
-            var options = new SearchOptions();
-            options.Debug = true;
+            EngineOptions.Debug = true;
             var stopwatch = new Stopwatch();
             var cancellationTokenSource = new CancellationTokenSource();
             //var searchTask = Task.Run(() =>
@@ -245,7 +244,7 @@ namespace ChessDotNet.ConsoleTests
                 for (int i = 0; i < 1; i++)
                 {
                     stopwatch.Restart();
-                    var moves = searchService.Run(board, searchParameters, options, cancellationTokenSource.Token);
+                    var moves = searchService.Run(board, searchParameters, cancellationTokenSource.Token);
                     stopwatch.Stop();
                     searchService.NewGame();
                     Console.WriteLine($"Total time: {stopwatch.Elapsed.TotalMilliseconds} ms");
