@@ -119,15 +119,19 @@ namespace ChessDotNet.Data
                 switch (moveText[4])
                 {
                     case 'q':
+                    case 'Q':
                         pawnPromotesTo = isWhite ? ChessPiece.WhiteQueen : ChessPiece.BlackQueen;
                         break;
                     case 'n':
+                    case 'N':
                         pawnPromotesTo = isWhite ? ChessPiece.WhiteKnight : ChessPiece.BlackKnight;
                         break;
                     case 'b':
-                        pawnPromotesTo = isWhite ? ChessPiece.WhitePawn : ChessPiece.BlackPawn;
+                    case 'B':
+                        pawnPromotesTo = isWhite ? ChessPiece.WhiteBishop : ChessPiece.BlackBishop;
                         break;
                     case 'r':
+                    case 'R':
                         pawnPromotesTo = isWhite ? ChessPiece.WhiteRook : ChessPiece.BlackRook;
                         break;
                 }

@@ -8,7 +8,7 @@ namespace ChessDotNet.Search2
     [StructLayout(LayoutKind.Sequential, Pack = 4)]
     public struct TranspositionTableEntry
     {
-        private readonly uint _extra;
+        public uint _extra;
 
         public UInt64 Key { get; set; }
         //public UInt64 Key2 { get; set; }

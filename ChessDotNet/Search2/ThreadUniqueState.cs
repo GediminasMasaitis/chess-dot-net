@@ -7,19 +7,25 @@ namespace ChessDotNet.Search2
 {
     public class ThreadUniqueState
     {
-        public uint[][] Killers { get; }
-        public uint[][] Countermove { get; }
-        public int[][][] History { get; }
-        public int[][][] Cutoff { get; }
-        public Move[][] Moves { get; }
-        public int[][] SeeScores { get; }
-        public int[][] MoveStaticScores { get; }
+        public int ThreadId { get; set; }
+        public uint[][] Killers { get; set; }
+        public uint[][] Countermove { get; set;}
+        public int[][][] History { get; set; }
+        public int[][][] Cutoff { get; set; }
+        public Move[][] Moves { get; set; }
+        public int[][] SeeScores { get; set; }
+        public int[][] MoveStaticScores { get; set; }
 
         [JsonIgnore]
         public Random Rng { get; }
 
+        public ThreadUniqueState()
+        {
+        }
+
         public ThreadUniqueState(int threadId)
         {
+            ThreadId = threadId;
             Killers = new uint[SearchConstants.MaxDepth][]; // Non-captures causing beta cutoffs
             for (int i = 0; i < Killers.Length; i++)
             {
@@ -119,6 +125,12 @@ namespace ChessDotNet.Search2
                     Array.Clear(History[i][j], 0, History[i][j].Length);
                 }
             }
+        }
+
+        public ThreadUniqueState Clone()
+        {
+            // TODO
+            return new ThreadUniqueState(ThreadId);
         }
     }
 }

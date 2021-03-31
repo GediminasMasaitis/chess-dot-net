@@ -250,10 +250,10 @@ namespace ChessDotNet.MoveGeneration
         {
             var piece = forWhite ? ChessPiece.WhitePawn : ChessPiece.BlackPawn;
 
-            moves[moveCount++] = new Move(from, to, piece, takesPiece, enPassant, false, forWhite ? ChessPiece.WhiteKnight : ChessPiece.BlackKnight);
-            moves[moveCount++] = new Move(from, to, piece, takesPiece, enPassant, false, forWhite ? ChessPiece.WhiteBishop : ChessPiece.BlackBishop);
-            moves[moveCount++] = new Move(from, to, piece, takesPiece, enPassant, false, forWhite ? ChessPiece.WhiteRook : ChessPiece.BlackRook);
             moves[moveCount++] = new Move(from, to, piece, takesPiece, enPassant, false, forWhite ? ChessPiece.WhiteQueen : ChessPiece.BlackQueen);
+            moves[moveCount++] = new Move(from, to, piece, takesPiece, enPassant, false, forWhite ? ChessPiece.WhiteKnight : ChessPiece.BlackKnight);
+            moves[moveCount++] = new Move(from, to, piece, takesPiece, enPassant, false, forWhite ? ChessPiece.WhiteRook : ChessPiece.BlackRook);
+            moves[moveCount++] = new Move(from, to, piece, takesPiece, enPassant, false, forWhite ? ChessPiece.WhiteBishop : ChessPiece.BlackBishop);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

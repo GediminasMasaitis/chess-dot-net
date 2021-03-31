@@ -33,8 +33,8 @@ namespace ChessDotNet.Search2
         private readonly SearchStatistics _statistics;
         private readonly SeeService _see;
 
-        public static Board InitialBoard;
-        public static SearchState InitialState;
+        private Board _initialBoard;
+        private SearchState _initialState;
 
         public SearchService2
         (
@@ -66,8 +66,8 @@ namespace ChessDotNet.Search2
             _stopper.NewSearch(parameters, board.WhiteToMove, token);
             _statistics.Reset();
             _state.OnNewSearch();
-            //InitialBoard = board.Clone();
-            //InitialState = _state.DeepClone();
+            _initialBoard = board.Clone();
+            _initialState = _state.Clone();
             var log = SearchLog.New();
 
             if (SearchConstants.Multithreading)
@@ -193,6 +193,12 @@ namespace ChessDotNet.Search2
                 }
 
                 LogOutput(0, board, depth, score);
+                //ValidatePv(); // TODO: validation
+                //if (depth == 10)
+                //{
+                //    State.SaveState(board, _state);
+                //    return score;
+                //}
 
                 if (_stopper.ShouldStopOnDepthIncrease(depth))
                 {
@@ -1116,15 +1122,10 @@ namespace ChessDotNet.Search2
         private void ValidatePv()
         {
             //var pv = _state.TranspositionTable.GetSavedPrincipalVariation();
-            var pv = _state.TranspositionTable.GetPrincipalVariation(InitialBoard);
-
-            if (pv.Count > 100)
-            {
-                var a = 123;
-            }
+            var pv = _state.TranspositionTable.GetPrincipalVariation(_initialBoard);
 
             var moves = pv.Select(x => x.Move).ToList();
-            var clone = InitialBoard.Clone();
+            var clone = _initialBoard.Clone();
             var possibleMoves = new Move[SearchConstants.MaxDepth];
             var moveCount = 0;
             for (var i = 0; i < moves.Count; i++)
@@ -1145,8 +1146,7 @@ namespace ChessDotNet.Search2
 
                 if (!ok)
                 {
-                    break;
-                    State.SaveState(InitialBoard, InitialState);
+                    State.SaveState(_initialBoard, _initialState);
                     Dump.CreateDump();
                 }
 

@@ -9,9 +9,9 @@ namespace ChessDotNet.Search2
 {
     public class TranspositionTable
     {
-        private uint _size;
-        private TranspositionTableEntry[] _entries;
-        private IList<TranspositionTableEntry> _principalVariation;
+        public uint _size;
+        public TranspositionTableEntry[] _entries;
+        public IList<TranspositionTableEntry> _principalVariation;
 
         public TranspositionTable()
         {
@@ -131,13 +131,13 @@ namespace ChessDotNet.Search2
             Array.Clear(_entries, 0, _entries.Length);
         }
 
-        //public TranspositionTable Clone()
-        //{
-        //    var table = new TranspositionTable();
-        //    table._size = _size;
-        //    table._principalVariation = _principalVariation.ToList();
-        //    table._entries = _entries.ToArray();
-        //    return table;
-        //}
+        public TranspositionTable Clone()
+        {
+            var table = new TranspositionTable();
+            table._size = _size;
+            //table._principalVariation = _principalVariation.ToList();
+            table._entries = _entries.ToArray();
+            return table;
+        }
     }
 }

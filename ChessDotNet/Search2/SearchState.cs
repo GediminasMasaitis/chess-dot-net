@@ -1,23 +1,16 @@
 ﻿using System;
+using System.Linq;
 using System.Threading;
 
 namespace ChessDotNet.Search2
 {
     public class SearchState
     {
-        public ThreadUniqueState[] ThreadStates { get; }
-        public PrincipalVariationTable PrincipalVariationTable { get; }
-        public TranspositionTable TranspositionTable { get; }
+        public ThreadUniqueState[] ThreadStates { get; set; }
+        public PrincipalVariationTable PrincipalVariationTable { get; set; }
+        public TranspositionTable TranspositionTable { get; set; }
+
         //public AbdadaTable AbdadaTable { get; }
-
-        //public UInt64[,] Killers => _threadUniqueState.Value.Killers;
-        //public int[,,] History => _threadUniqueState.Value.History;
-        //public int[,,] Cutoff => _threadUniqueState.Value.Cutoff;
-        //public List<Move>[] Moves => _threadUniqueState.Value.Moves;
-
-
-
-        //private readonly ThreadLocal<ThreadUniqueState> _threadUniqueState;
 
         public SearchState()
         {
@@ -29,9 +22,6 @@ namespace ChessDotNet.Search2
             {
                 ThreadStates[i] = new ThreadUniqueState(i);
             }
-
-            //_threadUniqueState = new ThreadLocal<ThreadUniqueState>(() => new ThreadUniqueState(), true);
-
         }
 
         public void OnNewGame()
@@ -69,6 +59,15 @@ namespace ChessDotNet.Search2
                 Array.Copy(mainState.History, helperState.History, mainState.History.Length);
                 Array.Copy(mainState.Cutoff, helperState.Cutoff, mainState.Cutoff.Length);
             }
+        }
+
+        public SearchState Clone()
+        {
+            var newState = new SearchState();
+            newState.TranspositionTable = TranspositionTable.Clone();
+            newState.PrincipalVariationTable.Clone();
+            newState.ThreadStates = ThreadStates.Select(threadState => threadState.Clone()).ToArray();
+            return newState;
         }
     }
 }

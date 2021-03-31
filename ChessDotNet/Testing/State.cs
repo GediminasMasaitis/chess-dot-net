@@ -23,12 +23,12 @@ namespace ChessDotNet.Testing
             savedState.State = state;
 
             var json = JsonConvert.SerializeObject(savedState);
-            File.WriteAllText("state.json", json);
+            File.WriteAllText($"state-{DateTime.Now:yyyy-MM-dd-hh-mm-ss-fff}.json", json);
         }
 
-        public static SavedState LoadState()
+        public static SavedState LoadState(string path)
         {
-            var json = File.ReadAllText("state.json");
+            var json = File.ReadAllText(path);
             var savedState = JsonConvert.DeserializeObject<SavedState>(json);
             return savedState;
         }

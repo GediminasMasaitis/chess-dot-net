@@ -1,15 +1,16 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using ChessDotNet.Data;
 
 namespace ChessDotNet.Search2
 {
     public class PrincipalVariationTable
     {
-        private Move[][] Moves { get; }
-        private int _currentDepth;
-        private int _searchedDepth;
+        public Move[][] Moves { get; set; }
+        public int _currentDepth;
+        public int _searchedDepth;
 
         public PrincipalVariationTable()
         {
@@ -60,6 +61,19 @@ namespace ChessDotNet.Search2
                 
             }
             return moves;
+        }
+
+        public PrincipalVariationTable Clone()
+        {
+            var newTable = new PrincipalVariationTable();
+            newTable._currentDepth = _currentDepth;
+            newTable._searchedDepth = _searchedDepth;
+            for (int i = 1; i < Moves.Length; i++)
+            {
+                newTable.Moves[i] = Moves[i].ToArray();
+            }
+
+            return newTable;
         }
     }
 }
