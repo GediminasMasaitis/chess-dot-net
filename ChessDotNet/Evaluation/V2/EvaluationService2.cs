@@ -15,17 +15,20 @@ namespace ChessDotNet.Evaluation.V2
 {
     public class EvaluationService2 : IEvaluationService
     {
-        private readonly EvaluationData _e;
+        private readonly EvaluationData _evaluationData;
         private readonly EvalHashTable _evalTable;
         private readonly EvalHashTable _pawnTable;
         private readonly AttacksService _attacks;
         private readonly ISlideMoveGenerator _slideGenerator;
-        private readonly EvaluationScores _evaluationScores;
 
-        public EvaluationService2(EvaluationData e)
+        private readonly EvaluationScores _evaluationScores;
+        private readonly ulong[] _pawnControl;
+
+        public EvaluationService2(EvaluationData evaluationData)
         {
+            _pawnControl = new ulong[2];
             _evaluationScores = new EvaluationScores();
-            _e = e;
+            _evaluationData = evaluationData;
             _evalTable = new EvalHashTable();
             _evalTable.SetSize(16 * 1024 * 1024);
             _pawnTable = new EvalHashTable();
@@ -66,7 +69,7 @@ namespace ChessDotNet.Evaluation.V2
             int stronger = 0;
             int weaker = 0;
 
-            var pawnControl = new ulong[2];
+            var pawnControl = _pawnControl;
             pawnControl[ChessPiece.White] = _attacks.GetAttackedByPawns(b.BitBoard[ChessPiece.WhitePawn], true);
             pawnControl[ChessPiece.Black] = _attacks.GetAttackedByPawns(b.BitBoard[ChessPiece.BlackPawn], false);
 
@@ -91,8 +94,14 @@ namespace ChessDotNet.Evaluation.V2
             mgScore += (v.kingShield[ChessPiece.White] - v.kingShield[ChessPiece.Black]);
 
             /* tempo bonus */
-            if (b.WhiteToMove) result += EvaluationData.TEMPO;
-            else result -= EvaluationData.TEMPO;
+            if (b.WhiteToMove)
+            {
+                result += EvaluationData.TEMPO;
+            }
+            else
+            {
+                result -= EvaluationData.TEMPO;
+            }
 
             /**************************************************************************
             *  Adjusting material value for the various combinations of pieces.       *
@@ -108,10 +117,10 @@ namespace ChessDotNet.Evaluation.V2
             if (b.PieceCounts[ChessPiece.WhiteRook] > 1) v.adjustMaterial[ChessPiece.White] -= EvaluationData.P_ROOK_PAIR;
             if (b.PieceCounts[ChessPiece.BlackRook] > 1) v.adjustMaterial[ChessPiece.Black] -= EvaluationData.P_ROOK_PAIR;
 
-            v.adjustMaterial[ChessPiece.White] += _e.n_adj[b.PieceCounts[ChessPiece.WhitePawn]] * b.PieceCounts[ChessPiece.WhiteKnight];
-            v.adjustMaterial[ChessPiece.Black] += _e.n_adj[b.PieceCounts[ChessPiece.BlackPawn]] * b.PieceCounts[ChessPiece.BlackKnight];
-            v.adjustMaterial[ChessPiece.White] += _e.r_adj[b.PieceCounts[ChessPiece.WhitePawn]] * b.PieceCounts[ChessPiece.WhiteRook];
-            v.adjustMaterial[ChessPiece.Black] += _e.r_adj[b.PieceCounts[ChessPiece.BlackPawn]] * b.PieceCounts[ChessPiece.BlackRook];
+            v.adjustMaterial[ChessPiece.White] += _evaluationData.n_adj[b.PieceCounts[ChessPiece.WhitePawn]] * b.PieceCounts[ChessPiece.WhiteKnight];
+            v.adjustMaterial[ChessPiece.Black] += _evaluationData.n_adj[b.PieceCounts[ChessPiece.BlackPawn]] * b.PieceCounts[ChessPiece.BlackKnight];
+            v.adjustMaterial[ChessPiece.White] += _evaluationData.r_adj[b.PieceCounts[ChessPiece.WhitePawn]] * b.PieceCounts[ChessPiece.WhiteRook];
+            v.adjustMaterial[ChessPiece.Black] += _evaluationData.r_adj[b.PieceCounts[ChessPiece.BlackPawn]] * b.PieceCounts[ChessPiece.BlackRook];
 
             var pawnScore = getPawnScore(b, pawnControl);
             result += pawnScore;
@@ -246,7 +255,10 @@ namespace ChessDotNet.Evaluation.V2
             *  Finally return the score relative to the side to move.                 *
             **************************************************************************/
 
-            if (b.ColorToMove == ChessPiece.Black) result = -result;
+            if (b.ColorToMove == ChessPiece.Black)
+            {
+                result = -result;
+            }
 
             //tteval_save(result);
             return result;
@@ -261,8 +273,8 @@ namespace ChessDotNet.Evaluation.V2
                 while (pawns != 0)
                 {
                     var pos = pawns.BitScanForward();
-                    v.PieceSquaresMidgame[color] += _e.mgPst[pawn][pos];
-                    v.PieceSquaresEndgame[color] += _e.egPst[pawn][pos];
+                    v.PieceSquaresMidgame[color] += _evaluationData.mgPst[pawn][pos];
+                    v.PieceSquaresEndgame[color] += _evaluationData.egPst[pawn][pos];
                     pawns &= ~(1UL << pos);
                 }
 
@@ -272,8 +284,8 @@ namespace ChessDotNet.Evaluation.V2
                 {
                     var pos = knights.BitScanForward();
                     EvalKnight(b, v, pos, color, pawnControl);
-                    v.PieceSquaresMidgame[color] += _e.mgPst[knight][pos];
-                    v.PieceSquaresEndgame[color] += _e.egPst[knight][pos];
+                    v.PieceSquaresMidgame[color] += _evaluationData.mgPst[knight][pos];
+                    v.PieceSquaresEndgame[color] += _evaluationData.egPst[knight][pos];
                     knights &= ~(1UL << pos);
                 }
 
@@ -283,8 +295,8 @@ namespace ChessDotNet.Evaluation.V2
                 {
                     var pos = bishops.BitScanForward();
                     EvalBishop(b, v, pos, color, pawnControl);
-                    v.PieceSquaresMidgame[color] += _e.mgPst[bishop][pos];
-                    v.PieceSquaresEndgame[color] += _e.egPst[bishop][pos];
+                    v.PieceSquaresMidgame[color] += _evaluationData.mgPst[bishop][pos];
+                    v.PieceSquaresEndgame[color] += _evaluationData.egPst[bishop][pos];
                     bishops &= ~(1UL << pos);
                 }
 
@@ -294,8 +306,8 @@ namespace ChessDotNet.Evaluation.V2
                 {
                     var pos = rooks.BitScanForward();
                     EvalRook(b, v, pos, color);
-                    v.PieceSquaresMidgame[color] += _e.mgPst[rook][pos];
-                    v.PieceSquaresEndgame[color] += _e.egPst[rook][pos];
+                    v.PieceSquaresMidgame[color] += _evaluationData.mgPst[rook][pos];
+                    v.PieceSquaresEndgame[color] += _evaluationData.egPst[rook][pos];
                     rooks &= ~(1UL << pos);
                 }
 
@@ -305,13 +317,13 @@ namespace ChessDotNet.Evaluation.V2
                 {
                     var pos = queens.BitScanForward();
                     EvalQueen(b, v, pos, color);
-                    v.PieceSquaresMidgame[color] += _e.mgPst[queen][pos];
-                    v.PieceSquaresEndgame[color] += _e.egPst[queen][pos];
+                    v.PieceSquaresMidgame[color] += _evaluationData.mgPst[queen][pos];
+                    v.PieceSquaresEndgame[color] += _evaluationData.egPst[queen][pos];
                     queens &= ~(1UL << pos);
                 }
 
-                v.PieceSquaresMidgame[color] += _e.mgPst[ChessPiece.King + color][b.KingPositions[color]];
-                v.PieceSquaresEndgame[color] += _e.egPst[ChessPiece.King + color][b.KingPositions[color]];
+                v.PieceSquaresMidgame[color] += _evaluationData.mgPst[ChessPiece.King + color][b.KingPositions[color]];
+                v.PieceSquaresEndgame[color] += _evaluationData.egPst[ChessPiece.King + color][b.KingPositions[color]];
             }
         }
 
@@ -837,11 +849,11 @@ namespace ChessDotNet.Evaluation.V2
 
                 if (pawnSupported)
                 {
-                    result += _e.protected_passer[side][sq];
+                    result += _evaluationData.protected_passer[side][sq];
                 }
                 else
                 {
-                    result += _e.passed_pawn[side][sq];
+                    result += _evaluationData.passed_pawn[side][sq];
                 }
             }
 
@@ -852,7 +864,7 @@ namespace ChessDotNet.Evaluation.V2
 
             if (flagIsWeak)
             {
-                result += _e.weak_pawn[side, sq];
+                result += _evaluationData.weak_pawn[side, sq];
                 if (!flagIsOpposed)
                 {
                     result -= 4;

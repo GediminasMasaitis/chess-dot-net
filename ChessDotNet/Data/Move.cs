@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using ChessDotNet.Testing;
-
+using Newtonsoft.Json;
 using Bitboard = System.UInt64;
 using Key = System.UInt64;
 using Position = System.Byte;
@@ -15,7 +15,7 @@ namespace ChessDotNet.Data
 {
     public struct Move
     {
-        private readonly MoveValue Value;
+        public MoveValue Value;
 
         public Move(Position from, Position to, Piece piece, Piece takesPiece = 0, bool enPassant = false, bool castle = false, Piece pawnPromoteTo = ChessPiece.Empty)
         {
@@ -44,21 +44,32 @@ namespace ChessDotNet.Data
             Debug.Assert(TakesPiece != ChessPiece.BlackKing);
         }
 
+        [JsonIgnore]
         public Position From => (byte)(Value & 0xFF);
+
+        [JsonIgnore]
         public Position To => (byte)((Value >> 8) & 0xFF);
+        [JsonIgnore]
         public Piece Piece => (Piece)((Value >> 16) & 0x0F);
+        [JsonIgnore]
         public Piece TakesPiece => (Piece)((Value >> 20) & 0x0F);
+        [JsonIgnore]
         public Piece PawnPromoteTo => (Piece)((Value >> 24) & 0x0F);
+        [JsonIgnore]
         public bool EnPassant => ((Value >> 28) & 0x01) == 1;
+        [JsonIgnore]
         public bool Castle => ((Value >> 29) & 0x01) == 1;
+        [JsonIgnore]
         public bool NullMove => ((Value >> 30) & 0x01) == 1;
         //public bool WhiteToMove => ((Value >> 31) & 0x01) == 1;
+        [JsonIgnore]
         public ulong ColorToMove => (Value >> 31) & 0x01;
 
         //public int MVVLVAScore => TakesPiece > 0 ? MVVLVAScoreCalculation.Scores[Piece, TakesPiece] : 0;
+        [JsonIgnore]
         public MoveKey Key => (uint)(From << 16) + To;
         //private readonly ulong _staticKey;
-
+        [JsonIgnore]
         public MoveKey Key2 => Value;
         //return _staticKey;
         //return (uint) (From << 16) + To;

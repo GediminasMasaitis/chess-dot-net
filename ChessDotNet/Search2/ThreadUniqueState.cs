@@ -1,18 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
 using ChessDotNet.Data;
+using Newtonsoft.Json;
 
 namespace ChessDotNet.Search2
 {
     public class ThreadUniqueState
     {
-        public uint[][] Killers { get; }
-        public uint[][] Countermove { get; }
-        public int[][][] History { get; }
-        public int[][][] Cutoff { get; }
-        public Move[][] Moves { get; }
-        public int[][] SeeScores { get; }
-        public int[][] MoveStaticScores { get; }
+        public uint[][] Killers { get; set; }
+        public uint[][] Countermove { get; set; }
+        public int[][][] History { get; set; }
+        public int[][][] Cutoff { get; set; }
+        public Move[][] Moves { get; set; }
+        public int[][] SeeScores { get; set; }
+        public int[][] MoveStaticScores { get; set; }
+
+        [JsonIgnore]
         public Random Rng { get; }
 
         public ThreadUniqueState(int threadId)

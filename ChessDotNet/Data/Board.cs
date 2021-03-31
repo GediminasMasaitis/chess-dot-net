@@ -8,7 +8,7 @@ using ChessDotNet.Evaluation.V2;
 using ChessDotNet.Fen;
 using ChessDotNet.Hashing;
 using ChessDotNet.Testing;
-
+using Newtonsoft.Json;
 using Bitboard = System.UInt64;
 using ZobristKey = System.UInt64;
 using Position = System.Byte;
@@ -21,6 +21,7 @@ namespace ChessDotNet.Data
     public class Board
     {
         public byte ColorToMove { get; set; }
+
         public bool WhiteToMove
         {
             get => ColorToMove == ChessPiece.White;
@@ -32,10 +33,10 @@ namespace ChessDotNet.Data
         public int HistoryDepth { get; set; }
 
 
-        public Bitboard WhitePieces { get; private set; }
-        public Bitboard BlackPieces { get; private set; }
-        public Bitboard EmptySquares { get; private set; }
-        public Bitboard AllPieces { get; private set; }
+        public Bitboard WhitePieces { get; set; }
+        public Bitboard BlackPieces { get; set; }
+        public Bitboard EmptySquares { get; set; }
+        public Bitboard AllPieces { get; set; }
 
         public Bitboard[] BitBoard { get; set; }
         public Piece[] ArrayBoard { get; set; }
@@ -43,6 +44,7 @@ namespace ChessDotNet.Data
         public int EnPassantRankIndex { get; set; }
         public Bitboard EnPassantFile { get; set; }
         public ZobristKey Key { get; set; }
+        //public ZobristKey Key2 { get; set; }
         public ZobristKey PawnKey { get; set; }
         public int LastTookPieceHistoryIndex { get; set; }
 
@@ -281,6 +283,7 @@ namespace ChessDotNet.Data
             if (move.NullMove)
             {
                 SyncExtraBitBoards();
+                //Key2 = ZobristKeys2.CalculateKey(this);
                 // TODO check
                 return;
             }
@@ -385,39 +388,9 @@ namespace ChessDotNet.Data
 
             //SyncCastleTo1();
             SyncExtraBitBoards();
+            //Key2 = ZobristKeys2.CalculateKey(this);
         }
-
-        //public void SyncCastleTo2()
-        //{
-        //    CastlingPermission2 value = CastlingPermission2.None;
-        //    if (CastlingPermissions[CastlePermission.WhiteKingSide])
-        //    {
-        //        value |= CastlingPermission2.WhiteKing;
-        //    }
-        //    if (CastlingPermissions[CastlePermission.WhiteQueenSide])
-        //    {
-        //        value |= CastlingPermission2.WhiteQueen;
-        //    }
-        //    if (CastlingPermissions[CastlePermission.BlackKingSide])
-        //    {
-        //        value |= CastlingPermission2.BlackKing;
-        //    }
-        //    if (CastlingPermissions[CastlePermission.BlackQueenSide])
-        //    {
-        //        value |= CastlingPermission2.BlackQueen;
-        //    }
-
-        //    CastlingPermissions2 = value;
-        //}
-
-        //public void SyncCastleTo1()
-        //{
-        //    CastlingPermissions[CastlePermission.WhiteQueenSide] = (CastlingPermissions2 & CastlingPermission2.WhiteQueen) != CastlingPermission2.None;
-        //    CastlingPermissions[CastlePermission.WhiteKingSide] = (CastlingPermissions2 & CastlingPermission2.WhiteKing) != CastlingPermission2.None;
-        //    CastlingPermissions[CastlePermission.BlackQueenSide] = (CastlingPermissions2 & CastlingPermission2.BlackQueen) != CastlingPermission2.None;
-        //    CastlingPermissions[CastlePermission.BlackKingSide] = (CastlingPermissions2 & CastlingPermission2.BlackKing) != CastlingPermission2.None;
-        //}
-
+        
         public void TestMove(Move move)
         {
             var clone = Clone();
@@ -474,6 +447,7 @@ namespace ChessDotNet.Data
             if (move.NullMove)
             {
                 SyncExtraBitBoards();
+                //Key2 = ZobristKeys2.CalculateKey(this);
                 // TODO check
                 return;
             }
@@ -618,6 +592,7 @@ namespace ChessDotNet.Data
             Debug.Assert(Key == ZobristKeys.CalculateKey(this));
 
             SyncExtraBitBoards();
+            //Key2 = ZobristKeys2.CalculateKey(this);
         }
 
         public Board Clone()
@@ -635,6 +610,7 @@ namespace ChessDotNet.Data
             clone.EnPassantRankIndex = EnPassantRankIndex;
             clone.EnPassantFile = EnPassantFile;
             clone.Key = Key;
+            //clone.Key2 = Key2;
             clone.PawnKey = PawnKey;
             //clone.History = board.History; // TODO
             clone.LastTookPieceHistoryIndex = LastTookPieceHistoryIndex;

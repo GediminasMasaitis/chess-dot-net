@@ -132,6 +132,7 @@ namespace ChessDotNet.Data
             //board.SyncPiecesCount();
             board.SyncMaterial();
             board.Key = ZobristKeys.CalculateKey(board);
+            //board.Key2 = ZobristKeys2.CalculateKey(board);
             board.PawnKey = ZobristKeys.CalculatePawnKey(board);
             return board;
         }
@@ -195,5 +196,31 @@ namespace ChessDotNet.Data
             }
             return board;
         }
+
+        public Board ParseMoves(string moves)
+        {
+            var splitMoves = moves.Split(' ');
+            var board = ParseMoves(splitMoves);
+            return board;
+        }
+
+        public Board ParseMoves(IEnumerable<string> moves)
+        {
+            var board = CreateStartingPos();
+            foreach (var moveStr in moves)
+            {
+                var move = Move.FromPositionString(board, moveStr);
+                board.DoMove2(move);
+            }
+
+            return board;
+        }
+
+        public Board CreateStartingPos()
+        {
+            var board = ParseFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+            return board;
+        }
+
     }
 }

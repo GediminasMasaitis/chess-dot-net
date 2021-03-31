@@ -11,7 +11,8 @@ using ChessDotNet.Data;
 using ChessDotNet.Evaluation;
 using ChessDotNet.MoveGeneration;
 using ChessDotNet.Searching;
-
+using ChessDotNet.Testing;
+using Force.DeepCloner;
 using Bitboard = System.UInt64;
 using ZobristKey = System.UInt64;
 using Position = System.Byte;
@@ -26,11 +27,14 @@ namespace ChessDotNet.Search2
 
         private readonly PossibleMovesService _possibleMoves;
         private readonly IEvaluationService _evaluation;
-        private readonly SearchState _state;
+        private SearchState _state;
         private readonly SearchStopper _stopper;
         private readonly MoveOrderingService _moveOrdering;
         private readonly SearchStatistics _statistics;
         private readonly SeeService _see;
+
+        public static Board InitialBoard;
+        public static SearchState InitialState;
 
         public SearchService2
         (
@@ -47,6 +51,11 @@ namespace ChessDotNet.Search2
             _statistics = new SearchStatistics();
         }
 
+        public void SetState(SearchState state)
+        {
+            _state = state;
+        }
+
         public IList<Move> Run
         (
             Board board,
@@ -57,6 +66,8 @@ namespace ChessDotNet.Search2
             _stopper.NewSearch(parameters, board.WhiteToMove, token);
             _statistics.Reset();
             _state.OnNewSearch();
+            //InitialBoard = board.Clone();
+            //InitialState = _state.DeepClone();
             var log = SearchLog.New();
 
             if (SearchConstants.Multithreading)
@@ -334,6 +345,12 @@ namespace ChessDotNet.Search2
 
         private int SearchToDepth(int threadId, Board board, int depth, int ply, int alpha, int beta, int currentReduction, bool nullMoveAllowed, bool isPrincipalVariation, SearchLog log)
         {
+            //if (ply == 5)
+            //{
+            //    State.SaveState(board, _state);
+            //    Thread.Sleep(TimeSpan.FromDays(1));
+            //}
+
             log.AddMessage("Starting search", depth, alpha, beta);
             var threadState = _state.ThreadStates[threadId];
             var rootNode = ply == 0;
@@ -537,7 +554,6 @@ namespace ChessDotNet.Search2
             var bestScore = -SearchConstants.Inf;
             Move bestMove = default;
             SearchLog bestLog = default;
-
             // CHILD SEARCH
             var initialAlpha = alpha;
             var potentialMoves = threadState.Moves[ply];
@@ -745,6 +761,7 @@ namespace ChessDotNet.Search2
                 {
                     StoreTranspositionTable(board.Key, bestMove, depth, bestScore, TranspositionTableFlags.Exact);
                 }
+                //ValidatePv(); // TODO: validation
                 log.AddMessage($"Increased alpha, best move {bestMove.ToPositionString()}, best score {bestScore}", depth, alpha, beta, alpha);
             }
 
@@ -997,6 +1014,11 @@ namespace ChessDotNet.Search2
                 return false;
             }
 
+            //if (entry.Key2 != key2)
+            //{
+            //    var a = 123;
+            //}
+
             bestMove = entry.Move;
 
             if (entry.Depth < depth)
@@ -1088,6 +1110,47 @@ namespace ChessDotNet.Search2
                     return TranspositionTableProbeResult.HitCutoff;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(entry.Flag), entry.Flag, "Unknown flag");
+            }
+        }
+
+        private void ValidatePv()
+        {
+            //var pv = _state.TranspositionTable.GetSavedPrincipalVariation();
+            var pv = _state.TranspositionTable.GetPrincipalVariation(InitialBoard);
+
+            if (pv.Count > 100)
+            {
+                var a = 123;
+            }
+
+            var moves = pv.Select(x => x.Move).ToList();
+            var clone = InitialBoard.Clone();
+            var possibleMoves = new Move[SearchConstants.MaxDepth];
+            var moveCount = 0;
+            for (var i = 0; i < moves.Count; i++)
+            {
+                var move = moves[i];
+                moveCount = 0;
+                _possibleMoves.GetAllPossibleMoves(clone, possibleMoves, ref moveCount);
+                var ok = false;
+                for (int j = 0; j < moveCount; j++)
+                {
+                    var possibleMove = possibleMoves[j];
+                    if (possibleMove.Key2 == move.Key2)
+                    {
+                        ok = true;
+                        break;
+                    }
+                }
+
+                if (!ok)
+                {
+                    break;
+                    State.SaveState(InitialBoard, InitialState);
+                    Dump.CreateDump();
+                }
+
+                clone.DoMove2(move);
             }
         }
     }

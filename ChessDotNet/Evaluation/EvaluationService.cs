@@ -320,6 +320,15 @@ namespace ChessDotNet.Evaluation
                 score -= BishopPairScore;
             }
 
+            if (board.WhiteToMove)
+            {
+                score += 10;
+            }
+            else
+            {
+                score -= 10;
+            }
+
             return score;
         }
     }
