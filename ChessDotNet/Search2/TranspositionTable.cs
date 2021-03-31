@@ -9,9 +9,9 @@ namespace ChessDotNet.Search2
 {
     public class TranspositionTable
     {
-        public uint _size;
-        public TranspositionTableEntry[] _entries;
-        public IList<TranspositionTableEntry> _principalVariation;
+        private uint _size;
+        private TranspositionTableEntry[] _entries;
+        private IList<TranspositionTableEntry> _principalVariation;
 
         public TranspositionTable()
         {

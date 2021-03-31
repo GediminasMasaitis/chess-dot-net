@@ -181,7 +181,7 @@ namespace ChessDotNet.ConsoleTests
 
         private static void DoPerft()
         {
-            var fen = "8/6pp/3k4/3P1p2/5P2/4R2P/7K/q7 b - - 0 1";
+            var fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
             //var fen = "8/8/3k4/8/3K4/8/8/8 w - - 0 1";
             //var fen = "rnbqkbnr/2pppppp/p7/Pp6/8/8/1PPPPPPP/RNBQKBNR w KQkq b6 0 3 ";
             //var fen = "8/3R1k2/8/4B3/1K6/p6B/5p1P/8 b - - 1 67 ";

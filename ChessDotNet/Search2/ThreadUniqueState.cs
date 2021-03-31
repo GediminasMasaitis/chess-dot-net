@@ -7,13 +7,13 @@ namespace ChessDotNet.Search2
 {
     public class ThreadUniqueState
     {
-        public uint[][] Killers { get; set; }
-        public uint[][] Countermove { get; set; }
-        public int[][][] History { get; set; }
-        public int[][][] Cutoff { get; set; }
-        public Move[][] Moves { get; set; }
-        public int[][] SeeScores { get; set; }
-        public int[][] MoveStaticScores { get; set; }
+        public uint[][] Killers { get; }
+        public uint[][] Countermove { get; }
+        public int[][][] History { get; }
+        public int[][][] Cutoff { get; }
+        public Move[][] Moves { get; }
+        public int[][] SeeScores { get; }
+        public int[][] MoveStaticScores { get; }
 
         [JsonIgnore]
         public Random Rng { get; }
