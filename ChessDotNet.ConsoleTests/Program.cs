@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Text;
@@ -29,8 +30,10 @@ namespace ChessDotNet.ConsoleTests
 {
     class Program
     {
-        static async Task Main(string[] args)
+        static unsafe async Task Main(string[] args)
         {
+            //Console.WriteLine(Marshal.SizeOf<TranspositionTableEntry>());
+            Console.WriteLine(sizeof(TranspositionTableEntry));
             Init();
             //WritePieces();
             //foreach (var file in BitboardConstants.Files)
@@ -53,9 +56,9 @@ namespace ChessDotNet.ConsoleTests
             //TestRepetitions();
 
             //DoPerftClient();
-            DoPerft();
+            //DoPerft();
             //DoPerftSuite();
-            //DoSearch2Async();
+            DoSearch2Async();
             //TestLoadState();
             //TestInvalid();
             //DoSpeedTest();
@@ -135,14 +138,14 @@ namespace ChessDotNet.ConsoleTests
 
         public static void TestSee()
         {
-            var board = MakeBoard("k7/8/2b5/3p4/4b3/5B2/6B1/K7 w - - 0 1");
+            var board = MakeBoard("1k1r3q/1ppn3p/p4b2/4p3/8/P2N2P1/1PP1R1BP/2K1Q3 w - - 0 1");
 
             var slidingMoveGenerator = new MagicBitboardsService();
             var attacksService = new AttacksService(slidingMoveGenerator);
             var seeService = new SeeService(attacksService);
 
-            var from = ChessPosition.F3;
-            var to = ChessPosition.E4;
+            var from = ChessPosition.D3;
+            var to = ChessPosition.E5;
             var move = new Move(from, to, board.ArrayBoard[from], board.ArrayBoard[to]);
             //board.DoMove2(move);
             Console.WriteLine(1UL << move.From);
@@ -206,26 +209,45 @@ namespace ChessDotNet.ConsoleTests
             var fenSerializer = new FenSerializerService();
             var perftRunner = new PerftRunner(testClient, verificationClient, boardFactory, fenSerializer);
             perftRunner.OnOut += Console.Write;
-            perftRunner.Test(fen, 7);
+            perftRunner.Test(fen, 6);
         }
 
+        //[MethodImpl(MethodImplOptions.NoOptimization)]
         private static void DoSpeedTest()
         {
             var board = MakeBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
             var eval = new EvaluationService2(new EvaluationData());
+            var possibleMoves = new PossibleMovesService(new AttacksService(new MagicBitboardsService()), new MagicBitboardsService());
             var scores = new EvaluationScores();
             var sw = new Stopwatch();
+            var moves = new Move[218];
+            var moveCount = 0;
             sw.Start();
-            var num = 100000000;
-            for (var i = 0; i < num; i++)
+            var num = 300000000;
+            byte pos = 0;
+            for (var i = 0L; i < num; i++)
             {
                 //eval.evalPawnStructure(board, evaluationBoard);
                 //eval.Evaluate(board);
                 //eval.EvalRook(board, evaluationBoard, scores, 0, ChessPiece.White);
+
+                //moveCount = 0;
+                //possibleMoves.GetAllPotentialMoves(board, moves, ref moveCount);
+
+                var pawns = board.BitBoard[ChessPiece.WhitePawn];
+                while (pawns != 0)
+                {
+                    pos = pawns.BitScanForward();
+                    pawns &= ~(1UL << pos);
+                    //pawns &= pawns - 1;
+                }
+
+                //var kingPos = board.KingPositions[board.ColorToMove];
+                //var kingPos = board.WhiteToMove ? board.BitBoard[ChessPiece.WhiteKing] : board.BitBoard[ChessPiece.BlackKing];
             }
             sw.Stop();
             var speed = (long)(num / sw.Elapsed.TotalSeconds);
-            Console.WriteLine($"{speed.ToUserFriendly()}e/s");
+            Console.WriteLine($"{speed.ToUserFriendly()}/s");
         }
 
         private static void DoSearch2Async()

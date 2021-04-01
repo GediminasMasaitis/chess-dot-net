@@ -1,4 +1,6 @@
 using System;
+using System.Linq;
+using System.Security.Cryptography;
 using ChessDotNet.Data;
 
 namespace ChessDotNet.Hashing
@@ -26,7 +28,7 @@ namespace ChessDotNet.Hashing
                     ZPieces[i][j] = NextKey(rng);
                 }
             }
-
+            
             ZEnPassant = new ulong[8];
             for (var i = 0; i < 8; i++)
             {
@@ -64,11 +66,7 @@ namespace ChessDotNet.Hashing
                 }
                 ZCastle[i] = key;
             }
-            //for (var i = 0; i < castleLength; i++)
-            //{
-            //    ZCastle[i] = NextKey(rng);
-            //}
-
+            
             ZWhiteToMove = NextKey(rng);
         }
 

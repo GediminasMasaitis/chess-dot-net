@@ -13,6 +13,9 @@ namespace ChessDotNet.Data
         BlackQueen = 1 << 2,
         BlackKing = 1 << 3,
         
-        All = WhiteKing | WhiteQueen | BlackKing | BlackQueen
+        White = WhiteQueen | WhiteKing,
+        Black = BlackQueen | BlackKing,
+
+        All = White | Black
     }
 }

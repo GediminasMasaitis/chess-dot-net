@@ -5,31 +5,47 @@ using ChessDotNet.Data;
 
 namespace ChessDotNet.Search2
 {
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct TranspositionTableEntry
     {
-        public uint _extra;
+        public byte DepthCheckAndFlag;
+        public byte Depth => (byte) (DepthCheckAndFlag >> 3);
+        //public bool InCheck => ((DepthCheckAndFlag >> 2) & 1) != 0;
+        public byte Flag => (byte) (DepthCheckAndFlag & 3);
 
-        public UInt64 Key { get; set; }
+        //public byte Depth;
+        //public byte Flag;
+
+        public ulong PartialKeyAndScore;
+        public ulong PartialKey => PartialKeyAndScore & ~0xFFFFUL;
+        public short Score => unchecked((short)(PartialKeyAndScore & 0xFFFFUL));
+
+        //public short Score;
+        //public ulong Key;
+
+        public Move Move;
+        //public ushort pad;
+
         //public UInt64 Key2 { get; set; }
-        public Move Move { get; set; }
-        public byte Depth => (byte) (_extra & 0xFF);
 
-        public int Score => unchecked((short)((_extra >> 8) & 0xFFFF));
-        public Byte Flag => (byte) (_extra >> 24);
-
-        public TranspositionTableEntry(UInt64 key, Move move, int depth, int score, Byte flag/*, ulong key2 = 0*/)
+        public TranspositionTableEntry(UInt64 key, Move move, byte depth, short score, Byte flag)
         {
             Debug.Assert(depth >= 0);
             Debug.Assert(score < short.MaxValue);
             Debug.Assert(score > short.MinValue);
 
-            Key = key;
-            //Key2 = key2;
+            PartialKeyAndScore = (key & ~0xFFFFUL) | unchecked((ushort)score);
+            //Key = key;
+            //Score = score;
+
+            DepthCheckAndFlag = (byte)((depth << 3) /*| (byte)(inCheck ? (1 << 2) : 0)*/ | flag);
+            //Depth = depth;
+            //Flag = flag;
+
             Move = move;
-            _extra = (byte) depth;
-            _extra |= (uint)(unchecked((ushort)(short)score) << 8);
-            _extra |= (uint)(flag << 24);
+
+            //Key2 = key2;
+            //pad = 0;
         }
     }
 }

@@ -72,7 +72,7 @@ namespace ChessDotNet.MoveGeneration
                 var i = kings.BitScanForward();
                 ulong jumps = BitboardConstants.KingJumps[i];
                 allJumps |= jumps;
-                kings &= ~(1UL << i);
+                kings &= kings - 1;
             }
             return allJumps;
         }
@@ -85,7 +85,7 @@ namespace ChessDotNet.MoveGeneration
                 var i = knights.BitScanForward();
                 ulong jumps = BitboardConstants.KnightJumps[i];
                 allJumps |= jumps;
-                knights &= ~(1UL << i);
+                knights &= knights - 1;
             }
             return allJumps;
         }
@@ -116,7 +116,7 @@ namespace ChessDotNet.MoveGeneration
                 var i = slidingPieces.BitScanForward();
                 var slide = diagonal ? SlideMoveGenerator.DiagonalAntidiagonalSlide(allPieces, i) : SlideMoveGenerator.HorizontalVerticalSlide(allPieces, i);
                 allSlide |= slide;
-                slidingPieces &= ~(1UL << i);
+                slidingPieces &= slidingPieces - 1;
             }
             return allSlide;
         }
@@ -131,7 +131,7 @@ namespace ChessDotNet.MoveGeneration
                 {
                     return true;
                 }
-                bitboard &= ~(1UL << position);
+                bitboard &= bitboard - 1;
             }
 
             return false;

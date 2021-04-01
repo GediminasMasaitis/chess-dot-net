@@ -154,7 +154,7 @@ namespace ChessDotNet.Evaluation
 
         public int Evaluate(Board board)
         {
-            var score = board.Material[ChessPiece.White] - board.Material[ChessPiece.Black];
+            var score = (board.PawnMaterial[ChessPiece.White] + board.PieceMaterial[ChessPiece.White]) - (board.PawnMaterial[ChessPiece.Black] + board.PieceMaterial[ChessPiece.Black]);
             score += EvaluatePositions(board);
 
             if (!board.WhiteToMove)
@@ -182,7 +182,7 @@ namespace ChessDotNet.Evaluation
                 {
                     score += IsolatedScore;
                 }
-                bitboard &= ~(1UL << pos);
+                bitboard &= bitboard - 1;
             }
 
             bitboard = board.BitBoard[ChessPiece.BlackPawn];
@@ -198,7 +198,7 @@ namespace ChessDotNet.Evaluation
                 {
                     score -= IsolatedScore;
                 }
-                bitboard &= ~(1UL << pos);
+                bitboard &= bitboard - 1;
             }
 
             bitboard = board.BitBoard[ChessPiece.WhiteKnight];
@@ -206,7 +206,7 @@ namespace ChessDotNet.Evaluation
             {
                 var pos = bitboard.BitScanForward();
                 score += KnightTable[pos];
-                bitboard &= ~(1UL << pos);
+                bitboard &= bitboard - 1;
             }
 
             bitboard = board.BitBoard[ChessPiece.BlackKnight];
@@ -214,7 +214,7 @@ namespace ChessDotNet.Evaluation
             {
                 var pos = bitboard.BitScanForward();
                 score -= KnightTable[Mirror[pos]];
-                bitboard &= ~(1UL << pos);
+                bitboard &= bitboard - 1;
             }
 
             bitboard = board.BitBoard[ChessPiece.WhiteBishop];
@@ -222,7 +222,7 @@ namespace ChessDotNet.Evaluation
             {
                 var pos = bitboard.BitScanForward();
                 score += BishopTable[pos];
-                bitboard &= ~(1UL << pos);
+                bitboard &= bitboard - 1;
             }
 
             bitboard = board.BitBoard[ChessPiece.BlackBishop];
@@ -230,7 +230,7 @@ namespace ChessDotNet.Evaluation
             {
                 var pos = bitboard.BitScanForward();
                 score -= BishopTable[Mirror[pos]];
-                bitboard &= ~(1UL << pos);
+                bitboard &= bitboard - 1;
             }
 
             bitboard = board.BitBoard[ChessPiece.WhiteRook];
@@ -250,7 +250,7 @@ namespace ChessDotNet.Evaluation
                         score += RookSemiOpenScore;
                     }
                 }
-                bitboard &= ~(1UL << pos);
+                bitboard &= bitboard - 1;
             }
 
             bitboard = board.BitBoard[ChessPiece.BlackRook];
@@ -270,7 +270,7 @@ namespace ChessDotNet.Evaluation
                         score -= RookSemiOpenScore;
                     }
                 }
-                bitboard &= ~(1UL << pos);
+                bitboard &= bitboard - 1;
             }
 
             bitboard = board.BitBoard[ChessPiece.WhiteQueen];
@@ -289,7 +289,7 @@ namespace ChessDotNet.Evaluation
                         score += QueenSemiOpenScore;
                     }
                 }
-                bitboard &= ~(1UL << pos);
+                bitboard &= bitboard - 1;
             }
 
             bitboard = board.BitBoard[ChessPiece.BlackQueen];
@@ -308,7 +308,7 @@ namespace ChessDotNet.Evaluation
                         score -= QueenSemiOpenScore;
                     }
                 }
-                bitboard &= ~(1UL << pos);
+                bitboard &= bitboard - 1;
             }
 
             if (board.PieceCounts[ChessPiece.WhiteBishop] == 2)

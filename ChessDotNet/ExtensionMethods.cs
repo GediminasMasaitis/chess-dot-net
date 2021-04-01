@@ -16,7 +16,8 @@ namespace ChessDotNet
     public static class ExtensionMethods
     {
 #if NET5_0
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.NoOptimization)]
+
         public static Position BitScanForward(this ulong bb)
         {
             return (Position)BitOperations.TrailingZeroCount(bb);

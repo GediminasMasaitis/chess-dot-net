@@ -275,7 +275,7 @@ namespace ChessDotNet.Evaluation.V2
                     var pos = pawns.BitScanForward();
                     v.PieceSquaresMidgame[color] += _evaluationData.mgPst[pawn][pos];
                     v.PieceSquaresEndgame[color] += _evaluationData.egPst[pawn][pos];
-                    pawns &= ~(1UL << pos);
+                    pawns &= pawns - 1;
                 }
 
                 var knight = ChessPiece.Knight + color;
@@ -286,7 +286,7 @@ namespace ChessDotNet.Evaluation.V2
                     EvalKnight(b, v, pos, color, pawnControl);
                     v.PieceSquaresMidgame[color] += _evaluationData.mgPst[knight][pos];
                     v.PieceSquaresEndgame[color] += _evaluationData.egPst[knight][pos];
-                    knights &= ~(1UL << pos);
+                    knights &= knights - 1;
                 }
 
                 var bishop = ChessPiece.Bishop + color;
@@ -297,7 +297,7 @@ namespace ChessDotNet.Evaluation.V2
                     EvalBishop(b, v, pos, color, pawnControl);
                     v.PieceSquaresMidgame[color] += _evaluationData.mgPst[bishop][pos];
                     v.PieceSquaresEndgame[color] += _evaluationData.egPst[bishop][pos];
-                    bishops &= ~(1UL << pos);
+                    bishops &= bishops - 1;
                 }
 
                 var rook = ChessPiece.Rook + color;
@@ -308,7 +308,7 @@ namespace ChessDotNet.Evaluation.V2
                     EvalRook(b, v, pos, color);
                     v.PieceSquaresMidgame[color] += _evaluationData.mgPst[rook][pos];
                     v.PieceSquaresEndgame[color] += _evaluationData.egPst[rook][pos];
-                    rooks &= ~(1UL << pos);
+                    rooks &= rooks - 1;
                 }
 
                 var queen = ChessPiece.Queen + color;
@@ -319,7 +319,7 @@ namespace ChessDotNet.Evaluation.V2
                     EvalQueen(b, v, pos, color);
                     v.PieceSquaresMidgame[color] += _evaluationData.mgPst[queen][pos];
                     v.PieceSquaresEndgame[color] += _evaluationData.egPst[queen][pos];
-                    queens &= ~(1UL << pos);
+                    queens &= queens - 1;
                 }
 
                 v.PieceSquaresMidgame[color] += _evaluationData.mgPst[ChessPiece.King + color][b.KingPositions[color]];

@@ -34,8 +34,9 @@ namespace ChessDotNet.Perft.Suite
         public void RunSuite(string path)
         {
             var entries = ReadFens(path);
-            foreach (var entry in entries)
+            for (var index = 0; index < entries.Count; index++)
             {
+                var entry = entries[index];
                 _runner.Test(entry.Fen, entry.Depth);
             }
         }

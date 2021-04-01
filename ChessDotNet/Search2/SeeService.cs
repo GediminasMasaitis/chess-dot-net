@@ -5,6 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using ChessDotNet.Data;
 using ChessDotNet.Evaluation;
+using ChessDotNet.Evaluation.V2;
 using ChessDotNet.MoveGeneration;
 
 using Position = System.Byte;
@@ -17,9 +18,30 @@ namespace ChessDotNet.Search2
     {
         private readonly AttacksService _attacks;
 
+        private readonly short[] SeeWeights;
+
         public SeeService(AttacksService attacks)
         {
             _attacks = attacks;
+
+            SeeWeights = new short[ChessPiece.Count];
+            SeeWeights[ChessPiece.WhitePawn] = 100;
+            SeeWeights[ChessPiece.BlackPawn] = 100;
+
+            SeeWeights[ChessPiece.WhiteKnight] = 325;
+            SeeWeights[ChessPiece.BlackKnight] = 325;
+
+            SeeWeights[ChessPiece.WhiteBishop] = 335; // 325 instead of 335, exchanging bishop for knight
+            SeeWeights[ChessPiece.BlackBishop] = 335; // is not strictly "losing"
+
+            SeeWeights[ChessPiece.WhiteRook] = 500;
+            SeeWeights[ChessPiece.BlackRook] = 500;
+
+            SeeWeights[ChessPiece.WhiteQueen] = 975;
+            SeeWeights[ChessPiece.BlackQueen] = 975;
+
+            SeeWeights[ChessPiece.WhiteKing] = 0;
+            SeeWeights[ChessPiece.BlackKing] = 0;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -50,6 +72,10 @@ namespace ChessDotNet.Search2
                 {
                     seeScores[i] = See(board, move);
                 }
+                else
+                {
+                    seeScores[i] = 0;
+                }
             }
         }
 
@@ -76,11 +102,11 @@ namespace ChessDotNet.Search2
             var fromSet = 1UL << from;
             var occ = board.AllPieces;
             var colorToMove = board.ColorToMove;
-            gain[depth] = EvaluationService.Weights[takesPiece];
+            gain[depth] = SeeWeights[takesPiece];
             do
             {
                 depth++; // next depth and side
-                gain[depth] = EvaluationService.Weights[piece] - gain[depth - 1]; // speculative store, if defended
+                gain[depth] = SeeWeights[piece] - gain[depth - 1]; // speculative store, if defended
                 if (Math.Max(-gain[depth - 1], gain[depth]) < 0)
                 {
                     break; // pruning does not influence the result
