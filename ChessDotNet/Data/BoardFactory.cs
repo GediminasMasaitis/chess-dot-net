@@ -19,7 +19,11 @@ namespace ChessDotNet.Data
             board.ArrayBoard = new Piece[64];
             board.BitBoard = new ulong[ChessPiece.Count];
             board.CastlingPermissions = CastlingPermission.None;
-            board.History2 = new UndoMove[2048];
+            board.History2 = new UndoMove[1024];
+            //for (int i = 0; i < board.History2.Length; i++)
+            //{
+            //    board.History2[i] = new UndoMove();
+            //}
             board.PieceCounts = new int[ChessPiece.Count];
             board.PawnMaterial = new Score[2];
             board.PieceMaterial = new Score[2];
@@ -114,7 +118,7 @@ namespace ChessDotNet.Data
             if (fenPosition < fen.Length && fen[fenPosition] != '-')
             {
                 var lower = char.ToLowerInvariant(fen[fenPosition]);
-                var file = lower - 0x61;
+                var file = (sbyte)(lower - 0x61);
                 //var rank = fen[fenPosition] - 0x30;
                 if (file >= 0 && file < 8)
                 {
@@ -122,7 +126,7 @@ namespace ChessDotNet.Data
                     board.EnPassantFile = BitboardConstants.Files[file];
                 }
                 fenPosition++;
-                board.EnPassantRankIndex = fen[fenPosition] - '0' - 1;
+                board.EnPassantRankIndex = (sbyte)(fen[fenPosition] - '0' - 1);
             }
             
 
@@ -133,6 +137,7 @@ namespace ChessDotNet.Data
             board.Key = ZobristKeys.CalculateKey(board);
             //board.Key2 = ZobristKeys2.CalculateKey(board);
             board.PawnKey = ZobristKeys.CalculatePawnKey(board);
+            board.SetPinsAndChecks();
             return board;
         }
 

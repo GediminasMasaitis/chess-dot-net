@@ -10,6 +10,7 @@ using System.Runtime.Versioning;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using ChessDotNet.Common;
 using ChessDotNet.Data;
 using ChessDotNet.Evaluation;
 using ChessDotNet.Evaluation.V2;
@@ -34,6 +35,7 @@ namespace ChessDotNet.ConsoleTests
         {
             //Console.WriteLine(Marshal.SizeOf<TranspositionTableEntry>());
             Console.WriteLine(sizeof(TranspositionTableEntry));
+            Console.WriteLine(sizeof(UndoMove));
             Init();
             //WritePieces();
             //foreach (var file in BitboardConstants.Files)
@@ -60,7 +62,7 @@ namespace ChessDotNet.ConsoleTests
             //DoPerftSuite();
             DoSearch2Async();
             //TestLoadState();
-            //TestInvalid();
+            //TestPins();
             //DoSpeedTest();
             //TestSee();
             //TestEval2();
@@ -76,22 +78,10 @@ namespace ChessDotNet.ConsoleTests
             Console.ReadLine();
         }
 
-        public static void TestLoadState()
-        {
-            var savedState = State.LoadState("state.json");
-            var board = savedState.Board;
-            var state = savedState.State;
-
-            Console.WriteLine(board.Print(new EvaluationService2(new EvaluationData()), new FenSerializerService()));
-        }
-
-
-        public static void TestInvalid()
-        {
-            var factory = new BoardFactory();
-            var board = factory.ParseMoves("d2d4 d7d5 c1f4 c8f5 e2e3 e7e6 f1b5 c7c6 b5d3 d8b6 b2b3 f5d3 d1d3 b8a6 g1f3 a6b4 d3e2 b6b5 c2c4 d5c4 b3c4 b5f5 e1f1 e8c8 f4e5 f7f6 e3e4 f5h5 e5g3 f8d6 g3d6 d8d6 c4c5 d6d7 e2c4 b4a6 c4e6 a6c7 e6b3 c7b5 d4d5 b5c7 d5d6 c7a6 e4e5 a6c5 b3e3 b7b6 b1c3 g8h6 e5f6 g7f6 e3f4 h8d8 f4f6 d7d6 f6g7 d6d3 a1b1 h5g6 g7g6 h7g6 b1c1 c8b7 h2h3 d8e8 h3h4 h6f7 h4h5 e8h8 f1e2 g6h5 h1h4 d3d6 e2f1 c5d3 c1d1 c6c5 h4e4 h8d8 e4h4 d6h6 h4e4 d8d7 e4f4 h6h7 a2a3 a7a6 d1d2 b6b5 c3e4 c5c4 e4f6 h7h6 f3e1 f7g5 e1d3 d7d3 d2d3 c4d3 f4f5 g5e6 f6e4 b7c6 f5e5 h5h4 f1e1 h4h3 g2h3 e6f4 e5c5 c6b6 c5f5 f4e2 e1d2 h6h3 f5f6 b6c7 e4g5 h3h5 g5e6 c7d7 e6f8 d7e7 f6f3 h5g5 f8h7 g5g4 f3e3 e7f7 e3d3 e2d4 h7g5 f7f6 g5f3 d4e6 d3d6 g4a4 d6d3 e6c5 d3e3 a6a5 d2e2 b5b4 a3b4 a4a2 e2f1 a5b4 f3d4 a2b2 f2f4 b4b3 e3c3 c5e4 c3c6 f6f7 c6c7 f7g6 f1g1 b2b1 g1g2 b3b2 c7b7 b1d1 f4f5 g6h5 b7b2 d1d4 g2f3 e4d6 b2g2 d6f5 g2g1 d4b4 g1g8 f5h4 f3e3 h4g6 g8d8 g6e7 e3d3 h5g5 d3c3 b4b7 d8e8 g5f4 c3d3 e7c6 e8a8 c6e5 d3d4 b7d7 d4c5 f4e4 a8a4 e4f5 a4h4 e5d3 c5c4 f5e5 c4c3 d3f4 h4h8 d7d1 h8e8 f4e6 e8a8 e5e4 a8e8 e4d5 e8h8 d1g1 h8b8 g1f1 b8h8 d5e4 h8e8 e4e5 e8h8 f1g1 h8h5 e5e4 h5h8 g1c1");
-            Console.WriteLine(board.Print(new EvaluationService2(new EvaluationData()), new FenSerializerService()));
-        }
+        private static readonly ISlideMoveGenerator Slides = new MagicBitboardsService();
+        private static readonly AttacksService Attacks = new AttacksService(Slides);
+        private static readonly MoveValidator Validator = new MoveValidator(Attacks, Slides);
+        private static readonly MoveGenerator MoveGenerator = new MoveGenerator(Attacks, Slides, Validator);
 
         public static void TestEval2()
         {
@@ -132,7 +122,7 @@ namespace ChessDotNet.ConsoleTests
         {
             var boardFactory = new BoardFactory();
             var board = boardFactory.ParseFEN(fen);
-            Console.WriteLine(board.Print(new EvaluationService(), new FenSerializerService()));
+            Console.WriteLine(board.Print(new EvaluationService2(new EvaluationData()), new FenSerializerService()));
             return board;
         }
 
@@ -175,7 +165,8 @@ namespace ChessDotNet.ConsoleTests
         {
             var slidingMoveGenerator = new MagicBitboardsService();
             var attacksService = new AttacksService(slidingMoveGenerator);
-            var movesService = new PossibleMovesService(attacksService, slidingMoveGenerator);
+            var validator = new MoveValidator(attacksService, slidingMoveGenerator);
+            var movesService = new MoveGenerator(attacksService, slidingMoveGenerator, validator);
             var boardFactory = new BoardFactory();
             using var testClient = new InternalPerftClient(movesService, boardFactory);
             //using var verificationClient = new SharperPerftClient(@"C:\Chess\Engines\Sharper\Sharper.exe");
@@ -200,7 +191,8 @@ namespace ChessDotNet.ConsoleTests
             var slidingMoveGenerator = new MagicBitboardsService();
             //var slidingMoveGenerator = new HyperbolaQuintessence();
             var attacksService = new AttacksService(slidingMoveGenerator);
-            var movesService = new PossibleMovesService(attacksService, slidingMoveGenerator);
+            var validator = new MoveValidator(attacksService, slidingMoveGenerator);
+            var movesService = new MoveGenerator(attacksService, slidingMoveGenerator, validator);
             var boardFactory = new BoardFactory();
             using var testClient = new InternalPerftClient(movesService, boardFactory);
             //using var verificationClient = new SharperPerftClient(@"C:\Chess\Engines\Sharper\Sharper.exe");
@@ -217,7 +209,11 @@ namespace ChessDotNet.ConsoleTests
         {
             var board = MakeBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
             var eval = new EvaluationService2(new EvaluationData());
-            var possibleMoves = new PossibleMovesService(new AttacksService(new MagicBitboardsService()), new MagicBitboardsService());
+            var slidingMoveGenerator = new MagicBitboardsService();
+            //var slidingMoveGenerator = new HyperbolaQuintessence();
+            var attacksService = new AttacksService(slidingMoveGenerator);
+            var validator = new MoveValidator(attacksService, slidingMoveGenerator);
+            var possibleMoves = new MoveGenerator(attacksService, slidingMoveGenerator, validator);
             var scores = new EvaluationScores();
             var sw = new Stopwatch();
             var moves = new Move[218];
@@ -272,14 +268,15 @@ namespace ChessDotNet.ConsoleTests
             //board.DoMove2(Move.FromPositionString(board, "a1a2"));
 
             var fenSerializer = new FenSerializerService();
-            var slideMoveGenerator = new MagicBitboardsService();
+            var slidingMoveGenerator = new MagicBitboardsService();
             //var slideMoveGenerator = new HyperbolaQuintessence();
 
             var evaluationService = new EvaluationService2(new EvaluationData());
             //var evaluationService = new EvaluationService();
 
-            var attacksService = new AttacksService(slideMoveGenerator);
-            var movesService = new PossibleMovesService(attacksService, slideMoveGenerator);
+            var attacksService = new AttacksService(slidingMoveGenerator);
+            var validator = new MoveValidator(attacksService, slidingMoveGenerator);
+            var movesService = new MoveGenerator(attacksService, slidingMoveGenerator, validator);
             var searchService = new SearchService2(movesService, evaluationService);
             //var state = State.LoadState("state-2021-03-31-10-05-17-407.json");
             //board = state.Board;
@@ -373,7 +370,8 @@ namespace ChessDotNet.ConsoleTests
         {
             var slidingMoveGenerator = new MagicBitboardsService();
             var attacksService = new AttacksService(slidingMoveGenerator);
-            var movesService = new PossibleMovesService(attacksService, slidingMoveGenerator);
+            var validator = new MoveValidator(attacksService, slidingMoveGenerator);
+            var movesService = new MoveGenerator(attacksService, slidingMoveGenerator, validator);
             var boardFactory = new BoardFactory();
             using var testClient = new InternalPerftClient(movesService, boardFactory);
             //using var verificationClient = new SharperPerftClient(@"C:\Chess\Engines\Sharper\Sharper.exe");
@@ -395,12 +393,13 @@ namespace ChessDotNet.ConsoleTests
             //board.DoMove2(new Move(ChessPosition.D2, ChessPosition.D3, ChessPiece.WhitePawn));
             //board.UndoMove();
             Console.WriteLine(board.Print());
-            var slideMoveGenerator = new MagicBitboardsService();
+            var slidingMoveGenerator = new MagicBitboardsService();
             //var evaluationService = new EvaluationService();
             //Console.WriteLine(evaluationService.Evaluate(board));
 
-            var attacksService = new AttacksService(slideMoveGenerator);
-            var movesService = new PossibleMovesService(attacksService, slideMoveGenerator);
+            var attacksService = new AttacksService(slidingMoveGenerator);
+            var validator = new MoveValidator(attacksService, slidingMoveGenerator);
+            var movesService = new MoveGenerator(attacksService, slidingMoveGenerator, validator);
             var forWhite = true;
             var moves = new Move[218];
             var moveCount = 0;

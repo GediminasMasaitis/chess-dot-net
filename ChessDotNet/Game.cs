@@ -22,7 +22,7 @@ namespace ChessDotNet
         private ISlideMoveGenerator Hyperbola { get; set; }
         private IEvaluationService Evaluation { get; set; }
         private AttacksService Attacks { get; set; }
-        private PossibleMovesService Moves { get; set; }
+        private MoveGenerator Moves { get; set; }
         public SearchService2 Search { get; set; }
         private Board CurrentBoard { get; set; }
 
@@ -32,7 +32,8 @@ namespace ChessDotNet
             var slideMoveGenerator = new MagicBitboardsService();
             var evaluationService = new EvaluationService2(new EvaluationData());
             var attacksService = new AttacksService(slideMoveGenerator);
-            var movesService = new PossibleMovesService(attacksService, slideMoveGenerator);
+            var validator = new MoveValidator(attacksService, slideMoveGenerator);
+            var movesService = new MoveGenerator(attacksService, slideMoveGenerator, validator);
             var searchService = new SearchService2(movesService, evaluationService);
 
             BoardFact = new BoardFactory();

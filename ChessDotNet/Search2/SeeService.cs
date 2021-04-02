@@ -31,8 +31,8 @@ namespace ChessDotNet.Search2
             SeeWeights[ChessPiece.WhiteKnight] = 325;
             SeeWeights[ChessPiece.BlackKnight] = 325;
 
-            SeeWeights[ChessPiece.WhiteBishop] = 335; // 325 instead of 335, exchanging bishop for knight
-            SeeWeights[ChessPiece.BlackBishop] = 335; // is not strictly "losing"
+            SeeWeights[ChessPiece.WhiteBishop] = 325; // 325 instead of 335, exchanging bishop for knight
+            SeeWeights[ChessPiece.BlackBishop] = 325; // is not strictly "losing"
 
             SeeWeights[ChessPiece.WhiteRook] = 500;
             SeeWeights[ChessPiece.BlackRook] = 500;

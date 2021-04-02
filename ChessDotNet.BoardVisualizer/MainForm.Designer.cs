@@ -38,16 +38,18 @@
             // MainPictureBox
             // 
             this.MainPictureBox.Location = new System.Drawing.Point(0, 0);
+            this.MainPictureBox.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.MainPictureBox.Name = "MainPictureBox";
-            this.MainPictureBox.Size = new System.Drawing.Size(513, 513);
+            this.MainPictureBox.Size = new System.Drawing.Size(593, 593);
             this.MainPictureBox.TabIndex = 0;
             this.MainPictureBox.TabStop = false;
             // 
             // ShowBitboardButton
             // 
-            this.ShowBitboardButton.Location = new System.Drawing.Point(528, 478);
+            this.ShowBitboardButton.Location = new System.Drawing.Point(616, 552);
+            this.ShowBitboardButton.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.ShowBitboardButton.Name = "ShowBitboardButton";
-            this.ShowBitboardButton.Size = new System.Drawing.Size(236, 23);
+            this.ShowBitboardButton.Size = new System.Drawing.Size(275, 27);
             this.ShowBitboardButton.TabIndex = 3;
             this.ShowBitboardButton.Text = "Show";
             this.ShowBitboardButton.UseVisualStyleBackColor = true;
@@ -56,30 +58,33 @@
             // Bitboard0Label
             // 
             this.Bitboard0Label.AutoSize = true;
-            this.Bitboard0Label.Location = new System.Drawing.Point(525, 13);
+            this.Bitboard0Label.Location = new System.Drawing.Point(612, 15);
+            this.Bitboard0Label.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.Bitboard0Label.Name = "Bitboard0Label";
-            this.Bitboard0Label.Size = new System.Drawing.Size(58, 13);
+            this.Bitboard0Label.Size = new System.Drawing.Size(64, 15);
             this.Bitboard0Label.TabIndex = 23;
             this.Bitboard0Label.Text = "Bitboard 0:";
             // 
             // Bitboard0TextBox
             // 
-            this.Bitboard0TextBox.Location = new System.Drawing.Point(589, 10);
+            this.Bitboard0TextBox.Location = new System.Drawing.Point(687, 12);
+            this.Bitboard0TextBox.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.Bitboard0TextBox.Name = "Bitboard0TextBox";
-            this.Bitboard0TextBox.Size = new System.Drawing.Size(175, 20);
+            this.Bitboard0TextBox.Size = new System.Drawing.Size(204, 23);
             this.Bitboard0TextBox.TabIndex = 22;
             this.Bitboard0TextBox.Text = "0";
             // 
             // MainForm
             // 
             this.AcceptButton = this.ShowBitboardButton;
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(775, 513);
+            this.ClientSize = new System.Drawing.Size(904, 593);
             this.Controls.Add(this.Bitboard0Label);
             this.Controls.Add(this.Bitboard0TextBox);
             this.Controls.Add(this.ShowBitboardButton);
             this.Controls.Add(this.MainPictureBox);
+            this.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.Name = "MainForm";
             this.Text = "Bitboard viewer";
             ((System.ComponentModel.ISupportInitialize)(this.MainPictureBox)).EndInit();

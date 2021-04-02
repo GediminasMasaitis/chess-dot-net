@@ -2,11 +2,15 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
+using ChessDotNet.Common;
 using ChessDotNet.Evaluation;
 using ChessDotNet.Evaluation.V2;
 using ChessDotNet.Fen;
 using ChessDotNet.Hashing;
+using ChessDotNet.MoveGeneration;
+using ChessDotNet.MoveGeneration.SlideGeneration;
 using ChessDotNet.Testing;
 using Newtonsoft.Json;
 using Bitboard = System.UInt64;
@@ -30,7 +34,7 @@ namespace ChessDotNet.Data
 
         public CastlingPermission CastlingPermissions { get; set; }
         public UndoMove[] History2 { get; set; }
-        public int HistoryDepth { get; set; }
+        public ushort HistoryDepth { get; set; }
 
 
         public Bitboard WhitePieces { get; set; }
@@ -40,65 +44,71 @@ namespace ChessDotNet.Data
 
         public Bitboard[] BitBoard { get; set; }
         public Piece[] ArrayBoard { get; set; }
-        public int EnPassantFileIndex { get; set; }
-        public int EnPassantRankIndex { get; set; }
+        public sbyte EnPassantFileIndex { get; set; }
+        public sbyte EnPassantRankIndex { get; set; }
         public Bitboard EnPassantFile { get; set; }
         public ZobristKey Key { get; set; }
         //public ZobristKey Key2 { get; set; }
         public ZobristKey PawnKey { get; set; }
-        public int LastTookPieceHistoryIndex { get; set; }
+        public ushort LastTookPieceHistoryIndex { get; set; }
 
         public int[] PieceCounts { get; set; }
         public Position[] KingPositions { get; set; }
         public Score[] PawnMaterial { get; set; }
         public Score[] PieceMaterial { get; set; }
 
-        private static CastlingPermission[] CastleRevocationTable { get; set; }
+
+        private bool _hasPinnedPieces;
+        private ulong _pinnedPieces;
+        public ulong PinnedPieces
+        {
+            get
+            {
+                if (_hasPinnedPieces)
+                {
+                    return _pinnedPieces;
+                }
+
+                _pinnedPieces = _pinDetector.GetPinned(this, ColorToMove, KingPositions[ColorToMove]);
+                _hasPinnedPieces = true;
+                return _pinnedPieces;
+            }
+        }
+
+        private bool _hasCheckers;
+        private ulong _checkers;
+        public ulong Checkers
+        {
+            get
+            {
+                if (_hasCheckers)
+                {
+                    return _checkers;
+                }
+
+                _checkers = _attacks.GetAttackersOfSide(this, KingPositions[ColorToMove], !WhiteToMove, AllPieces);
+                _hasCheckers = true;
+                return _checkers;
+            }
+        }
+
+        //public ulong PinnedPieces { get; set; }
+        //public ulong Checkers { get; set; }
+
+
+        private readonly AttacksService _attacks;
+        private readonly PinDetector _pinDetector;
 
         public Board()
         {
-            //History = new List<HistoryEntry>(128);
-            //ArrayBoard = new int[64];
-            //BitBoard = new ulong[13];
             EnPassantFileIndex = -1;
             EnPassantRankIndex = -1;
-            History2 = new UndoMove[20];
             HistoryDepth = 0;
             CastlingPermissions = CastlingPermission.None;
-        }
 
-        static Board()
-        {
-            CastleRevocationTable = new CastlingPermission[64];
-            for (Position i = 0; i < 64; i++)
-            {
-                CastlingPermission permission = CastlingPermission.All;
-                switch (i)
-                {
-                    case 0:
-                        permission &= ~CastlingPermission.WhiteQueen;
-                        break;
-                    case 4:
-                        permission &= ~CastlingPermission.WhiteQueen;
-                        permission &= ~CastlingPermission.WhiteKing;
-                        break;
-                    case 7:
-                        permission &= ~CastlingPermission.WhiteKing;
-                        break;
-                    case 56:
-                        permission &= ~CastlingPermission.BlackQueen;
-                        break;
-                    case 60:
-                        permission &= ~CastlingPermission.BlackQueen;
-                        permission &= ~CastlingPermission.BlackKing;
-                        break;
-                    case 63:
-                        permission &= ~CastlingPermission.BlackKing;
-                        break;
-                }
-
-                CastleRevocationTable[i] = permission;
-            }
+            var slides = new MagicBitboardsService();
+            _attacks = new AttacksService(slides);
+            _pinDetector = new PinDetector(slides);
         }
 
         public void SyncBitBoardsToArrayBoard()
@@ -158,7 +168,7 @@ namespace ChessDotNet.Data
                 {
                     ArrayBoard[i] = ChessPiece.WhiteKing;
                 }
-                else//else if ((BitBoard[ChessPiece.BlackKing] & (1UL << i)) != 0)
+                else//if ((BitBoard[ChessPiece.BlackKing] & (1UL << i)) != 0)
                 {
                     ArrayBoard[i] = ChessPiece.BlackKing;
                 }
@@ -274,6 +284,10 @@ namespace ChessDotNet.Data
             Key = history.Key;
             PawnKey = history.PawnKey;
             LastTookPieceHistoryIndex = history.FiftyMoveRule;
+            _hasPinnedPieces = history.HasPinnedPieces;
+            _pinnedPieces = history.PinnedPieces;
+            _hasCheckers = history.HasCheckers;
+            _checkers = history.Checkers;
 
             var originalColorToMove = ColorToMove;
             WhiteToMove = !WhiteToMove;
@@ -386,7 +400,16 @@ namespace ChessDotNet.Data
             SyncExtraBitBoards();
             //Key2 = ZobristKeys2.CalculateKey(this);
         }
-        
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SetPinsAndChecks()
+        {
+            _hasCheckers = false;
+            _hasPinnedPieces = false;
+            //PinnedPieces = _pinDetector.GetPinned(this, ColorToMove, KingPositions[ColorToMove]);
+            //Checkers = _attacks.GetAttackersOfSide(this, KingPositions[ColorToMove], !WhiteToMove, AllPieces);
+        }
+
         public void TestMove(Move move)
         {
             var clone = Clone();
@@ -423,6 +446,10 @@ namespace ChessDotNet.Data
             History2[HistoryDepth].EnPassantFileIndex = EnPassantFileIndex;
             History2[HistoryDepth].EnPassantRankIndex = EnPassantRankIndex;
             History2[HistoryDepth].FiftyMoveRule = LastTookPieceHistoryIndex;
+            History2[HistoryDepth].HasPinnedPieces = _hasPinnedPieces;
+            History2[HistoryDepth].PinnedPieces = _pinnedPieces;
+            History2[HistoryDepth].HasCheckers = _hasCheckers;
+            History2[HistoryDepth].Checkers = _checkers;
             HistoryDepth++;
             
             var originalWhiteToMove = WhiteToMove;
@@ -443,6 +470,7 @@ namespace ChessDotNet.Data
             if (move.NullMove)
             {
                 SyncExtraBitBoards();
+                SetPinsAndChecks();
                 //Key2 = ZobristKeys2.CalculateKey(this);
                 // TODO check
                 return;
@@ -508,7 +536,7 @@ namespace ChessDotNet.Data
                         PawnKey ^= ZobristKeys.ZPieces[move.To][move.TakesPiece];
                     }
                 }
-                LastTookPieceHistoryIndex = HistoryDepth - 1;
+                LastTookPieceHistoryIndex = (ushort) (HistoryDepth - 1);
                 PieceCounts[move.TakesPiece]--;
                 if (takesPawn)
                 {
@@ -544,8 +572,8 @@ namespace ChessDotNet.Data
             // PAWN DOUBLE MOVES
             if ((move.Piece == ChessPiece.WhitePawn && move.From + 16 == move.To) || (move.Piece == ChessPiece.BlackPawn && move.From - 16 == move.To))
             {
-                var fileIndex = move.From % 8;
-                var rankIndex = (move.To >> 3) + (originalWhiteToMove ? -1 : 1);
+                var fileIndex = (sbyte)(move.From & 7);
+                var rankIndex = (sbyte)((move.To >> 3) + (originalWhiteToMove ? -1 : 1));
                 EnPassantFile = BitboardConstants.Files[fileIndex];
                 EnPassantFileIndex = fileIndex;
                 EnPassantRankIndex = rankIndex;
@@ -576,14 +604,15 @@ namespace ChessDotNet.Data
             }
 
             var originalPermissions = CastlingPermissions;
-            CastlingPermissions &= CastleRevocationTable[move.From];
-            CastlingPermissions &= CastleRevocationTable[move.To];
+            CastlingPermissions &= CastlingRevocation.Table[move.From];
+            CastlingPermissions &= CastlingRevocation.Table[move.To];
             var revoked = CastlingPermissions ^ originalPermissions;
             Key ^= ZobristKeys.ZCastle[(byte)revoked];
 
             Debug.Assert(Key == ZobristKeys.CalculateKey(this));
 
             SyncExtraBitBoards();
+            SetPinsAndChecks();
             //Key2 = ZobristKeys2.CalculateKey(this);
         }
 

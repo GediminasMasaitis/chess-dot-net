@@ -10,15 +10,15 @@ namespace ChessDotNet.Perft
 {
     public class InternalPerftClient : IPerftClient
     {
-        private readonly PossibleMovesService _possibleMovesService;
+        private readonly MoveGenerator _moveGenerator;
         private readonly BoardFactory _boardFactory;
 
         private Board _currentBoard;
         private Move[][] _moves;
 
-        public InternalPerftClient(PossibleMovesService possibleMovesService, BoardFactory boardFactory)
+        public InternalPerftClient(MoveGenerator moveGenerator, BoardFactory boardFactory)
         {
-            _possibleMovesService = possibleMovesService;
+            _moveGenerator = moveGenerator;
             _boardFactory = boardFactory;
             _moves = new Move[SearchConstants.MaxDepth][];
             for (var i = 0; i < SearchConstants.MaxDepth; i++)
@@ -57,7 +57,7 @@ namespace ChessDotNet.Perft
 
             var possibleMoves = _moves[depth];
             var moveCount = 0;
-            _possibleMovesService.GetAllPossibleMoves(_currentBoard, possibleMoves, ref moveCount);
+            _moveGenerator.GetAllPossibleMoves(_currentBoard, possibleMoves, ref moveCount);
             for (var i = 0; i < moveCount; i++)
             {
                 var move = possibleMoves[i];
@@ -82,7 +82,7 @@ namespace ChessDotNet.Perft
 
             var possibleMoves = _moves[depth];
             var moveCount = 0;
-            _possibleMovesService.GetAllPossibleMoves(board, possibleMoves, ref moveCount);
+            _moveGenerator.GetAllPossibleMoves(board, possibleMoves, ref moveCount);
             if (depth == 1)
             {
                 return moveCount;

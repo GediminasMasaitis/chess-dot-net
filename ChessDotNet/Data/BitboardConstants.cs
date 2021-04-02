@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -58,6 +59,8 @@ namespace ChessDotNet.Data
         public static Bitboard[][] PawnSupportJumps { get; private set; }
         public static Bitboard[][] ColumnInFront { get; private set; }
         public static Bitboard[][] ColumnSortOfBehind { get; private set; }
+
+        public static Bitboard[][] Between { get; private set; }
 
         public static void Init()
         {
@@ -259,6 +262,43 @@ namespace ChessDotNet.Data
                 }
                 ColumnSortOfBehind[ChessPiece.Black][i] = bitboard;
             }
+
+            Between = InitBetween();
+        }
+
+        private static ulong[][] InitBetween()
+        {
+            var slides = Ranks.Concat(Files).Concat(Diagonals).Concat(Antidiagonals).ToArray();
+            var between = new ulong[64][];
+            for (int i = 0; i < 64; i++)
+            {
+                between[i] = new ulong[64];
+                var from = 1UL << i;
+                for (int j = 0; j < 64; j++)
+                {
+                    if (i == j)
+                    {
+                        continue;
+                    }
+
+                    var to = 1UL << j;
+                    var min = Math.Min(i, j);
+                    var max = Math.Max(i, j);
+                    var slide = slides.SingleOrDefault(s => (s & from) != 0 && (s & to) != 0);
+                    var result = 0UL;
+                    while (slide != 0)
+                    {
+                        var pos = slide.BitScanForward();
+                        if (pos > min && pos < max)
+                        {
+                            result |= 1UL << pos;
+                        }
+                        slide &= slide - 1;
+                    }
+                    between[i][j] = result;
+                }
+            }
+            return between;
         }
 
         private static ulong GetAttackedByJumpingPiece(Position position, Bitboard jumpMask, Position jumpMaskCenter)

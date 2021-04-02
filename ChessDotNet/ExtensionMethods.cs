@@ -48,13 +48,13 @@ namespace ChessDotNet
 
 #if NET5_0
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int BitCount(this ulong bb)
+        public static byte BitCount(this ulong bb)
         {
-            return BitOperations.PopCount(bb);
+            return (byte)BitOperations.PopCount(bb);
         }
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int BitCount(this ulong bb)
+        public static byte BitCount(this ulong bb)
         {
             ulong result = bb - ((bb >> 1) & 0x5555555555555555UL);
             result = (result & 0x3333333333333333UL) + ((result >> 2) & 0x3333333333333333UL);
