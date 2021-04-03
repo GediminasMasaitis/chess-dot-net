@@ -58,46 +58,42 @@ namespace ChessDotNet.Data
         public Score[] PieceMaterial { get; set; }
 
 
-        private bool _hasPinnedPieces;
-        private ulong _pinnedPieces;
-        public ulong PinnedPieces
-        {
-            get
-            {
-                if (_hasPinnedPieces)
-                {
-                    return _pinnedPieces;
-                }
+        //private bool _hasPinnedPieces;
+        //private ulong _pinnedPieces;
+        //public ulong PinnedPieces
+        //{
+        //    get
+        //    {
+        //        if (_hasPinnedPieces)
+        //        {
+        //            return _pinnedPieces;
+        //        }
 
-                _pinnedPieces = _pinDetector.GetPinned(this, ColorToMove, KingPositions[ColorToMove]);
-                _hasPinnedPieces = true;
-                return _pinnedPieces;
-            }
-        }
+        //        _pinnedPieces = _pinDetector.GetPinned(this, ColorToMove, KingPositions[ColorToMove]);
+        //        _hasPinnedPieces = true;
+        //        return _pinnedPieces;
+        //    }
+        //}
 
-        private bool _hasCheckers;
-        private ulong _checkers;
-        public ulong Checkers
-        {
-            get
-            {
-                if (_hasCheckers)
-                {
-                    return _checkers;
-                }
+        //private bool _hasCheckers;
+        //private ulong _checkers;
+        //public ulong Checkers
+        //{
+        //    get
+        //    {
+        //        if (_hasCheckers)
+        //        {
+        //            return _checkers;
+        //        }
 
-                _checkers = _attacks.GetAttackersOfSide(this, KingPositions[ColorToMove], !WhiteToMove, AllPieces);
-                _hasCheckers = true;
-                return _checkers;
-            }
-        }
+        //        _checkers = _attacks.GetAttackersOfSide(this, KingPositions[ColorToMove], !WhiteToMove, AllPieces);
+        //        _hasCheckers = true;
+        //        return _checkers;
+        //    }
+        //}
 
         //public ulong PinnedPieces { get; set; }
         //public ulong Checkers { get; set; }
-
-
-        private readonly AttacksService _attacks;
-        private readonly PinDetector _pinDetector;
 
         public Board()
         {
@@ -105,10 +101,6 @@ namespace ChessDotNet.Data
             EnPassantRankIndex = -1;
             HistoryDepth = 0;
             CastlingPermissions = CastlingPermission.None;
-
-            var slides = new MagicBitboardsService();
-            _attacks = new AttacksService(slides);
-            _pinDetector = new PinDetector(slides);
         }
 
         public void SyncBitBoardsToArrayBoard()
@@ -284,10 +276,10 @@ namespace ChessDotNet.Data
             Key = history.Key;
             PawnKey = history.PawnKey;
             LastTookPieceHistoryIndex = history.FiftyMoveRule;
-            _hasPinnedPieces = history.HasPinnedPieces;
-            _pinnedPieces = history.PinnedPieces;
-            _hasCheckers = history.HasCheckers;
-            _checkers = history.Checkers;
+            //_hasPinnedPieces = history.HasPinnedPieces;
+            //_pinnedPieces = history.PinnedPieces;
+            //_hasCheckers = history.HasCheckers;
+            //_checkers = history.Checkers;
 
             var originalColorToMove = ColorToMove;
             WhiteToMove = !WhiteToMove;
@@ -401,14 +393,14 @@ namespace ChessDotNet.Data
             //Key2 = ZobristKeys2.CalculateKey(this);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetPinsAndChecks()
-        {
-            _hasCheckers = false;
-            _hasPinnedPieces = false;
-            //PinnedPieces = _pinDetector.GetPinned(this, ColorToMove, KingPositions[ColorToMove]);
-            //Checkers = _attacks.GetAttackersOfSide(this, KingPositions[ColorToMove], !WhiteToMove, AllPieces);
-        }
+        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
+        //public void SetPinsAndChecks()
+        //{
+        //    _hasCheckers = false;
+        //    _hasPinnedPieces = false;
+        //    //PinnedPieces = _pinDetector.GetPinned(this, ColorToMove, KingPositions[ColorToMove]);
+        //    //Checkers = _attacks.GetAttackersOfSide(this, KingPositions[ColorToMove], !WhiteToMove, AllPieces);
+        //}
 
         public void TestMove(Move move)
         {
@@ -446,10 +438,10 @@ namespace ChessDotNet.Data
             History2[HistoryDepth].EnPassantFileIndex = EnPassantFileIndex;
             History2[HistoryDepth].EnPassantRankIndex = EnPassantRankIndex;
             History2[HistoryDepth].FiftyMoveRule = LastTookPieceHistoryIndex;
-            History2[HistoryDepth].HasPinnedPieces = _hasPinnedPieces;
-            History2[HistoryDepth].PinnedPieces = _pinnedPieces;
-            History2[HistoryDepth].HasCheckers = _hasCheckers;
-            History2[HistoryDepth].Checkers = _checkers;
+            //History2[HistoryDepth].HasPinnedPieces = _hasPinnedPieces;
+            //History2[HistoryDepth].PinnedPieces = _pinnedPieces;
+            //History2[HistoryDepth].HasCheckers = _hasCheckers;
+            //History2[HistoryDepth].Checkers = _checkers;
             HistoryDepth++;
             
             var originalWhiteToMove = WhiteToMove;
@@ -470,7 +462,7 @@ namespace ChessDotNet.Data
             if (move.NullMove)
             {
                 SyncExtraBitBoards();
-                SetPinsAndChecks();
+                //SetPinsAndChecks();
                 //Key2 = ZobristKeys2.CalculateKey(this);
                 // TODO check
                 return;
@@ -612,7 +604,7 @@ namespace ChessDotNet.Data
             Debug.Assert(Key == ZobristKeys.CalculateKey(this));
 
             SyncExtraBitBoards();
-            SetPinsAndChecks();
+            //SetPinsAndChecks();
             //Key2 = ZobristKeys2.CalculateKey(this);
         }
 

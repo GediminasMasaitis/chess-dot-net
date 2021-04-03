@@ -7,6 +7,7 @@ using System.Windows.Input;
 using ChessDotNet.Common;
 using ChessDotNet.Data;
 using ChessDotNet.Evaluation;
+using ChessDotNet.Evaluation.Nnue;
 using ChessDotNet.Evaluation.V2;
 using ChessDotNet.MoveGeneration;
 using ChessDotNet.MoveGeneration.SlideGeneration;
@@ -29,15 +30,17 @@ namespace ChessDotNet
 
         public Game()
         {
-            var slideMoveGenerator = new MagicBitboardsService();
-            var evaluationService = new EvaluationService2(new EvaluationData());
-            var attacksService = new AttacksService(slideMoveGenerator);
-            var validator = new MoveValidator(attacksService, slideMoveGenerator);
-            var movesService = new MoveGenerator(attacksService, slideMoveGenerator, validator);
+            var slidingMoveGenerator = new MagicBitboardsService();
+            //var evaluationService = new EvaluationService2(new EvaluationData());
+            var evaluationService = new NnueEvaluationService(new NnueExternalClient());
+            var attacksService = new AttacksService(slidingMoveGenerator);
+            var pinDetector = new PinDetector(slidingMoveGenerator);
+            var validator = new MoveValidator(attacksService, slidingMoveGenerator, pinDetector);
+            var movesService = new MoveGenerator(attacksService, slidingMoveGenerator, validator);
             var searchService = new SearchService2(movesService, evaluationService);
 
             BoardFact = new BoardFactory();
-            Hyperbola = slideMoveGenerator;
+            Hyperbola = slidingMoveGenerator;
             Evaluation = evaluationService;
             Attacks = attacksService;
             Moves = movesService;

@@ -13,6 +13,8 @@ using System.Threading.Tasks;
 using ChessDotNet.Common;
 using ChessDotNet.Data;
 using ChessDotNet.Evaluation;
+using ChessDotNet.Evaluation.Nnue;
+using ChessDotNet.Evaluation.Nnue.Managed;
 using ChessDotNet.Evaluation.V2;
 using ChessDotNet.Fen;
 using ChessDotNet.Hashing;
@@ -60,12 +62,13 @@ namespace ChessDotNet.ConsoleTests
             //DoPerftClient();
             //DoPerft();
             //DoPerftSuite();
-            DoSearch2Async();
+            //DoSearch2Async();
             //TestLoadState();
             //TestPins();
             //DoSpeedTest();
             //TestSee();
             //TestEval2();
+            TestNnueManaged();
 
             //Console.WriteLine(new BoardFactory().ParseFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").Print());
             //var pos = 27;
@@ -80,16 +83,29 @@ namespace ChessDotNet.ConsoleTests
 
         private static readonly ISlideMoveGenerator Slides = new MagicBitboardsService();
         private static readonly AttacksService Attacks = new AttacksService(Slides);
-        private static readonly MoveValidator Validator = new MoveValidator(Attacks, Slides);
+        private static readonly PinDetector PinDetector = new PinDetector(Slides);
+        private static readonly MoveValidator Validator = new MoveValidator(Attacks, Slides, PinDetector);
         private static readonly MoveGenerator MoveGenerator = new MoveGenerator(Attacks, Slides, Validator);
+
+        private static void TestNnueManaged()
+        {
+            var board = MakeBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+
+            var loader = new NnueLoader();
+            var parameters = loader.Load("C:/Temp/nn-62ef826d1a6d.nnue");
+            var managed = new NnueManagedClient(parameters);
+            var evaluationService = new NnueEvaluationService(managed);
+            evaluationService.Evaluate(board);
+        }
 
         public static void TestEval2()
         {
-            //var board = MakeBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-            var board = MakeBoard("r3r1kb/p2bp2p/1q1p1npB/5NQ1/2p1P1P1/2N2P2/PPP5/2KR3R w - - 0 1");
-            var eval2 = new EvaluationService2(new EvaluationData());
+            var board = MakeBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+            //var board = MakeBoard("r3r1kb/p2bp2p/1q1p1npB/5NQ1/2p1P1P1/2N2P2/PPP5/2KR3R w - - 0 1");
+            //var eval2 = new EvaluationService2(new EvaluationData());
+            var eval2 = new NnueEvaluationService(new NnueExternalClient());
             var score = eval2.Evaluate(board);
-
+            Console.WriteLine("score" + score);
         }
 
         public static void WritePieces()
@@ -163,12 +179,8 @@ namespace ChessDotNet.ConsoleTests
 
         public static void DoPerftClient()
         {
-            var slidingMoveGenerator = new MagicBitboardsService();
-            var attacksService = new AttacksService(slidingMoveGenerator);
-            var validator = new MoveValidator(attacksService, slidingMoveGenerator);
-            var movesService = new MoveGenerator(attacksService, slidingMoveGenerator, validator);
             var boardFactory = new BoardFactory();
-            using var testClient = new InternalPerftClient(movesService, boardFactory);
+            using var testClient = new InternalPerftClient(MoveGenerator, boardFactory);
             //using var verificationClient = new SharperPerftClient(@"C:\Chess\Engines\Sharper\Sharper.exe");
             using var verificationClient = new StockfishPerftClient(@"C:\Chess\Engines\stockfish_13_win_x64_avx2\stockfish_13_win_x64_avx2.exe");
         }
@@ -188,13 +200,8 @@ namespace ChessDotNet.ConsoleTests
             //fen = "r1b1k2r/ppppnppp/2n2q2/2b5/3NP3/2P1B3/PP3PPP/RN1QKB1R w KQkq - 0 1";
             //fen = "2k5/8/8/8/8/8/6p1/2K5 w - - 1 1 ";
             //fen = "rnbqkbnr/1ppppppp/8/p7/1P6/P7/2PPPPPP/RNBQKBNR b KQkq b3 0 2 ";
-            var slidingMoveGenerator = new MagicBitboardsService();
-            //var slidingMoveGenerator = new HyperbolaQuintessence();
-            var attacksService = new AttacksService(slidingMoveGenerator);
-            var validator = new MoveValidator(attacksService, slidingMoveGenerator);
-            var movesService = new MoveGenerator(attacksService, slidingMoveGenerator, validator);
             var boardFactory = new BoardFactory();
-            using var testClient = new InternalPerftClient(movesService, boardFactory);
+            using var testClient = new InternalPerftClient(MoveGenerator, boardFactory);
             //using var verificationClient = new SharperPerftClient(@"C:\Chess\Engines\Sharper\Sharper.exe");
             using var verificationClient = new StockfishPerftClient(@"C:\Chess\Engines\stockfish_13_win_x64_avx2\stockfish_13_win_x64_avx2.exe");
 
@@ -209,11 +216,7 @@ namespace ChessDotNet.ConsoleTests
         {
             var board = MakeBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
             var eval = new EvaluationService2(new EvaluationData());
-            var slidingMoveGenerator = new MagicBitboardsService();
             //var slidingMoveGenerator = new HyperbolaQuintessence();
-            var attacksService = new AttacksService(slidingMoveGenerator);
-            var validator = new MoveValidator(attacksService, slidingMoveGenerator);
-            var possibleMoves = new MoveGenerator(attacksService, slidingMoveGenerator, validator);
             var scores = new EvaluationScores();
             var sw = new Stopwatch();
             var moves = new Move[218];
@@ -268,16 +271,17 @@ namespace ChessDotNet.ConsoleTests
             //board.DoMove2(Move.FromPositionString(board, "a1a2"));
 
             var fenSerializer = new FenSerializerService();
-            var slidingMoveGenerator = new MagicBitboardsService();
             //var slideMoveGenerator = new HyperbolaQuintessence();
 
-            var evaluationService = new EvaluationService2(new EvaluationData());
+            //var client = new NnueManagedClient(new NnueLoader().Load("C:/Temp/nn-62ef826d1a6d.nnue"));
+            var client = new NnueExternalClient();
+
+            var evaluationService = new NnueEvaluationService(client);
+            //var evaluationService = new NnueEvaluationService();
+            //var evaluationService = new EvaluationService2(new EvaluationData());
             //var evaluationService = new EvaluationService();
 
-            var attacksService = new AttacksService(slidingMoveGenerator);
-            var validator = new MoveValidator(attacksService, slidingMoveGenerator);
-            var movesService = new MoveGenerator(attacksService, slidingMoveGenerator, validator);
-            var searchService = new SearchService2(movesService, evaluationService);
+            var searchService = new SearchService2(MoveGenerator, evaluationService);
             //var state = State.LoadState("state-2021-03-31-10-05-17-407.json");
             //board = state.Board;
             //Console.WriteLine(board.Print(null, new FenSerializerService()));
@@ -368,12 +372,8 @@ namespace ChessDotNet.ConsoleTests
 
         private static void DoPerftSuite()
         {
-            var slidingMoveGenerator = new MagicBitboardsService();
-            var attacksService = new AttacksService(slidingMoveGenerator);
-            var validator = new MoveValidator(attacksService, slidingMoveGenerator);
-            var movesService = new MoveGenerator(attacksService, slidingMoveGenerator, validator);
             var boardFactory = new BoardFactory();
-            using var testClient = new InternalPerftClient(movesService, boardFactory);
+            using var testClient = new InternalPerftClient(MoveGenerator, boardFactory);
             //using var verificationClient = new SharperPerftClient(@"C:\Chess\Engines\Sharper\Sharper.exe");
             using var verificationClient = new StockfishPerftClient(@"C:\Chess\Engines\stockfish_13_win_x64_avx2\stockfish_13_win_x64_avx2.exe");
 
@@ -398,7 +398,8 @@ namespace ChessDotNet.ConsoleTests
             //Console.WriteLine(evaluationService.Evaluate(board));
 
             var attacksService = new AttacksService(slidingMoveGenerator);
-            var validator = new MoveValidator(attacksService, slidingMoveGenerator);
+            var pinDetector = new PinDetector(slidingMoveGenerator);
+            var validator = new MoveValidator(attacksService, slidingMoveGenerator, pinDetector);
             var movesService = new MoveGenerator(attacksService, slidingMoveGenerator, validator);
             var forWhite = true;
             var moves = new Move[218];

@@ -9,7 +9,7 @@ namespace ChessDotNet.Search2
     public struct TranspositionTableEntry
     {
         public byte DepthCheckAndFlag;
-        public byte Depth => (byte) (DepthCheckAndFlag >> 3);
+        public byte Depth => (byte) (DepthCheckAndFlag >> 2);
         //public bool InCheck => ((DepthCheckAndFlag >> 2) & 1) != 0;
         public byte Flag => (byte) (DepthCheckAndFlag & 3);
 
@@ -38,7 +38,7 @@ namespace ChessDotNet.Search2
             //Key = key;
             //Score = score;
 
-            DepthCheckAndFlag = (byte)((depth << 3) /*| (byte)(inCheck ? (1 << 2) : 0)*/ | flag);
+            DepthCheckAndFlag = (byte)((depth << 2) /*| (byte)(inCheck ? (1 << 2) : 0)*/ | flag);
             //Depth = depth;
             //Flag = flag;
 

@@ -20,6 +20,7 @@ namespace ChessDotNet.Evaluation.V2
         private readonly EvalHashTable _pawnTable;
         private readonly AttacksService _attacks;
         private readonly ISlideMoveGenerator _slideGenerator;
+        private readonly PinDetector _pinDetector;
 
         private readonly EvaluationScores _evaluationScores;
         private readonly ulong[] _pawnControl;
@@ -34,6 +35,7 @@ namespace ChessDotNet.Evaluation.V2
             _pawnTable = new EvalHashTable();
             _pawnTable.SetSize(16 * 1024 * 1024);
             _slideGenerator = new MagicBitboardsService();
+            _pinDetector = new PinDetector(_slideGenerator);
             _attacks = new AttacksService(_slideGenerator);
         }
 
@@ -177,6 +179,11 @@ namespace ChessDotNet.Evaluation.V2
             if (v.attCnt[ChessPiece.Black] < 2 || b.PieceCounts[ChessPiece.BlackQueen] == 0) v.attWeight[ChessPiece.Black] = 0;
             result += EvaluationData.SafetyTable[v.attWeight[ChessPiece.White]];
             result -= EvaluationData.SafetyTable[v.attWeight[ChessPiece.Black]];
+
+            var whitePins = _pinDetector.GetPinned(b, ChessPiece.White, b.KingPositions[ChessPiece.White]);
+            result -= whitePins.BitCount() * 5;
+            var blackPins = _pinDetector.GetPinned(b, ChessPiece.Black, b.KingPositions[ChessPiece.Black]);
+            result += blackPins.BitCount() * 5;
 
             /**************************************************************************
             *  Low material correction - guarding against an illusory material advan- *
@@ -540,8 +547,7 @@ namespace ChessDotNet.Evaluation.V2
             *  Collect data about mobility and king attacks                           *
             **************************************************************************/
 
-            var mb = new MagicBitboardsService();
-            var slide = mb.AllSlide(b.AllPieces, sq);
+            var slide = _slideGenerator.AllSlide(b.AllPieces, sq);
 
             var opponent = side == ChessPiece.White ? b.BlackPieces : b.WhitePieces;
             var emptyOrOpponent = (b.EmptySquares | opponent) & slide;

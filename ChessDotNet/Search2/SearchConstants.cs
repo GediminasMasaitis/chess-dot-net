@@ -2,7 +2,7 @@
 {
     public static class SearchConstants
     {
-        public const int MaxDepth = 32;
+        public const int MaxDepth = 64;
 
         public const int MateScore = 30000;
         public const int MateThereshold = 29000;

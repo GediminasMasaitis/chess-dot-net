@@ -35,6 +35,7 @@ namespace ChessDotNet.Search2
         private readonly SearchStatistics _statistics;
         private readonly AttacksService _attacksService;
         private readonly MoveValidator _validator;
+        private readonly PinDetector _pinDetector;
         private readonly SeeService _see;
 
         private Board _initialBoard;
@@ -52,7 +53,8 @@ namespace ChessDotNet.Search2
             _evaluation = evaluation;
             var slides = new MagicBitboardsService();
             _attacksService = new AttacksService(slides);
-            _validator = new MoveValidator(_attacksService, slides);
+            _pinDetector = new PinDetector(slides);
+            _validator = new MoveValidator(_attacksService, slides, _pinDetector);
             _see = new SeeService(_attacksService);
             _moveOrdering = new MoveOrderingService();
             _state = new SearchState();
@@ -434,7 +436,8 @@ namespace ChessDotNet.Search2
             //var myKing = board.WhiteToMove ? board.BitBoard[ChessPiece.WhiteKing] : board.BitBoard[ChessPiece.BlackKing];
             //var myKingPos = myKing.BitScanForward();
             //var inCheck = _attacksService.IsPositionAttacked(board, myKingPos, !board.WhiteToMove);
-            var inCheck = board.Checkers != 0;
+            var checkers = _attacksService.GetAttackersOfSide(board, board.KingPositions[board.ColorToMove], !board.WhiteToMove, board.AllPieces);
+            var inCheck = checkers != 0;
 
             if (inCheck)
             {
@@ -483,6 +486,10 @@ namespace ChessDotNet.Search2
 
             // STATIC EVALUATION PRUNING
             var staticScore = _evaluation.Evaluate(board);
+            //board.WhiteToMove = !board.WhiteToMove;
+            //var staticScore2 = _evaluation.Evaluate(board);
+            //Debug.Assert(staticScore == staticScore2);
+            //board.WhiteToMove = !board.WhiteToMove;
             if
             (
                 EngineOptions.UseStaticEvaluationPruning
@@ -596,12 +603,14 @@ namespace ChessDotNet.Search2
             var moveStaticScores = threadState.MoveStaticScores[ply];
             _moveOrdering.CalculateStaticScores(board, potentialMoves, moveCount, ply, principalVariationMove, threadState.Killers, EngineOptions.UseSeeOrdering, seeScores, moveStaticScores);
             
+            
+            var pinnedPieces = _pinDetector.GetPinned(board, board.ColorToMove, board.KingPositions[board.ColorToMove]);
             for (var moveIndex = 0; moveIndex < moveCount; moveIndex++)
             {
                 _moveOrdering.OrderNextMove(moveIndex, potentialMoves, moveStaticScores, seeScores, moveCount, threadState.History);
                 var move = potentialMoves[moveIndex];
                 var seeScore = seeScores[moveIndex];
-                var kingSafe = _validator.IsKingSafeAfterMove2(board, move);
+                var kingSafe = _validator.IsKingSafeAfterMove2(board, move, checkers, pinnedPieces);
                 if (!kingSafe)
                 {
                     continue;
@@ -623,10 +632,10 @@ namespace ChessDotNet.Search2
                     //var opponentKing = board.WhiteToMove ? board.BitBoard[ChessPiece.WhiteKing] : board.BitBoard[ChessPiece.BlackKing];
                     //var opponentInCheck = (attacks & opponentKing) != 0;
 
-                    //var opponentKing = board.WhiteToMove ? board.BitBoard[ChessPiece.WhiteKing] : board.BitBoard[ChessPiece.BlackKing];
-                    //var opponentKingPos = opponentKing.BitScanForward();
-                    //var opponentInCheck = _attacksService.IsPositionAttacked(board, opponentKingPos, !board.WhiteToMove);
-                    var opponentInCheck = board.Checkers != 0;
+                    var opponentKing = board.WhiteToMove ? board.BitBoard[ChessPiece.WhiteKing] : board.BitBoard[ChessPiece.BlackKing];
+                    var opponentKingPos = opponentKing.BitScanForward();
+                    var opponentInCheck = _attacksService.IsPositionAttacked(board, opponentKingPos, !board.WhiteToMove);
+                    //var opponentInCheck = board.Checkers != 0;
                     if (!opponentInCheck)
                     {
                         _statistics.FutilityReductions++;
@@ -656,10 +665,10 @@ namespace ChessDotNet.Search2
                     && move.PawnPromoteTo == ChessPiece.Empty
                 )
                 {
-                    //var opponentKing = board.WhiteToMove ? board.BitBoard[ChessPiece.WhiteKing] : board.BitBoard[ChessPiece.BlackKing];
-                    //var opponentKingPos = opponentKing.BitScanForward();
-                    //var opponentInCheck = _attacksService.IsPositionAttacked(board, opponentKingPos, !board.WhiteToMove);
-                    var opponentInCheck = board.Checkers != 0;
+                    var opponentKing = board.WhiteToMove ? board.BitBoard[ChessPiece.WhiteKing] : board.BitBoard[ChessPiece.BlackKing];
+                    var opponentKingPos = opponentKing.BitScanForward();
+                    var opponentInCheck = _attacksService.IsPositionAttacked(board, opponentKingPos, !board.WhiteToMove);
+                    //var opponentInCheck = board.Checkers != 0;
                     if (!opponentInCheck)
                     {
                         threadState.Cutoff[move.ColorToMove][move.From][move.To] = 50;
@@ -882,14 +891,15 @@ namespace ChessDotNet.Search2
             _see.CalculateSeeScores(board, potentialMoves, moveCount, seeScores);
             var moveStaticScores = threadState.MoveStaticScores[ply];
             _moveOrdering.CalculateStaticScores(board, potentialMoves, moveCount, ply, principalVariationMove, threadState.Killers, EngineOptions.UseSeeOrdering, seeScores, moveStaticScores);
-
+            var checkers = _attacksService.GetAttackersOfSide(board, board.KingPositions[board.ColorToMove], !board.WhiteToMove, board.AllPieces);
+            var pinnedPieces = _pinDetector.GetPinned(board, board.ColorToMove, board.KingPositions[board.ColorToMove]);
             for (var moveIndex = 0; moveIndex < moveCount; moveIndex++)
             {
                 _moveOrdering.OrderNextMove(moveIndex, potentialMoves, moveStaticScores, seeScores, moveCount, threadState.History);
                 var move = potentialMoves[moveIndex];
                 Debug.Assert(move.TakesPiece != ChessPiece.Empty);
 
-                var kingSafe = _validator.IsKingSafeAfterMove2(board, move);
+                var kingSafe = _validator.IsKingSafeAfterMove2(board, move, checkers, pinnedPieces);
                 if (!kingSafe)
                 {
                     continue;
@@ -943,7 +953,7 @@ namespace ChessDotNet.Search2
                     {
 
                         var seeScore = seeScores[moveIndex];
-                        if (seeScore < -10)
+                        if (seeScore < 0) // TODO: -10?
                         {
                             _statistics.SeePruning++;
                             continue;

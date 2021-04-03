@@ -137,7 +137,7 @@ namespace ChessDotNet.Data
             board.Key = ZobristKeys.CalculateKey(board);
             //board.Key2 = ZobristKeys2.CalculateKey(board);
             board.PawnKey = ZobristKeys.CalculatePawnKey(board);
-            board.SetPinsAndChecks();
+            //board.SetPinsAndChecks();
             return board;
         }
 

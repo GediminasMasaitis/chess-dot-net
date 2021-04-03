@@ -5,79 +5,29 @@ using ChessDotNet.Data;
 
 namespace ChessDotNet.MoveGeneration
 {
-    public class PinDetector
-    {
-        private readonly ISlideMoveGenerator _slideMoveGenerator;
-
-        public PinDetector(ISlideMoveGenerator slideMoveGenerator)
-        {
-            _slideMoveGenerator = slideMoveGenerator;
-        }
-
-        public ulong GetPinned(Board board, byte color, byte pos)
-        {
-            var opponentColor = (byte)(color ^ 1);
-            var pinned = 0UL;
-            var ownPieces = color == ChessPiece.White ? board.WhitePieces : board.BlackPieces;
-
-            var xrays = DiagonalAntidiagonalXray(board.AllPieces, ownPieces, pos);
-            var pinners = xrays & (board.BitBoard[ChessPiece.Bishop | opponentColor] | board.BitBoard[ChessPiece.Queen | opponentColor]);
-
-            while (pinners != 0)
-            {
-                int pinner = pinners.BitScanForward();
-                pinned |= BitboardConstants.Between[pinner][pos] & ownPieces;
-                pinners &= pinners - 1;
-            }
-
-            xrays = HorizontalVerticalXray(board.AllPieces, ownPieces, pos);
-            pinners = xrays & (board.BitBoard[ChessPiece.Rook | opponentColor] | board.BitBoard[ChessPiece.Queen | opponentColor]);
-
-            while (pinners != 0)
-            {
-                int pinner = pinners.BitScanForward();
-                pinned |= BitboardConstants.Between[pinner][pos] & ownPieces;
-                pinners &= pinners - 1;
-            }
-            return pinned;
-        }
-
-        private ulong DiagonalAntidiagonalXray(ulong allPieces, ulong ownPieces, byte position)
-        {
-            var attacks = _slideMoveGenerator.DiagonalAntidiagonalSlide(allPieces, position);
-            ownPieces &= attacks;
-            var xrayAttacks = attacks ^ _slideMoveGenerator.DiagonalAntidiagonalSlide(allPieces ^ ownPieces, position);
-            return xrayAttacks;
-        }
-
-        private ulong HorizontalVerticalXray(ulong allPieces, ulong ownPieces, byte position)
-        {
-            var attacks = _slideMoveGenerator.HorizontalVerticalSlide(allPieces, position);
-            ownPieces &= attacks;
-            var xrayAttacks = attacks ^ _slideMoveGenerator.HorizontalVerticalSlide(allPieces ^ ownPieces, position);
-            return xrayAttacks;
-        }
-    }
-
     public class MoveValidator
     {
         private readonly AttacksService _attacksService;
         private readonly ISlideMoveGenerator _slideMoveGenerator;
+        private readonly PinDetector _pinDetector;
 
-        public MoveValidator(AttacksService attacksService, ISlideMoveGenerator slideMoveGenerator)
+        public MoveValidator(AttacksService attacksService, ISlideMoveGenerator slideMoveGenerator, PinDetector pinDetector)
         {
             _attacksService = attacksService;
             _slideMoveGenerator = slideMoveGenerator;
+            _pinDetector = pinDetector;
         }
 
         public void FilterMovesByKingSafety(Board board, Move[] moves, ref int moveCount)
         {
+            var checkers = _attacksService.GetAttackersOfSide(board, board.KingPositions[board.ColorToMove], !board.WhiteToMove, board.AllPieces);
+            var pinnedPieces = _pinDetector.GetPinned(board, board.ColorToMove, board.KingPositions[board.ColorToMove]);
 
             var toRemove = 0;
             for (var i = 0; i < moveCount; i++)
             {
                 var move = moves[i];
-                var safe = IsKingSafeAfterMove(board, move);
+                var safe = IsKingSafeAfterMove2(board, move, checkers, pinnedPieces);
                 if (safe)
                 {
                     if (toRemove > 0)
@@ -95,10 +45,11 @@ namespace ChessDotNet.MoveGeneration
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool IsKingSafeAfterMove2(Board board, Move move)
+        public bool IsKingSafeAfterMove2(Board board, Move move, ulong checkers, ulong pinnedPieces)
         {
             var kingMove = move.Piece == ChessPiece.King + board.ColorToMove;
-            var checkers = board.Checkers;
+            //var checkers = board.Checkers;
+            //var pinnedPieces = board.PinnedPieces;
             var checkCount = checkers.BitCount();
 
             if (checkCount > 1 && !kingMove)
@@ -106,7 +57,9 @@ namespace ChessDotNet.MoveGeneration
                 return false;
             }
 
-            var isPinned = (board.PinnedPieces & (1UL << move.From)) != 0;
+            
+            var isPinned = (pinnedPieces & (1UL << move.From)) != 0;
+            var toBitboard = 1UL << move.To;
             if (checkCount == 1 && !kingMove)
             {
                 if (isPinned)
@@ -116,7 +69,7 @@ namespace ChessDotNet.MoveGeneration
 
                 var checkerPos = checkers.BitScanForward();
                 var canMoveTo = BitboardConstants.Between[board.KingPositions[board.ColorToMove]][checkerPos] | checkers;
-                var toBitboard = 1UL << move.To;
+                
                 if ((canMoveTo & toBitboard) == 0)
                 {
                     return false;
@@ -124,6 +77,15 @@ namespace ChessDotNet.MoveGeneration
 
                 return true;
             }
+
+            //if (isPinned)
+            //{
+            //    var canMoveTo = BitboardConstants.Between[board.KingPositions[board.ColorToMove]][move.From];
+            //    if ((canMoveTo & toBitboard) != 0)
+            //    {
+            //        return true;
+            //    }
+            //}
 
             if
             (
