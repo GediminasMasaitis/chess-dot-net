@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
+using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.X86;
 
 namespace ChessDotNet.Evaluation.Nnue.Managed
 {
@@ -49,6 +51,10 @@ namespace ChessDotNet.Evaluation.Nnue.Managed
         private const uint FtInDims = 64 * PS_END;
         private const uint FtOutDims = kHalfDimensions * 2;
 
+        private const ushort SIMD_WIDTH = 256;
+        private const byte RegisterCount = 16;
+        private const ushort TileHeight = (RegisterCount * SIMD_WIDTH / 16);
+
         public NnueManagedClient(HalfKpParameters parameters)
         {
             _parameters = parameters;
@@ -61,11 +67,12 @@ namespace ChessDotNet.Evaluation.Nnue.Managed
             public sbyte[] hidden2_out = new sbyte[32];
         }
 
-        private class IndexList
+        private unsafe struct IndexList2
         {
             public uint size;
-            public uint[] values = new uint[30];
+            public fixed uint values[30];
         }
+
         int orient(int c, int s)
         {
             return s ^ (c == white ? 0x00 : 0x3f);
@@ -77,29 +84,38 @@ namespace ChessDotNet.Evaluation.Nnue.Managed
 
         public int Evaluate(NnuePosition pos)
         {
-            var input_mask = new uint[FtOutDims / (8 * sizeof(uint))];
-            var hidden1_mask = new uint[8 / sizeof(uint)];
+            Span<uint> input_mask = stackalloc uint[(int)FtOutDims / (8 * sizeof(uint))];
+            Span<uint> hidden1_mask = stackalloc uint[8 / sizeof(uint)];
+            Span<uint> fake = stackalloc uint[0];
             var buf = new NetData();
 
-            Transform(pos, buf.input, input_mask);
-            AffineTxfm(buf.input, buf.hidden1_out, FtOutDims, 32, _parameters.Hidden1.Biases, _parameters.Hidden1.Weights, input_mask, hidden1_mask, true);
-            AffineTxfm(buf.hidden1_out, buf.hidden2_out, 32, 32, _parameters.Hidden2.Biases, _parameters.Hidden2.Weights, hidden1_mask, null, false);
-            var outValue = AffinePropagate(buf.hidden2_out, _parameters.Output.Biases, _parameters.Output.Weights);
+            int outValue;
+            if(Avx2.IsSupported)
+            {
+                TransformAvx2(pos, buf.input, ref input_mask);
+                AffineTransformAvx2(buf.input, buf.hidden1_out, FtOutDims, _parameters.Hidden1.Biases, _parameters.Hidden1.Weights, ref input_mask, ref hidden1_mask, true);
+                AffineTransformAvx2(buf.hidden1_out, buf.hidden2_out, 32, _parameters.Hidden2.Biases, _parameters.Hidden2.Weights, ref hidden1_mask, ref fake, false);
+                outValue = AffinePropagateAvx2(buf.hidden2_out, _parameters.Output.Biases, _parameters.Output.Weights);
+            }
+            else
+            {
+                Transform(pos, buf.input);
+                AffineTransform(buf.input, buf.hidden1_out, FtOutDims, 32, _parameters.Hidden1.Biases, _parameters.Hidden1.Weights);
+                AffineTransform(buf.hidden1_out, buf.hidden2_out, 32, 32, _parameters.Hidden2.Biases, _parameters.Hidden2.Weights);
+                outValue = AffinePropagate(buf.hidden2_out, _parameters.Output.Biases, _parameters.Output.Weights);
+            }
             var result = outValue / 16;
             return result;
         }
 
-        private void AffineTxfm
+        private void AffineTransform
         (
             sbyte[] input,
             sbyte[] output,
             uint inDims,
             uint outDims,
             int[] biases,
-            sbyte[] weights,
-            uint[] inMask,
-            uint[] outMask,
-            bool pack8_and_calc_mask
+            sbyte[] weights
         )
         {
             var tmp = new int[outDims];
@@ -130,6 +146,104 @@ namespace ChessDotNet.Evaluation.Nnue.Managed
             }
         }
 
+        private unsafe void AffineTransformAvx2
+        (
+            sbyte[] input,
+            sbyte[] output,
+            uint inDims,
+            //uint outDims,
+            int[] biases,
+            sbyte[] weights,
+            ref Span<uint> inMask,
+            ref Span<uint> outMask,
+            bool packAndGetMask
+        )
+        {
+            Vector256<sbyte> kZeroBytes = Vector256<sbyte>.Zero;
+            Vector256<short> kZeroShort = Vector256<short>.Zero;
+            fixed (int* biasesPtr = biases)
+            fixed (sbyte* weightsPtr = weights)
+            fixed (uint* inMaskPtr = inMask)
+            fixed (sbyte* outputPtr = output)
+            {
+                var out0 = ((Vector256<int>*)biasesPtr)[0];
+                var out1 = ((Vector256<int>*)biasesPtr)[1];
+                var out2 = ((Vector256<int>*)biasesPtr)[2];
+                var out4 = ((Vector256<int>*)biasesPtr)[3];
+
+                ulong v = *(ulong*)inMaskPtr;
+                for (uint offset = 0; offset < inDims;)
+                {
+                    if (!next_idx(out uint idx, ref offset, ref v, ref inMask, inDims))
+                    {
+                        break;
+                    }
+
+                    Vector256<sbyte> first = ((Vector256<sbyte>*) weightsPtr)[idx];
+                    Vector256<sbyte> second;
+
+                    short factor = (short)input[idx];
+                    
+                    if (next_idx(out idx, ref offset, ref v, ref inMask, inDims))
+                    {
+                        second = ((Vector256<sbyte>*) weightsPtr)[idx];
+                        factor |= (short)(input[idx] << 8);
+                    }
+                    else
+                    {
+                        second = kZeroBytes;
+                    }
+
+                    Vector256<byte> multiply = Vector256.Create(factor).AsByte();
+                    Vector256<sbyte> unpacked = Avx2.UnpackLow(first, second);
+                    Vector256<short> product = Avx2.MultiplyAddAdjacent(multiply, unpacked);
+                    Vector256<short> signs = Avx2.CompareGreaterThan(kZeroShort, product);
+                    out0 = Avx2.Add(out0, Avx2.UnpackLow(product, signs).AsInt32());
+                    out1 = Avx2.Add(out1, Avx2.UnpackHigh(product, signs).AsInt32());
+                    unpacked = Avx2.UnpackHigh(first, second);
+                    product = Avx2.MultiplyAddAdjacent(multiply, unpacked);
+                    signs = Avx2.CompareGreaterThan(kZeroShort, product);
+                    out2 = Avx2.Add(out2, Avx2.UnpackLow(product, signs).AsInt32());
+                    out4 = Avx2.Add(out4, Avx2.UnpackHigh(product, signs).AsInt32());
+                }
+
+                Vector256<short> result0 = Avx2.ShiftRightArithmetic(Avx2.PackSignedSaturate(out0, out1), SHIFT);
+                Vector256<short> result1 = Avx2.ShiftRightArithmetic(Avx2.PackSignedSaturate(out2, out4), SHIFT);
+
+                var outVec = (Vector256<sbyte>*) outputPtr;
+                outVec[0] = Avx2.PackSignedSaturate(result0, result1);
+                if (packAndGetMask)
+                {
+                    outMask[0] = (uint) Avx2.MoveMask(Avx2.CompareGreaterThan(outVec[0], kZeroBytes));
+                }
+                else
+                {
+                    outVec[0] = Avx2.Max(outVec[0], kZeroBytes);
+                }
+            }
+        }
+
+        bool next_idx(out uint idx, ref uint offset, ref ulong v, ref Span<uint> mask, uint inDims)
+        {
+            while (v == 0)
+            {
+                offset += 8 * sizeof(ulong);
+                if (offset >= inDims)
+                {
+                    idx = default;
+                    return false;
+                }
+
+                var offs = (int)offset / 32 + 1;
+                var offs2 = (int)offset / 32;
+                v = (ulong)mask[offs] << 32 | mask[offs2];
+                //memcpy(v, (char*)mask + (*offset / 8), sizeof(mask2_t));
+            }
+            idx = offset + v.BitScanForward();
+            v &= v - 1;
+            return true;
+        }
+
         private int AffinePropagate(sbyte[] input, int[] biases, sbyte[] weights)
         {
             var sum = biases[0];
@@ -140,9 +254,25 @@ namespace ChessDotNet.Evaluation.Nnue.Managed
             return sum;
         }
 
-        private void Transform(NnuePosition pos, sbyte[] output, uint[] outMask)
+        private unsafe int AffinePropagateAvx2(sbyte[] input, int[] biases, sbyte[] weights)
         {
-            if (!UpdateAccumulator(pos))
+            fixed (sbyte* inputPtr = input)
+            fixed (sbyte* weightsPtr = weights)
+            {
+                var iv = (Vector256<byte>*)inputPtr;
+                var row = (Vector256<sbyte>*)weightsPtr;
+                var prod1 = Avx2.MultiplyAddAdjacent(iv[0], row[0]);
+                var prod = Avx2.MultiplyAddAdjacent(prod1, Vector256.Create((short) 1));
+                var sum = Sse2.Add(prod.GetLower(), Avx2.ExtractVector128(prod, 1));
+                sum = Sse2.Add(sum, Sse2.Shuffle(sum, 0x1b));
+                var result = Sse2.ConvertToInt32(sum) + Sse41.Extract(sum, 1) + biases[0];
+                return result;
+            }
+        }
+
+        private void Transform(NnuePosition pos, sbyte[] output)
+        {
+            //if (!UpdateAccumulator(pos))
             {
                 RefreshAccumulator(pos);
             }
@@ -160,50 +290,114 @@ namespace ChessDotNet.Evaluation.Nnue.Managed
             }
         }
 
+        private unsafe void TransformAvx2(NnuePosition pos, sbyte[] output, ref Span<uint> outMask)
+        {
+            RefreshAccumulatorAvx2(pos);
+            var accumulation = pos.nnue[0].accumulator.accumulation;
+            var perspectives = new int[] { pos.player, pos.player ^ 1 };
+            var outputMaskIndex = 0;
+            for (uint perspective = 0; perspective < 2; perspective++)
+            {
+                var offset = kHalfDimensions * perspective;
+                const uint numChunks = (16 * kHalfDimensions) / SIMD_WIDTH;
+                fixed (sbyte* outputPtr = output)
+                fixed (short* accumulationsPtr = accumulation[perspectives[perspective]])
+                {
+                    var outEntry = (Vector256<sbyte>*) &outputPtr[offset];
+                    for (uint i = 0; i < numChunks / 2; i++)
+                    {
+                        var s0 = ((Vector256<short>*) accumulationsPtr)[i * 2];
+                        var s1 = ((Vector256<short>*) accumulationsPtr)[i * 2 + 1];
+                        outEntry[i] = Avx2.PackSignedSaturate(s0, s1);
+                        var x = outEntry[i];
+                        outMask[outputMaskIndex++] = (uint)Avx2.MoveMask(Avx2.CompareGreaterThan(outEntry[i], Vector256<sbyte>.Zero));
+                    }
+                }
+            }
+        }
+
+        private unsafe void RefreshAccumulator(NnuePosition pos)
+        {
+            var accumulator = pos.nnue[0].accumulator;
+            Span<IndexList2> activeIndices = stackalloc IndexList2[2];
+            AppendActiveIndices(pos, activeIndices);
+
+            for (int color = 0; color < 2; color++)
+            {
+                Array.Copy(_parameters.FeatureTransformer.Biases, accumulator.accumulation[color], kHalfDimensions);
+
+                for (uint i = 0; i < activeIndices[color].size; i++)
+                {
+                    uint index = activeIndices[color].values[i];
+                    uint offset = kHalfDimensions * index;
+
+                    for (uint j = 0; j < kHalfDimensions; j++)
+                    {
+                        accumulator.accumulation[color][j] += _parameters.FeatureTransformer.Weights[offset + j];
+                    }
+                }
+            }
+
+            accumulator.computedAccumulation = 1;
+        }
+
+        private unsafe void RefreshAccumulatorAvx2(NnuePosition pos)
+        {
+            var accumulator = pos.nnue[0].accumulator;
+            Span<IndexList2> activeIndices = stackalloc IndexList2[2];
+            AppendActiveIndices(pos, activeIndices);
+            var acc = stackalloc Vector256<short>[RegisterCount];
+            for (int color = 0; color < 2; color++)
+            {
+                for (uint i = 0; i < kHalfDimensions / TileHeight; i++)
+                {
+                    fixed (short* biasPtr = _parameters.FeatureTransformer.Biases)
+                    fixed (short* weightsPtr = _parameters.FeatureTransformer.Weights)
+                    fixed (short* accumulationsPtr = accumulator.accumulation[color])
+                    {
+                        var biasesTile = (Vector256<short>*)(&biasPtr[i * TileHeight]);
+                        var accTile = (Vector256<short>*)(&accumulationsPtr[i * TileHeight]);
+                        for (var j = 0; j < RegisterCount; j++)
+                        {
+                            acc[j] = biasesTile[j];
+                        }
+
+                        for (var j = 0; j < activeIndices[color].size; j++)
+                        {
+                            uint index = activeIndices[color].values[j];
+                            uint offset = kHalfDimensions * index + i * TileHeight;
+                            Vector256<short>* column = (Vector256<short>*)&weightsPtr[offset];
+
+                            for (uint k = 0; k < RegisterCount; k++)
+                            {
+                                acc[k] = Avx2.Add(acc[k], column[k]);
+                            }
+                        }
+
+                        for (uint j = 0; j < RegisterCount; j++)
+                        {
+                            accTile[j] = acc[j];
+                        }
+                    }
+                }
+            }
+            accumulator.computedAccumulation = 1;
+        }
+
         private bool UpdateAccumulator(NnuePosition pos)
         {
             return false;
         }
 
-        private void RefreshAccumulator(NnuePosition pos)
-        {
-            var accumulator = pos.nnue[0].accumulator;
-            var activeIndices = new IndexList[2];
-            for (int i = 0; i < 2; i++)
-            {
-                activeIndices[i] = new IndexList();
-                activeIndices[i].size = 0;
-            }
-            AppendActiveIndices(pos, activeIndices);
-
-            for (uint c = 0; c < 2; c++)
-            {
-                //memcpy(accumulator.accumulation[c], ft_biases, kHalfDimensions * sizeof(int16_t));
-                Array.Copy(_parameters.FeatureTransformer.Biases, accumulator.accumulation[c], kHalfDimensions);
-
-                for (uint k = 0; k < activeIndices[c].size; k++)
-                {
-                    uint index = activeIndices[c].values[k];
-                    uint offset = kHalfDimensions * index;
-
-                    for (uint j = 0; j < kHalfDimensions; j++)
-                    {
-                        accumulator.accumulation[c][j] += _parameters.FeatureTransformer.Weights[offset + j]; //ft_weights[offset + j];
-                    }
-
-                }
-            }
-        }
-
-        private void AppendActiveIndices(NnuePosition pos, IndexList[] active)
+        private void AppendActiveIndices(NnuePosition pos, Span<IndexList2> active)
         {
             for (int c = 0; c < 2; c++)
             {
-                HalfKpAppendActiveIndices(pos, c, active[c]);
+                HalfKpAppendActiveIndices(pos, c, ref active[c]);
             }
         }
 
-        private void HalfKpAppendActiveIndices(NnuePosition pos, int c, IndexList active)
+        private unsafe void HalfKpAppendActiveIndices(NnuePosition pos, int c, ref IndexList2 active)
         {
             int ksq = pos.squares[c];
             ksq = orient(c, ksq);

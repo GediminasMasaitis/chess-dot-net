@@ -62,13 +62,13 @@ namespace ChessDotNet.ConsoleTests
             //DoPerftClient();
             //DoPerft();
             //DoPerftSuite();
-            //DoSearch2Async();
+            DoSearch2Async();
             //TestLoadState();
             //TestPins();
             //DoSpeedTest();
             //TestSee();
             //TestEval2();
-            TestNnueManaged();
+            //TestNnueManaged();
 
             //Console.WriteLine(new BoardFactory().ParseFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").Print());
             //var pos = 27;
@@ -95,7 +95,8 @@ namespace ChessDotNet.ConsoleTests
             var parameters = loader.Load("C:/Temp/nn-62ef826d1a6d.nnue");
             var managed = new NnueManagedClient(parameters);
             var evaluationService = new NnueEvaluationService(managed);
-            evaluationService.Evaluate(board);
+            var result = evaluationService.Evaluate(board);
+            Console.WriteLine(result);
         }
 
         public static void TestEval2()
@@ -273,8 +274,8 @@ namespace ChessDotNet.ConsoleTests
             var fenSerializer = new FenSerializerService();
             //var slideMoveGenerator = new HyperbolaQuintessence();
 
-            //var client = new NnueManagedClient(new NnueLoader().Load("C:/Temp/nn-62ef826d1a6d.nnue"));
-            var client = new NnueExternalClient();
+            var client = new NnueManagedClient(new NnueLoader().Load("C:/Temp/nn-62ef826d1a6d.nnue"));
+            //var client = new NnueExternalClient();
 
             var evaluationService = new NnueEvaluationService(client);
             //var evaluationService = new NnueEvaluationService();

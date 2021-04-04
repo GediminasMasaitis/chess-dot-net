@@ -1,4 +1,6 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
+using System.Runtime.Intrinsics;
 using System.Text;
 
 namespace ChessDotNet.Evaluation.Nnue.Managed
@@ -80,12 +82,22 @@ namespace ChessDotNet.Evaluation.Nnue.Managed
             return parameters;
         }
 
-        private int GetWeightIndex(int r, int c, int dims)
+        private uint GetWeightIndex(uint r, uint c, uint dims)
         {
+            if (true)
+            {
+                if (dims > 32)
+                {
+                    uint b = c & 0x18;
+                    b = (b << 1) | (b >> 1);
+                    c = (c & ~0x18U) | (b & 0x18);
+                }
+            }
+
             return c * 32 + r;
         }
 
-        private NnueParameters ReadHiddenParameters(BinaryReader reader, int inputDimensions, int outputDimensions)
+        private NnueParameters ReadHiddenParameters(BinaryReader reader, uint inputDimensions, uint outputDimensions)
         {
             var parameters = new NnueParameters();
             parameters.Biases = new int[outputDimensions];
@@ -96,9 +108,14 @@ namespace ChessDotNet.Evaluation.Nnue.Managed
                 parameters.Biases[i] = reader.ReadInt32();
             }
 
-            for (var i = 0; i < outputDimensions; i++)
+            if (true)
             {
-                for (var j = 0; j < inputDimensions; j++)
+                permute_biases(parameters.Biases);
+            }
+
+            for (uint i = 0; i < outputDimensions; i++)
+            {
+                for (uint j = 0; j < inputDimensions; j++)
                 {
                     var index = GetWeightIndex(i, j, inputDimensions);
                     parameters.Weights[index] = reader.ReadSByte();
@@ -111,6 +128,28 @@ namespace ChessDotNet.Evaluation.Nnue.Managed
             //}
 
             return parameters;
+        }
+
+        static unsafe void permute_biases(int[] biases)
+        {
+            fixed (int* biasesPtr = biases)
+            {
+                var b = (Vector128<int>*) biasesPtr;
+                var tmp = stackalloc Vector128<int>[8];
+                tmp[0] = b[0];
+                tmp[1] = b[4];
+                tmp[2] = b[1];
+                tmp[3] = b[5];
+                tmp[4] = b[2];
+                tmp[5] = b[6];
+                tmp[6] = b[3];
+                tmp[7] = b[7];
+
+                for (var i = 0; i < 8; i++)
+                {
+                    b[i] = tmp[i];
+                }
+            }
         }
 
         private NnueParameters ReadOutputParameters(BinaryReader reader, int inputDimensions, int outputDimensions)
