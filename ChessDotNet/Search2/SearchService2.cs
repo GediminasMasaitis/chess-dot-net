@@ -40,8 +40,6 @@ namespace ChessDotNet.Search2
 
         private Board _initialBoard;
         private SearchState _initialState;
-        
-
 
         public SearchService2
         (
@@ -77,6 +75,7 @@ namespace ChessDotNet.Search2
             _stopper.NewSearch(parameters, board.WhiteToMove, token);
             _statistics.Reset();
             _state.OnNewSearch();
+            //board.NnueData.Reset();
             //_initialBoard = board.Clone();
             //_initialState = _state.Clone();
             var log = SearchLog.New();
@@ -371,6 +370,12 @@ namespace ChessDotNet.Search2
         //    }
         //}
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private int Contempt(Board board)
+        {
+            return 0;
+        }
+
         private int SearchToDepth(int threadId, Board board, int depth, int ply, int alpha, int beta, int currentReduction, bool nullMoveAllowed, bool isPrincipalVariation, SearchLog log)
         {
             //if (ply == 5)
@@ -388,7 +393,7 @@ namespace ChessDotNet.Search2
             // STOP CHECK
             if (depth > 2 && _stopper.ShouldStop())
             {
-                var score = 0;
+                var score = Contempt(board);
                 log.AddMessage("Stop requested", depth, alpha, beta, score);
                 return score;
             }
@@ -396,7 +401,7 @@ namespace ChessDotNet.Search2
             // REPETITION DETECTION
             if (nullMoveAllowed && !rootNode)
             {
-                var isRepetition = IsRepetition(board);
+                var isRepetition = IsRepetitionOr50Move(board);
                 if (isRepetition)
                 {
                     _statistics.Repetitions++;
@@ -778,8 +783,8 @@ namespace ChessDotNet.Search2
                 else
                 {
                     _statistics.Stalemates++;
-                    log.AddMessage($"Stalemate detected", depth, alpha, beta, 0);
-                    alpha = 0;
+                    alpha = Contempt(board);
+                    log.AddMessage($"Stalemate detected", depth, alpha, beta, alpha);
                 }
                 return alpha; // Should we store to TT if it's mate / stalemate?
             }
@@ -809,9 +814,14 @@ namespace ChessDotNet.Search2
             return alpha;
         }
 
-        private bool IsRepetition(Board board)
+        private bool IsRepetitionOr50Move(Board board)
         {
-            for (var i = board.LastTookPieceHistoryIndex; i < board.HistoryDepth; i++)
+            if (board.HistoryDepth - board.FiftyMoveRuleIndex > 100)
+            {
+                return true;
+            }
+
+            for (var i = board.FiftyMoveRuleIndex; i < board.HistoryDepth; i++)
             {
                 var previousEntry = board.History2[i];
                 var previousKey = previousEntry.Key;

@@ -10,7 +10,7 @@ namespace ChessDotNet.Data
         public CastlingPermission CastlingPermission { get; set; }
         public sbyte EnPassantFileIndex { get; set; }
         public sbyte EnPassantRankIndex { get; set; }
-        public ushort FiftyMoveRule { get; set; }
+        public ushort FiftyMoveRuleIndex { get; set; }
         public UInt64 Key { get; set; }
         public UInt64 PawnKey { get; set; }
     }

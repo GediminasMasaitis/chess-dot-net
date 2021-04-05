@@ -274,13 +274,12 @@ namespace ChessDotNet.ConsoleTests
             var fenSerializer = new FenSerializerService();
             //var slideMoveGenerator = new HyperbolaQuintessence();
 
-            //var client = new NnueManagedClient(new NnueLoader().Load("C:/Temp/nn-62ef826d1a6d.nnue"));
-            var client = new NnueImplFallback(new NnueLoader().Load("C:/Temp/nn-62ef826d1a6d.nnue", NnueArchitecture.Fallback));
+            var client = new NnueManagedClient(new NnueLoader().Load("C:/Temp/nn-62ef826d1a6d.nnue"));
+            //var client = new NnueImplFallback(new NnueLoader().Load("C:/Temp/nn-62ef826d1a6d.nnue", NnueArchitecture.Fallback));
             //var client = new NnueExternalClient();
             //var client = new NnueNnueCpuClient();
 
             var evaluationService = new NnueEvaluationService(client);
-            //var evaluationService = new NnueEvaluationService();
             //var evaluationService = new EvaluationService2(new EvaluationData());
             //var evaluationService = new EvaluationService();
 

@@ -2,19 +2,13 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Text;
-using ChessDotNet.Common;
 using ChessDotNet.Evaluation;
 using ChessDotNet.Evaluation.Nnue.Managed;
 using ChessDotNet.Evaluation.V2;
 using ChessDotNet.Fen;
 using ChessDotNet.Hashing;
-using ChessDotNet.MoveGeneration;
-using ChessDotNet.MoveGeneration.SlideGeneration;
 using ChessDotNet.Search2;
-using ChessDotNet.Testing;
-using Newtonsoft.Json;
 using Bitboard = System.UInt64;
 using ZobristKey = System.UInt64;
 using Position = System.Byte;
@@ -32,9 +26,10 @@ namespace ChessDotNet.Data
 
         public NnueBoardData()
         {
-            Accumulators = new NnueAccumulator[SearchConstants.MaxDepth];
-            Dirty = new NnueDirtyPiece[SearchConstants.MaxDepth];
-            for (int i = 0; i < SearchConstants.MaxDepth; i++)
+            const int count = SearchConstants.MaxDepth;
+            Accumulators = new NnueAccumulator[count];
+            Dirty = new NnueDirtyPiece[count];
+            for (int i = 0; i < count; i++)
             {
                 Accumulators[i] = new NnueAccumulator();
                 Dirty[i] = new NnueDirtyPiece();
@@ -44,6 +39,11 @@ namespace ChessDotNet.Data
 
         public void UndoMove(Move move)
         {
+            if (!EngineOptions.UseNnue)
+            {
+                return;
+            }
+
             if (move.NullMove)
             {
                 return;
@@ -54,6 +54,11 @@ namespace ChessDotNet.Data
 
         public void DoMove(Move move)
         {
+            if (!EngineOptions.UseNnue)
+            {
+                return;
+            }
+
             if (move.NullMove)
             {
                 return;
@@ -114,6 +119,15 @@ namespace ChessDotNet.Data
                 dirty.dirtyNum++;
             }
         }
+
+        public void Reset()
+        {
+            Ply = 0;
+            for (int i = 0; i < Accumulators.Length; i++)
+            {
+                Accumulators[i].computedAccumulation = false;
+            }
+        }
     }
 
     public class Board
@@ -144,7 +158,7 @@ namespace ChessDotNet.Data
         public ZobristKey Key { get; set; }
         //public ZobristKey Key2 { get; set; }
         public ZobristKey PawnKey { get; set; }
-        public ushort LastTookPieceHistoryIndex { get; set; }
+        public ushort FiftyMoveRuleIndex { get; set; }
 
         public int[] PieceCounts { get; set; }
         public Position[] KingPositions { get; set; }
@@ -153,14 +167,17 @@ namespace ChessDotNet.Data
 
         public NnueBoardData NnueData { get; set; }
 
-        public Board()
+        public Board(bool createNnue = true)
         {
             EnPassantFileIndex = -1;
             EnPassantRankIndex = -1;
             HistoryDepth = 0;
             CastlingPermissions = CastlingPermission.None;
 
-            NnueData = new NnueBoardData();
+            if (createNnue)
+            {
+                NnueData = new NnueBoardData();
+            }
         }
 
         public void SyncBitBoardsToArrayBoard()
@@ -312,22 +329,18 @@ namespace ChessDotNet.Data
             TestBoard(this, clone);
             var entry = clone.History2[HistoryDepth - 1];
             var move = entry.Move;
-            clone.UndoMove(false);
-            clone.DoMove2(move, false);
+            clone.UndoMove();
+            clone.DoMove2(move);
             TestBoard(this, clone);
         }
 
-        public void UndoMove(bool test = false)
+        public void UndoMove()
         {
             var history = History2[HistoryDepth - 1];
             var move = history.Move;
+            
             NnueData.UndoMove(move);
-
-            if (test)
-            {
-                TestUndoMove();
-            }
-
+            
             HistoryDepth--;
 
             EnPassantFileIndex = history.EnPassantFileIndex;
@@ -336,7 +349,7 @@ namespace ChessDotNet.Data
             CastlingPermissions = history.CastlingPermission;
             Key = history.Key;
             PawnKey = history.PawnKey;
-            LastTookPieceHistoryIndex = history.FiftyMoveRule;
+            FiftyMoveRuleIndex = history.FiftyMoveRuleIndex;
             //_hasPinnedPieces = history.HasPinnedPieces;
             //_pinnedPieces = history.PinnedPieces;
             //_hasCheckers = history.HasCheckers;
@@ -467,25 +480,24 @@ namespace ChessDotNet.Data
         {
             var clone = Clone();
             TestBoard(this, clone);
-            clone.DoMove2(move, false);
-            clone.UndoMove(false);
+            clone.DoMove2(move);
+            clone.UndoMove();
             TestBoard(this, clone);
         }
 
         public Board DoMove(Move move)
         {
             var clone = Clone();
-            clone.DoMove2(move);
+            clone.DoMove2(move, false);
             return clone;
         }
 
-        public void DoMove2(Move move, bool test = false)
+        public void DoMove2(Move move, bool doNnue = true)
         {
             Debug.Assert(move.ColorToMove == ColorToMove || move.NullMove);
-            NnueData.DoMove(move);
-            if (test)
+            if (doNnue)
             {
-                TestMove(move);
+                NnueData.DoMove(move);
             }
 
             //var clone = Clone();
@@ -498,7 +510,7 @@ namespace ChessDotNet.Data
             History2[HistoryDepth].CastlingPermission = CastlingPermissions;
             History2[HistoryDepth].EnPassantFileIndex = EnPassantFileIndex;
             History2[HistoryDepth].EnPassantRankIndex = EnPassantRankIndex;
-            History2[HistoryDepth].FiftyMoveRule = LastTookPieceHistoryIndex;
+            History2[HistoryDepth].FiftyMoveRuleIndex = FiftyMoveRuleIndex;
             //History2[HistoryDepth].HasPinnedPieces = _hasPinnedPieces;
             //History2[HistoryDepth].PinnedPieces = _pinnedPieces;
             //History2[HistoryDepth].HasCheckers = _hasCheckers;
@@ -540,6 +552,7 @@ namespace ChessDotNet.Data
             var takesPawn = (move.TakesPiece & ~ChessPiece.Color) == ChessPiece.Pawn;
             if (isPawn)
             {
+                FiftyMoveRuleIndex = (ushort)(HistoryDepth - 1);
                 PawnKey ^= ZobristKeys.ZPieces[move.From][move.Piece];
             }
 
@@ -589,7 +602,7 @@ namespace ChessDotNet.Data
                         PawnKey ^= ZobristKeys.ZPieces[move.To][move.TakesPiece];
                     }
                 }
-                LastTookPieceHistoryIndex = (ushort) (HistoryDepth - 1);
+                FiftyMoveRuleIndex = (ushort) (HistoryDepth - 1);
                 PieceCounts[move.TakesPiece]--;
                 if (takesPawn)
                 {
@@ -671,7 +684,7 @@ namespace ChessDotNet.Data
 
         public Board Clone()
         {
-            var clone = new Board();
+            var clone = new Board(false);
             clone.WhiteToMove = WhiteToMove;
             //clone.CastlingPermissions = (bool[])CastlingPermissions.Clone();
             clone.WhitePieces = WhitePieces;
@@ -687,7 +700,7 @@ namespace ChessDotNet.Data
             //clone.Key2 = Key2;
             clone.PawnKey = PawnKey;
             //clone.History = board.History; // TODO
-            clone.LastTookPieceHistoryIndex = LastTookPieceHistoryIndex;
+            clone.FiftyMoveRuleIndex = FiftyMoveRuleIndex;
             clone.PieceCounts = (int[])PieceCounts.Clone();
             clone.PawnMaterial = (Score[])PawnMaterial.Clone();
             clone.PieceMaterial = (Score[])PieceMaterial.Clone();
@@ -744,7 +757,7 @@ namespace ChessDotNet.Data
             Debug.Assert(lhs.EnPassantRankIndex == rhs.EnPassantRankIndex);
             Debug.Assert(lhs.EnPassantFile == rhs.EnPassantFile);
             Debug.Assert(lhs.Key == rhs.Key);
-            Debug.Assert(lhs.LastTookPieceHistoryIndex == rhs.LastTookPieceHistoryIndex);
+            Debug.Assert(lhs.FiftyMoveRuleIndex == rhs.FiftyMoveRuleIndex);
             Debug.Assert(lhs.PieceCounts.SequenceEqual(rhs.PieceCounts));
             Debug.Assert(lhs.PawnMaterial.SequenceEqual(rhs.PawnMaterial));
             Debug.Assert(lhs.PieceMaterial.SequenceEqual(rhs.PieceMaterial));
@@ -763,7 +776,7 @@ namespace ChessDotNet.Data
         {
             Debug.Assert(lhs.EnPassantFileIndex == rhs.EnPassantFileIndex);
             Debug.Assert(lhs.EnPassantRankIndex == rhs.EnPassantRankIndex);
-            Debug.Assert(lhs.FiftyMoveRule == rhs.FiftyMoveRule);
+            Debug.Assert(lhs.FiftyMoveRuleIndex == rhs.FiftyMoveRuleIndex);
             Debug.Assert(lhs.Key == rhs.Key);
             Debug.Assert(lhs.CastlingPermission == rhs.CastlingPermission);
             TestMove(lhs.Move, rhs.Move);
@@ -814,7 +827,7 @@ namespace ChessDotNet.Data
             const string separatorsTop     = "   ┌───┬───┬───┬───┬───┬───┬───┬───┐";
             const string separatorsMid     = "   ├───┼───┼───┼───┼───┼───┼───┼───┤";
             const string separatorsBottom  = "   └───┴───┴───┴───┴───┴───┴───┴───┘";
-            const char separator = useUnicodeSeparators ? '│' : '|';;
+            const char separator = useUnicodeSeparators ? '│' : '|';
 
             const string fileMarkers = "     A   B   C   D   E   F   G   H  ";
             

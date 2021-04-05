@@ -214,7 +214,7 @@ namespace ChessDotNet.Data
             foreach (var moveStr in moves)
             {
                 var move = Move.FromPositionString(board, moveStr);
-                board.DoMove2(move);
+                board.DoMove2(move, false);
             }
 
             return board;

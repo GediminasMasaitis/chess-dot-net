@@ -354,6 +354,11 @@ namespace ChessDotNet.Evaluation.V2
 
             PIECE_VALUE[ChessPiece.WhiteKing] = 0;
             PIECE_VALUE[ChessPiece.BlackKing] = 0;
+
+            //for (var i = 0; i < PIECE_VALUE.Length; i++)
+            //{
+            //    PIECE_VALUE[i] = PIECE_VALUE[i] * 2;
+            //}
         }
 
         void setSquaresNearKing()

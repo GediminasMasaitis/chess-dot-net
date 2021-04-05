@@ -19,7 +19,7 @@ namespace ChessDotNet
         public static bool UseNullMovePruning { get; set; } = true;
         public static bool UseRazoring { get; set; } = true;
         public static bool UseFutilityPruning { get; set; } = true;
-        public static bool UseLateMoveReductions { get; set; } = true;
+        public static bool UseLateMoveReductions { get; set; } = true;               
         public static bool UsePrincipalVariationSearch { get; set; } = true;
         public static bool UseDeltaPruning { get; set; } = true;
         public static bool UseSeePruning { get; set; } = true;
@@ -28,5 +28,7 @@ namespace ChessDotNet
         // EVALUATION
         public static bool UseEvalHashTable { get; set; } = true;
         public static bool UsePawnHashTable { get; set; } = true;
+        public static bool UseNnue { get; set; } = true;
+        public static string NnueDataPath { get; set; } = "C:/Temp/nn-62ef826d1a6d.nnue";
     }
 }

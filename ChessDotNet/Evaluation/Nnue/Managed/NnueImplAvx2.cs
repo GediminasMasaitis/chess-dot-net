@@ -162,8 +162,8 @@ namespace ChessDotNet.Evaluation.Nnue.Managed
                 RefreshAccumulatorAvx2(pos);
             }
 
-            var accumulation = pos.nnue[0].accumulator.accumulation;
-            var perspectives = new int[] { pos.player, pos.player ^ 1 };
+            var accumulation = pos.Nnue[0].accumulator.accumulation;
+            var perspectives = new int[] { pos.Player, pos.Player ^ 1 };
             var outputMaskIndex = 0;
             for (uint perspective = 0; perspective < 2; perspective++)
             {
@@ -187,7 +187,7 @@ namespace ChessDotNet.Evaluation.Nnue.Managed
 
         private unsafe void RefreshAccumulatorAvx2(NnuePosition pos)
         {
-            var accumulator = pos.nnue[0].accumulator;
+            var accumulator = pos.Nnue[0].accumulator;
             Span<IndexList2> activeIndices = stackalloc IndexList2[2];
             AppendActiveIndices(pos, activeIndices);
             var acc = stackalloc Vector256<short>[RegisterCount];
@@ -230,20 +230,20 @@ namespace ChessDotNet.Evaluation.Nnue.Managed
 
         private unsafe bool UpdateAccumulator(NnuePosition pos)
         {
-            var accumulator = pos.nnue[0].accumulator;
+            var accumulator = pos.Nnue[0].accumulator;
             if (accumulator.computedAccumulation)
             {
                 return true;
             }
 
             NnueAccumulator prevAcc;
-            if (pos.nnue[1] != null && pos.nnue[1].accumulator.computedAccumulation)
+            if (pos.NnueCount > 0 && pos.Nnue[1].accumulator.computedAccumulation)
             {
-                prevAcc = pos.nnue[1].accumulator;
+                prevAcc = pos.Nnue[1].accumulator;
             }
-            else if (pos.nnue[2] != null && pos.nnue[2].accumulator.computedAccumulation)
+            else if (pos.NnueCount > 1 && pos.Nnue[2].accumulator.computedAccumulation)
             {
-                prevAcc = pos.nnue[2].accumulator;
+                prevAcc = pos.Nnue[2].accumulator;
             }
             else
             {

@@ -17,7 +17,7 @@ namespace ChessDotNet.Evaluation.Nnue
 
         public int Evaluate(NnuePosition pos)
         {
-            var result = nncpu_evaluate(pos.player, pos.pieces, pos.squares);
+            var result = nncpu_evaluate(pos.Player, pos.Pieces, pos.Squares);
             return result;
         }
 

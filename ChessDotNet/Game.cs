@@ -61,7 +61,7 @@ namespace ChessDotNet
             foreach (var moveStr in moves)
             {
                 var move = Move.FromPositionString(CurrentBoard, moveStr);
-                CurrentBoard.DoMove2(move);
+                CurrentBoard.DoMove2(move, false);
             }
         }
 

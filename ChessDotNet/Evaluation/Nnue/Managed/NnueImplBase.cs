@@ -63,10 +63,10 @@ namespace ChessDotNet.Evaluation.Nnue.Managed
 
         protected void AppendChangedIndices(NnuePosition pos, Span<IndexList2> removed, Span<IndexList2> added, Span<bool> reset)
         {
-            var dp = pos.nnue[0].dirtyPiece;
+            var dp = pos.Nnue[0].dirtyPiece;
             Debug.Assert(dp.dirtyNum != 0);
 
-            if (pos.nnue[1].accumulator.computedAccumulation)
+            if (pos.Nnue[1].accumulator.computedAccumulation)
             {
                 for (byte color = 0; color < 2; color++)
                 {
@@ -83,7 +83,7 @@ namespace ChessDotNet.Evaluation.Nnue.Managed
             }
             else
             {
-                var dp2 = pos.nnue[1].dirtyPiece;
+                var dp2 = pos.Nnue[1].dirtyPiece;
                 for (byte c = 0; c < 2; c++)
                 {
                     reset[c] = dp.pc[0] == GetKing(c) || dp2.pc[0] == GetKing(c);
@@ -102,19 +102,19 @@ namespace ChessDotNet.Evaluation.Nnue.Managed
 
         private unsafe void HalfKpAppendActiveIndices(NnuePosition pos, int c, ref IndexList2 active)
         {
-            int ksq = pos.squares[c];
+            int ksq = pos.Squares[c];
             ksq = orient(c, ksq);
-            for (int i = 2; pos.pieces[i] != 0; i++)
+            for (int i = 2; pos.Pieces[i] != 0; i++)
             {
-                int sq = pos.squares[i];
-                int pc = pos.pieces[i];
+                int sq = pos.Squares[i];
+                int pc = pos.Pieces[i];
                 active.values[active.size++] = make_index(c, sq, pc, ksq);
             }
         }
 
         private unsafe void HaldKpAppendChangedIndices(NnuePosition pos, byte color, NnueDirtyPiece dirtyPiece, ref IndexList2 removed, ref IndexList2 added)
         {
-            int ksq = pos.squares[color];
+            int ksq = pos.Squares[color];
             ksq = orient(color, ksq);
             for (int i = 0; i < dirtyPiece.dirtyNum; i++)
             {
