@@ -23,7 +23,7 @@ namespace ChessDotNet.Evaluation.Nnue
             _position.Pieces[1] = 7;
         }
 
-        public int Evaluate(Board board)
+        public int Evaluate(Board board, Span<ulong> pins = default)
         {
             if (EngineOptions.UseEvalHashTable)
             {

@@ -95,7 +95,7 @@ namespace ChessDotNet.ConsoleTests
             var parameters = loader.Load("C:/Temp/nn-62ef826d1a6d.nnue");
             var managed = new NnueManagedClient(parameters);
             var evaluationService = new NnueEvaluationService(managed);
-            var result = evaluationService.Evaluate(board);
+            var result = evaluationService.Evaluate(board, null);
             Console.WriteLine(result);
         }
 
@@ -105,7 +105,9 @@ namespace ChessDotNet.ConsoleTests
             //var board = MakeBoard("r3r1kb/p2bp2p/1q1p1npB/5NQ1/2p1P1P1/2N2P2/PPP5/2KR3R w - - 0 1");
             //var eval2 = new EvaluationService2(new EvaluationData());
             var eval2 = new NnueEvaluationService(new NnueExternalClient());
-            var score = eval2.Evaluate(board);
+            Span<ulong> pins = stackalloc ulong[2];
+            
+            var score = eval2.Evaluate(board, pins);
             Console.WriteLine("score" + score);
         }
 
@@ -279,8 +281,8 @@ namespace ChessDotNet.ConsoleTests
             //var client = new NnueExternalClient();
             //var client = new NnueNnueCpuClient();
 
-            var evaluationService = new NnueEvaluationService(client);
-            //var evaluationService = new EvaluationService2(new EvaluationData());
+            //var evaluationService = new NnueEvaluationService(client);
+            var evaluationService = new EvaluationService2(new EvaluationData());
             //var evaluationService = new EvaluationService();
 
             var searchService = new SearchService2(MoveGenerator, evaluationService);
@@ -368,7 +370,7 @@ namespace ChessDotNet.ConsoleTests
             var boardFactory = new BoardFactory();
             var board = boardFactory.ParseFEN(fen);
             var evaluationService = new EvaluationService();
-            var evaluation = evaluationService.Evaluate(board);
+            var evaluation = evaluationService.Evaluate(board, null);
             Console.WriteLine(evaluation);
         }
 

@@ -39,7 +39,7 @@ namespace ChessDotNet.Evaluation.V2
             _attacks = new AttacksService(_slideGenerator);
         }
 
-        public int Evaluate(Board board)
+        public int Evaluate(Board board, Span<ulong> pins)
         {
             if (EngineOptions.UseEvalHashTable)
             {
@@ -49,21 +49,21 @@ namespace ChessDotNet.Evaluation.V2
                     return hashScore;
                 }
 
-                var score = eval(board, _evaluationScores);
+                var score = EvaluateInner(board, pins, _evaluationScores);
                 _evalTable.Store(board.Key, score);
                 //printEval(board, e, eb, v, score);
                 return score;
             }
             else
             {
-                var score = eval(board, _evaluationScores);
+                var score = EvaluateInner(board, pins, _evaluationScores);
                 _evalTable.Store(board.Key, score);
                 //printEval(board, e, eb, v, score);
                 return score;
             }
         }
 
-        private int eval(Board b, EvaluationScores v)
+        private int EvaluateInner(Board board, Span<ulong> pins, EvaluationScores scores)
         {
             int result = 0;
             int mgScore = 0;
@@ -72,8 +72,8 @@ namespace ChessDotNet.Evaluation.V2
             int weaker = 0;
 
             var pawnControl = _pawnControl;
-            pawnControl[ChessPiece.White] = _attacks.GetAttackedByPawns(b.BitBoard[ChessPiece.WhitePawn], true);
-            pawnControl[ChessPiece.Black] = _attacks.GetAttackedByPawns(b.BitBoard[ChessPiece.BlackPawn], false);
+            pawnControl[ChessPiece.White] = _attacks.GetAttackedByPawns(board.BitBoard[ChessPiece.WhitePawn], true);
+            pawnControl[ChessPiece.Black] = _attacks.GetAttackedByPawns(board.BitBoard[ChessPiece.BlackPawn], false);
 
             /**************************************************************************
             *  Clear all eval data                                                    *
@@ -81,22 +81,22 @@ namespace ChessDotNet.Evaluation.V2
 
             _evaluationScores.Clear();
             
-            v.gamePhase = b.PieceCounts[ChessPiece.WhiteKnight] + b.PieceCounts[ChessPiece.WhiteBishop] + 2 * b.PieceCounts[ChessPiece.WhiteRook] + 4 * b.PieceCounts[ChessPiece.WhiteQueen]
-                        + b.PieceCounts[ChessPiece.BlackKnight] + b.PieceCounts[ChessPiece.BlackBishop] + 2 * b.PieceCounts[ChessPiece.BlackRook] + 4 * b.PieceCounts[ChessPiece.BlackQueen];
+            scores.gamePhase = board.PieceCounts[ChessPiece.WhiteKnight] + board.PieceCounts[ChessPiece.WhiteBishop] + 2 * board.PieceCounts[ChessPiece.WhiteRook] + 4 * board.PieceCounts[ChessPiece.WhiteQueen]
+                        + board.PieceCounts[ChessPiece.BlackKnight] + board.PieceCounts[ChessPiece.BlackBishop] + 2 * board.PieceCounts[ChessPiece.BlackRook] + 4 * board.PieceCounts[ChessPiece.BlackQueen];
 
             /************************************************************************** 
             * add king's pawn shield score and evaluate part of piece blockage score  *
             * (the rest of the latter will be done via piece eval)                    *
             **************************************************************************/
 
-            v.kingShield[ChessPiece.White] = wKingShield(b);
-            v.kingShield[ChessPiece.Black] = bKingShield(b);
-            blockedPieces(b, v, ChessPiece.White);
-            blockedPieces(b, v, ChessPiece.Black);
-            mgScore += (v.kingShield[ChessPiece.White] - v.kingShield[ChessPiece.Black]);
+            scores.kingShield[ChessPiece.White] = wKingShield(board);
+            scores.kingShield[ChessPiece.Black] = bKingShield(board);
+            blockedPieces(board, scores, ChessPiece.White);
+            blockedPieces(board, scores, ChessPiece.Black);
+            mgScore += (scores.kingShield[ChessPiece.White] - scores.kingShield[ChessPiece.Black]);
 
             /* tempo bonus */
-            if (b.WhiteToMove)
+            if (board.WhiteToMove)
             {
                 result += EvaluationData.TEMPO;
             }
@@ -112,36 +112,36 @@ namespace ChessDotNet.Evaluation.V2
             *  value as pawns disappear, whereas rooks gain.                          *
             **************************************************************************/
 
-            if (b.PieceCounts[ChessPiece.WhiteBishop] > 1) v.adjustMaterial[ChessPiece.White] += EvaluationData.BISHOP_PAIR;
-            if (b.PieceCounts[ChessPiece.BlackBishop] > 1) v.adjustMaterial[ChessPiece.Black] += EvaluationData.BISHOP_PAIR;
-            if (b.PieceCounts[ChessPiece.WhiteKnight] > 1) v.adjustMaterial[ChessPiece.White] -= EvaluationData.P_KNIGHT_PAIR;
-            if (b.PieceCounts[ChessPiece.BlackKnight] > 1) v.adjustMaterial[ChessPiece.Black] -= EvaluationData.P_KNIGHT_PAIR;
-            if (b.PieceCounts[ChessPiece.WhiteRook] > 1) v.adjustMaterial[ChessPiece.White] -= EvaluationData.P_ROOK_PAIR;
-            if (b.PieceCounts[ChessPiece.BlackRook] > 1) v.adjustMaterial[ChessPiece.Black] -= EvaluationData.P_ROOK_PAIR;
+            if (board.PieceCounts[ChessPiece.WhiteBishop] > 1) scores.adjustMaterial[ChessPiece.White] += EvaluationData.BISHOP_PAIR;
+            if (board.PieceCounts[ChessPiece.BlackBishop] > 1) scores.adjustMaterial[ChessPiece.Black] += EvaluationData.BISHOP_PAIR;
+            if (board.PieceCounts[ChessPiece.WhiteKnight] > 1) scores.adjustMaterial[ChessPiece.White] -= EvaluationData.P_KNIGHT_PAIR;
+            if (board.PieceCounts[ChessPiece.BlackKnight] > 1) scores.adjustMaterial[ChessPiece.Black] -= EvaluationData.P_KNIGHT_PAIR;
+            if (board.PieceCounts[ChessPiece.WhiteRook] > 1) scores.adjustMaterial[ChessPiece.White] -= EvaluationData.P_ROOK_PAIR;
+            if (board.PieceCounts[ChessPiece.BlackRook] > 1) scores.adjustMaterial[ChessPiece.Black] -= EvaluationData.P_ROOK_PAIR;
 
-            v.adjustMaterial[ChessPiece.White] += _evaluationData.n_adj[b.PieceCounts[ChessPiece.WhitePawn]] * b.PieceCounts[ChessPiece.WhiteKnight];
-            v.adjustMaterial[ChessPiece.Black] += _evaluationData.n_adj[b.PieceCounts[ChessPiece.BlackPawn]] * b.PieceCounts[ChessPiece.BlackKnight];
-            v.adjustMaterial[ChessPiece.White] += _evaluationData.r_adj[b.PieceCounts[ChessPiece.WhitePawn]] * b.PieceCounts[ChessPiece.WhiteRook];
-            v.adjustMaterial[ChessPiece.Black] += _evaluationData.r_adj[b.PieceCounts[ChessPiece.BlackPawn]] * b.PieceCounts[ChessPiece.BlackRook];
+            scores.adjustMaterial[ChessPiece.White] += _evaluationData.n_adj[board.PieceCounts[ChessPiece.WhitePawn]] * board.PieceCounts[ChessPiece.WhiteKnight];
+            scores.adjustMaterial[ChessPiece.Black] += _evaluationData.n_adj[board.PieceCounts[ChessPiece.BlackPawn]] * board.PieceCounts[ChessPiece.BlackKnight];
+            scores.adjustMaterial[ChessPiece.White] += _evaluationData.r_adj[board.PieceCounts[ChessPiece.WhitePawn]] * board.PieceCounts[ChessPiece.WhiteRook];
+            scores.adjustMaterial[ChessPiece.Black] += _evaluationData.r_adj[board.PieceCounts[ChessPiece.BlackPawn]] * board.PieceCounts[ChessPiece.BlackRook];
 
-            var pawnScore = getPawnScore(b, pawnControl);
+            var pawnScore = getPawnScore(board, pawnControl);
             result += pawnScore;
 
             /**************************************************************************
             *  Evaluate pieces                                                        *
             **************************************************************************/
 
-            EvaluatePieces(b, v, pawnControl);
+            EvaluatePieces(board, scores, pawnControl, pins);
 
 
             /************************************************************************** 
             *  Sum the incrementally counted material and piece/square table values   *
             **************************************************************************/
 
-            mgScore += b.PieceMaterial[ChessPiece.White] + b.PawnMaterial[ChessPiece.White] + v.PieceSquaresMidgame[ChessPiece.White]
-                      - b.PieceMaterial[ChessPiece.Black] - b.PawnMaterial[ChessPiece.Black] - v.PieceSquaresMidgame[ChessPiece.Black];
-            egScore += b.PieceMaterial[ChessPiece.White] + b.PawnMaterial[ChessPiece.White] + v.PieceSquaresEndgame[ChessPiece.White]
-                      - b.PieceMaterial[ChessPiece.Black] - b.PawnMaterial[ChessPiece.Black] - v.PieceSquaresEndgame[ChessPiece.Black];
+            mgScore += board.PieceMaterial[ChessPiece.White] + board.PawnMaterial[ChessPiece.White] + scores.PieceSquaresMidgame[ChessPiece.White]
+                      - board.PieceMaterial[ChessPiece.Black] - board.PawnMaterial[ChessPiece.Black] - scores.PieceSquaresMidgame[ChessPiece.Black];
+            egScore += board.PieceMaterial[ChessPiece.White] + board.PawnMaterial[ChessPiece.White] + scores.PieceSquaresEndgame[ChessPiece.White]
+                      - board.PieceMaterial[ChessPiece.Black] - board.PawnMaterial[ChessPiece.Black] - scores.PieceSquaresEndgame[ChessPiece.Black];
 
 
             /**************************************************************************
@@ -150,15 +150,15 @@ namespace ChessDotNet.Evaluation.V2
             *  both sides. With less pieces, endgame score becomes more influential.  *
             **************************************************************************/
 
-            mgScore += (v.mgMob[ChessPiece.White] - v.mgMob[ChessPiece.Black]);
-            egScore += (v.egMob[ChessPiece.White] - v.egMob[ChessPiece.Black]);
-            mgScore += (v.mgTropism[ChessPiece.White] - v.mgTropism[ChessPiece.Black]);
-            egScore += (v.egTropism[ChessPiece.White] - v.egTropism[ChessPiece.Black]);
-            if (v.gamePhase > 24)
+            mgScore += (scores.mgMob[ChessPiece.White] - scores.mgMob[ChessPiece.Black]);
+            egScore += (scores.egMob[ChessPiece.White] - scores.egMob[ChessPiece.Black]);
+            mgScore += (scores.mgTropism[ChessPiece.White] - scores.mgTropism[ChessPiece.Black]);
+            egScore += (scores.egTropism[ChessPiece.White] - scores.egTropism[ChessPiece.Black]);
+            if (scores.gamePhase > 24)
             {
-                v.gamePhase = 24;
+                scores.gamePhase = 24;
             }
-            int mgWeight = v.gamePhase;
+            int mgWeight = scores.gamePhase;
             int egWeight = 24 - mgWeight;
             result += ((mgScore * mgWeight) + (egScore * egWeight)) / 24;
 
@@ -166,24 +166,22 @@ namespace ChessDotNet.Evaluation.V2
             *  Add phase-independent score components.                                *
             **************************************************************************/
 
-            result += (v.blockages[ChessPiece.White] - v.blockages[ChessPiece.Black]);
-            result += (v.positionalThemes[ChessPiece.White] - v.positionalThemes[ChessPiece.Black]);
-            result += (v.adjustMaterial[ChessPiece.White] - v.adjustMaterial[ChessPiece.Black]);
+            result += (scores.blockages[ChessPiece.White] - scores.blockages[ChessPiece.Black]);
+            result += (scores.positionalThemes[ChessPiece.White] - scores.positionalThemes[ChessPiece.Black]);
+            result += (scores.adjustMaterial[ChessPiece.White] - scores.adjustMaterial[ChessPiece.Black]);
 
             /**************************************************************************
             *  Merge king attack score. We don't apply this value if there are less   *
             *  than two attackers or if the attacker has no queen.                    *
             **************************************************************************/
 
-            if (v.attCnt[ChessPiece.White] < 2 || b.PieceCounts[ChessPiece.WhiteQueen] == 0) v.attWeight[ChessPiece.White] = 0;
-            if (v.attCnt[ChessPiece.Black] < 2 || b.PieceCounts[ChessPiece.BlackQueen] == 0) v.attWeight[ChessPiece.Black] = 0;
-            result += EvaluationData.SafetyTable[v.attWeight[ChessPiece.White]];
-            result -= EvaluationData.SafetyTable[v.attWeight[ChessPiece.Black]];
+            if (scores.attCnt[ChessPiece.White] < 2 || board.PieceCounts[ChessPiece.WhiteQueen] == 0) scores.attWeight[ChessPiece.White] = 0;
+            if (scores.attCnt[ChessPiece.Black] < 2 || board.PieceCounts[ChessPiece.BlackQueen] == 0) scores.attWeight[ChessPiece.Black] = 0;
+            result += EvaluationData.SafetyTable[scores.attWeight[ChessPiece.White]];
+            result -= EvaluationData.SafetyTable[scores.attWeight[ChessPiece.Black]];
 
-            var whitePins = _pinDetector.GetPinned(b, ChessPiece.White, b.KingPositions[ChessPiece.White]);
-            result -= whitePins.BitCount() * 5;
-            var blackPins = _pinDetector.GetPinned(b, ChessPiece.Black, b.KingPositions[ChessPiece.Black]);
-            result += blackPins.BitCount() * 5;
+            //result -= pins[ChessPiece.White].BitCount() * 5;
+            //result += pins[ChessPiece.Black].BitCount() * 5;
 
             /**************************************************************************
             *  Low material correction - guarding against an illusory material advan- *
@@ -208,23 +206,23 @@ namespace ChessDotNet.Evaluation.V2
                 weaker = ChessPiece.White;
             }
 
-            if (b.PawnMaterial[stronger] == 0)
+            if (board.PawnMaterial[stronger] == 0)
             {
 
-                if (b.PieceMaterial[stronger] < 400)
+                if (board.PieceMaterial[stronger] < 400)
                 {
                     return 0;
                 }
 
-                if (b.PawnMaterial[weaker] == 0 && (b.PieceMaterial[stronger] == 2 * EvaluationData.PIECE_VALUE[ChessPiece.Knight]))
+                if (board.PawnMaterial[weaker] == 0 && (board.PieceMaterial[stronger] == 2 * EvaluationData.PIECE_VALUE[ChessPiece.Knight]))
                 {
                     return 0;
                 }
 
                 if
                 (
-                    b.PieceMaterial[stronger] == EvaluationData.PIECE_VALUE[ChessPiece.Rook]
-                    && b.PieceMaterial[weaker] == EvaluationData.PIECE_VALUE[ChessPiece.Knight] // TODO FIXED
+                    board.PieceMaterial[stronger] == EvaluationData.PIECE_VALUE[ChessPiece.Rook]
+                    && board.PieceMaterial[weaker] == EvaluationData.PIECE_VALUE[ChessPiece.Knight] // TODO FIXED
                 )
                 {
                     result /= 2;
@@ -232,8 +230,8 @@ namespace ChessDotNet.Evaluation.V2
 
                 if
                 (
-                    b.PieceMaterial[stronger] == EvaluationData.PIECE_VALUE[ChessPiece.Rook]
-                    && b.PieceMaterial[weaker] == EvaluationData.PIECE_VALUE[ChessPiece.Bishop]
+                    board.PieceMaterial[stronger] == EvaluationData.PIECE_VALUE[ChessPiece.Rook]
+                    && board.PieceMaterial[weaker] == EvaluationData.PIECE_VALUE[ChessPiece.Bishop]
                 )
                 {
                     result /= 2;
@@ -241,8 +239,8 @@ namespace ChessDotNet.Evaluation.V2
 
                 if
                 (
-                    b.PieceMaterial[stronger] == EvaluationData.PIECE_VALUE[ChessPiece.Rook] + EvaluationData.PIECE_VALUE[ChessPiece.Knight]
-                    && b.PieceMaterial[weaker] == EvaluationData.PIECE_VALUE[ChessPiece.Rook]
+                    board.PieceMaterial[stronger] == EvaluationData.PIECE_VALUE[ChessPiece.Rook] + EvaluationData.PIECE_VALUE[ChessPiece.Knight]
+                    && board.PieceMaterial[weaker] == EvaluationData.PIECE_VALUE[ChessPiece.Rook]
                 )
                 {
                     result /= 2;
@@ -250,8 +248,8 @@ namespace ChessDotNet.Evaluation.V2
 
                 if
                 (
-                    b.PieceMaterial[stronger] == EvaluationData.PIECE_VALUE[ChessPiece.Rook] + EvaluationData.PIECE_VALUE[ChessPiece.Bishop]
-                    && b.PieceMaterial[weaker] == EvaluationData.PIECE_VALUE[ChessPiece.Rook]
+                    board.PieceMaterial[stronger] == EvaluationData.PIECE_VALUE[ChessPiece.Rook] + EvaluationData.PIECE_VALUE[ChessPiece.Bishop]
+                    && board.PieceMaterial[weaker] == EvaluationData.PIECE_VALUE[ChessPiece.Rook]
                 )
                 {
                     result /= 2;
@@ -262,7 +260,7 @@ namespace ChessDotNet.Evaluation.V2
             *  Finally return the score relative to the side to move.                 *
             **************************************************************************/
 
-            if (b.ColorToMove == ChessPiece.Black)
+            if (board.ColorToMove == ChessPiece.Black)
             {
                 result = -result;
             }
@@ -271,10 +269,11 @@ namespace ChessDotNet.Evaluation.V2
             return result;
         }
 
-        void EvaluatePieces(Board b, EvaluationScores v, ulong[] pawnControl)
+        void EvaluatePieces(Board b, EvaluationScores v, ulong[] pawnControl, Span<ulong> pins)
         {
             for (Piece color = 0; color <= 1; color++)
             {
+                var pinned = pins[color];
                 var pawn = ChessPiece.Pawn + color;
                 var pawns = b.BitBoard[pawn];
                 while (pawns != 0)
@@ -290,7 +289,7 @@ namespace ChessDotNet.Evaluation.V2
                 while (knights != 0)
                 {
                     var pos = knights.BitScanForward();
-                    EvalKnight(b, v, pos, color, pawnControl);
+                    EvalKnight(b, v, pos, color, pawnControl, pinned);
                     v.PieceSquaresMidgame[color] += _evaluationData.mgPst[knight][pos];
                     v.PieceSquaresEndgame[color] += _evaluationData.egPst[knight][pos];
                     knights &= knights - 1;
@@ -301,7 +300,7 @@ namespace ChessDotNet.Evaluation.V2
                 while (bishops != 0)
                 {
                     var pos = bishops.BitScanForward();
-                    EvalBishop(b, v, pos, color, pawnControl);
+                    EvalBishop(b, v, pos, color, pawnControl, pinned);
                     v.PieceSquaresMidgame[color] += _evaluationData.mgPst[bishop][pos];
                     v.PieceSquaresEndgame[color] += _evaluationData.egPst[bishop][pos];
                     bishops &= bishops - 1;
@@ -312,7 +311,7 @@ namespace ChessDotNet.Evaluation.V2
                 while (rooks != 0)
                 {
                     var pos = rooks.BitScanForward();
-                    EvalRook(b, v, pos, color);
+                    EvalRook(b, v, pos, color, pinned);
                     v.PieceSquaresMidgame[color] += _evaluationData.mgPst[rook][pos];
                     v.PieceSquaresEndgame[color] += _evaluationData.egPst[rook][pos];
                     rooks &= rooks - 1;
@@ -323,7 +322,7 @@ namespace ChessDotNet.Evaluation.V2
                 while (queens != 0)
                 {
                     var pos = queens.BitScanForward();
-                    EvalQueen(b, v, pos, color);
+                    EvalQueen(b, v, pos, color, pinned);
                     v.PieceSquaresMidgame[color] += _evaluationData.mgPst[queen][pos];
                     v.PieceSquaresEndgame[color] += _evaluationData.egPst[queen][pos];
                     queens &= queens - 1;
@@ -334,7 +333,7 @@ namespace ChessDotNet.Evaluation.V2
             }
         }
 
-        void EvalKnight(Board b, EvaluationScores v, Position sq, Piece side, ulong[] pawnControl)
+        void EvalKnight(Board b, EvaluationScores v, Position sq, Piece side, ulong[] pawnControl, ulong pinned)
         {
             int att = 0;
             int mob = 0;
@@ -349,9 +348,13 @@ namespace ChessDotNet.Evaluation.V2
             var opponent = side == ChessPiece.White ? b.BlackPieces : b.WhitePieces;
             var emptyOrOpponent = (b.EmptySquares | opponent) & jumps;
 
-            var uncontrolled = emptyOrOpponent & ~pawnControl[side ^ 1];
-            mob += uncontrolled.BitCount();
-
+            var bitboard = 1UL << sq;
+            if ((bitboard & pinned) == 0)
+            {
+                var uncontrolled = emptyOrOpponent & ~pawnControl[side ^ 1];
+                mob += uncontrolled.BitCount();
+            }
+            
             var emptyOrOpponentNearKing = emptyOrOpponent & BitboardConstants.KingExtendedJumps[side ^ 1][b.KingPositions[side ^ 1]];
             att += emptyOrOpponentNearKing.BitCount();
 
@@ -382,7 +385,7 @@ namespace ChessDotNet.Evaluation.V2
             v.egTropism[side] += 3 * tropism;
         }
 
-        void EvalBishop(Board b, EvaluationScores v, Position sq, Piece side, ulong[] pawnControl)
+        void EvalBishop(Board b, EvaluationScores v, Position sq, Piece side, ulong[] pawnControl, ulong pinned)
         {
 
             int att = 0;
@@ -393,11 +396,15 @@ namespace ChessDotNet.Evaluation.V2
             **************************************************************************/
             var slide = _slideGenerator.DiagonalAntidiagonalSlide(b.AllPieces, sq);
 
-            var emptyUncontrolled = b.EmptySquares & ~pawnControl[side ^ 1] & slide;
-            mob += emptyUncontrolled.BitCount();
-
             var opponent = (side == ChessPiece.White ? b.BlackPieces : b.WhitePieces) & slide;
-            mob += opponent.BitCount();
+
+            var bitboard = 1UL << sq;
+            if ((bitboard & pinned) == 0)
+            {
+                var emptyUncontrolled = b.EmptySquares & ~pawnControl[side ^ 1] & slide;
+                mob += emptyUncontrolled.BitCount();
+                mob += opponent.BitCount();
+            }
 
             var emptyOrOpponentNearKing = (b.EmptySquares | opponent) & BitboardConstants.KingExtendedJumps[side ^ 1][b.KingPositions[side ^ 1]] & slide;
             att += emptyOrOpponentNearKing.BitCount();
@@ -416,7 +423,7 @@ namespace ChessDotNet.Evaluation.V2
             v.egTropism[side] += 1 * tropism;
         }
 
-        public void EvalRook(Board b, EvaluationScores v, Position sq, Piece side)
+        public void EvalRook(Board b, EvaluationScores v, Position sq, Piece side, ulong pinned)
         {
 
             int att = 0;
@@ -488,8 +495,13 @@ namespace ChessDotNet.Evaluation.V2
 
             var opponent = side == ChessPiece.White ? b.BlackPieces : b.WhitePieces;
             var emptyOrOpponent = (b.EmptySquares | opponent) & slide;
-            mob += emptyOrOpponent.BitCount();
 
+            var bitboard = 1UL << sq;
+            if ((bitboard & pinned) == 0)
+            {
+                mob += emptyOrOpponent.BitCount();
+            }
+            
             var emptyOrOpponentNearKing = emptyOrOpponent & BitboardConstants.KingExtendedJumps[side ^ 1][b.KingPositions[side ^ 1]];
             att += emptyOrOpponentNearKing.BitCount();
 
@@ -507,7 +519,7 @@ namespace ChessDotNet.Evaluation.V2
             v.egTropism[side] += 1 * tropism;
         }
 
-        void EvalQueen(Board b, EvaluationScores v, Position sq, Piece side)
+        void EvalQueen(Board b, EvaluationScores v, Position sq, Piece side, ulong pinned)
         {
 
             int att = 0;
@@ -548,11 +560,15 @@ namespace ChessDotNet.Evaluation.V2
             **************************************************************************/
 
             var slide = _slideGenerator.AllSlide(b.AllPieces, sq);
-
             var opponent = side == ChessPiece.White ? b.BlackPieces : b.WhitePieces;
             var emptyOrOpponent = (b.EmptySquares | opponent) & slide;
-            mob += emptyOrOpponent.BitCount();
-
+            
+            var bitboard = 1UL << sq;
+            if ((bitboard & pinned) == 0)
+            {
+                mob += emptyOrOpponent.BitCount();
+            }
+            
             var emptyOrOpponentNearKing = emptyOrOpponent & BitboardConstants.KingExtendedJumps[side ^ 1][b.KingPositions[side ^ 1]];
             att += emptyOrOpponentNearKing.BitCount();
 

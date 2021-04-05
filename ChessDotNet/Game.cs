@@ -31,8 +31,8 @@ namespace ChessDotNet
         public Game()
         {
             var slidingMoveGenerator = new MagicBitboardsService();
-            //var evaluationService = new EvaluationService2(new EvaluationData());
-            var evaluationService = new NnueEvaluationService(new NnueExternalClient());
+            var evaluationService = new EvaluationService2(new EvaluationData());
+            //var evaluationService = new NnueEvaluationService(new NnueExternalClient());
             var attacksService = new AttacksService(slidingMoveGenerator);
             var pinDetector = new PinDetector(slidingMoveGenerator);
             var validator = new MoveValidator(attacksService, slidingMoveGenerator, pinDetector);

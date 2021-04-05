@@ -489,8 +489,11 @@ namespace ChessDotNet.Search2
                 }
             }
 
+            Span<ulong> pins = stackalloc ulong[2];
+            _pinDetector.GetPinnedToKings(board, pins);
+            
             // STATIC EVALUATION PRUNING
-            var staticScore = _evaluation.Evaluate(board);
+            var staticScore = _evaluation.Evaluate(board, pins);
             //board.WhiteToMove = !board.WhiteToMove;
             //var staticScore2 = _evaluation.Evaluate(board);
             //Debug.Assert(staticScore == staticScore2);
@@ -607,9 +610,8 @@ namespace ChessDotNet.Search2
             _see.CalculateSeeScores(board, potentialMoves, moveCount, seeScores);
             var moveStaticScores = threadState.MoveStaticScores[ply];
             _moveOrdering.CalculateStaticScores(board, potentialMoves, moveCount, ply, principalVariationMove, threadState.Killers, EngineOptions.UseSeeOrdering, seeScores, moveStaticScores);
-            
-            
-            var pinnedPieces = _pinDetector.GetPinned(board, board.ColorToMove, board.KingPositions[board.ColorToMove]);
+
+            var pinnedPieces = pins[board.ColorToMove];
             for (var moveIndex = 0; moveIndex < moveCount; moveIndex++)
             {
                 _moveOrdering.OrderNextMove(moveIndex, potentialMoves, moveStaticScores, seeScores, moveCount, threadState.History);
@@ -837,7 +839,9 @@ namespace ChessDotNet.Search2
         {
             var threadState = _state.ThreadStates[threadId];
 
-            var standPat = _evaluation.Evaluate(board);
+            Span<ulong> pins = stackalloc ulong[2];
+            _pinDetector.GetPinnedToKings(board, pins);
+            var standPat = _evaluation.Evaluate(board, pins);
             _statistics.NodesSearched++;
 
             if (standPat >= beta)
@@ -902,7 +906,7 @@ namespace ChessDotNet.Search2
             var moveStaticScores = threadState.MoveStaticScores[ply];
             _moveOrdering.CalculateStaticScores(board, potentialMoves, moveCount, ply, principalVariationMove, threadState.Killers, EngineOptions.UseSeeOrdering, seeScores, moveStaticScores);
             var checkers = _attacksService.GetAttackersOfSide(board, board.KingPositions[board.ColorToMove], !board.WhiteToMove, board.AllPieces);
-            var pinnedPieces = _pinDetector.GetPinned(board, board.ColorToMove, board.KingPositions[board.ColorToMove]);
+            var pinnedPieces = pins[board.ColorToMove];
             for (var moveIndex = 0; moveIndex < moveCount; moveIndex++)
             {
                 _moveOrdering.OrderNextMove(moveIndex, potentialMoves, moveStaticScores, seeScores, moveCount, threadState.History);

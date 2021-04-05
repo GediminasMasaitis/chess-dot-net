@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System;
+using System.Runtime.CompilerServices;
 using ChessDotNet.Common;
 using ChessDotNet.Data;
 
@@ -11,6 +12,12 @@ namespace ChessDotNet.MoveGeneration
         public PinDetector(ISlideMoveGenerator slideMoveGenerator)
         {
             _slideMoveGenerator = slideMoveGenerator;
+        }
+
+        public void GetPinnedToKings(Board board, Span<ulong> pins)
+        {
+            pins[ChessPiece.White] = GetPinned(board, ChessPiece.White, board.KingPositions[ChessPiece.White]);
+            pins[ChessPiece.Black] = GetPinned(board, ChessPiece.Black, board.KingPositions[ChessPiece.Black]);
         }
 
         public ulong GetPinned(Board board, byte color, byte pos)

@@ -8,6 +8,8 @@ using ChessDotNet.Evaluation.Nnue.Managed;
 using ChessDotNet.Evaluation.V2;
 using ChessDotNet.Fen;
 using ChessDotNet.Hashing;
+using ChessDotNet.MoveGeneration;
+using ChessDotNet.MoveGeneration.SlideGeneration;
 using ChessDotNet.Search2;
 using Bitboard = System.UInt64;
 using ZobristKey = System.UInt64;
@@ -334,13 +336,15 @@ namespace ChessDotNet.Data
             TestBoard(this, clone);
         }
 
-        public void UndoMove()
+        public void UndoMove(bool doNnue = true)
         {
             var history = History2[HistoryDepth - 1];
             var move = history.Move;
-            
-            NnueData.UndoMove(move);
-            
+            if (doNnue)
+            {
+                NnueData.UndoMove(move);
+            }
+
             HistoryDepth--;
 
             EnPassantFileIndex = history.EnPassantFileIndex;
@@ -847,7 +851,10 @@ namespace ChessDotNet.Data
 
             if (evaluationService != null)
             {
-                var score = evaluationService.Evaluate(this);
+                Span<ulong> pins = stackalloc ulong[2];
+                var pinDetector = new PinDetector(new MagicBitboardsService()); // TODO: Cleanup
+                pinDetector.GetPinnedToKings(this, pins);
+                var score = evaluationService.Evaluate(this, pins);
                 if (!WhiteToMove)
                 {
                     score = -score;

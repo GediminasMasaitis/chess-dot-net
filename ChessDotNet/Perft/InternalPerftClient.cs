@@ -62,11 +62,11 @@ namespace ChessDotNet.Perft
             {
                 var move = possibleMoves[i];
                 //_currentBoard.TestMove(move);
-                _currentBoard.DoMove2(move);
+                _currentBoard.DoMove2(move, false);
                 //_eval.Evaluate(_currentBoard);
                 var nodes = GetNodesInner(_currentBoard, depth - 1);
                 //var nodes = 1;
-                _currentBoard.UndoMove();
+                _currentBoard.UndoMove(false);
                 var moveStr = move.ToPositionString();
                 var moveAndNodes = new MoveAndNodes(moveStr, nodes, move);
                 yield return moveAndNodes;
@@ -93,10 +93,10 @@ namespace ChessDotNet.Perft
             {
                 var move = possibleMoves[i];
                 //board.TestMove(move);
-                board.DoMove2(move);
+                board.DoMove2(move, false);
                 //_eval.Evaluate(_currentBoard);
                 var childNodes = GetNodesInner(board, depth - 1);
-                board.UndoMove();
+                board.UndoMove(false);
                 nodes += childNodes;
             }
 

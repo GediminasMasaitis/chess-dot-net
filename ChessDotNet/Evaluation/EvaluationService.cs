@@ -1,4 +1,5 @@
-﻿using ChessDotNet.Data;
+﻿using System;
+using ChessDotNet.Data;
 
 namespace ChessDotNet.Evaluation
 {
@@ -152,7 +153,7 @@ namespace ChessDotNet.Evaluation
             };
         }
 
-        public int Evaluate(Board board)
+        public int Evaluate(Board board, Span<ulong> pins = default)
         {
             var score = (board.PawnMaterial[ChessPiece.White] + board.PieceMaterial[ChessPiece.White]) - (board.PawnMaterial[ChessPiece.Black] + board.PieceMaterial[ChessPiece.Black]);
             score += EvaluatePositions(board);

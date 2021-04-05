@@ -14,15 +14,12 @@ namespace ChessDotNet.Protocols
 {
     public class UciProtocol : IChessProtocol
     {
-        private readonly Game _game;
+        private Game _game;
 
         public UciProtocol()
         {
             BitboardConstants.Init();
             new MagicBitboardsInitializer(new HyperbolaQuintessence(), new KnownMagicNumberProvider()).Init();
-
-            _game = new Game();
-            _game.Search.SearchInfo += OnOnSearchInfo;
         }
 
         private void OnOnSearchInfo(SearchInfo searchInfo)
@@ -186,6 +183,9 @@ namespace ChessDotNet.Protocols
         
         private void ConfigureUCI()
         {
+            _game = new Game();
+            _game.Search.SearchInfo += OnOnSearchInfo;
+
             Output("id name Chess.NET");
             Output("id author Gediminas Masaitis");
             Output(string.Empty);
