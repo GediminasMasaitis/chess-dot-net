@@ -659,9 +659,9 @@ namespace ChessDotNet.Search2
                 (
                     EngineOptions.UseLateMoveReductions
                     && !isPrincipalVariation
-                    && movesEvaluated > 3
-                    //&& (!rootNode || movesEvaluated > 3)
-                    && depth > 4
+                    && movesEvaluated > 1
+                    && (!rootNode || movesEvaluated > 3)
+                    && depth >= 3
                     && !inCheck
                     //&& threadState.Cutoff[move.ColorToMove][move.From][move.To] < 50
                     //&& currentReduction == 0
