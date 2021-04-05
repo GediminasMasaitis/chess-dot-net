@@ -1,5 +1,6 @@
 ﻿using System;
 using ChessDotNet.Data;
+using ChessDotNet.Evaluation.Nnue.Managed;
 using ChessDotNet.Evaluation.V2;
 
 namespace ChessDotNet.Evaluation.Nnue
@@ -52,6 +53,8 @@ namespace ChessDotNet.Evaluation.Nnue
             return result;
         }
 
+        private NnueNnueData[] _datas = new NnueNnueData[3] { new NnueNnueData(), new NnueNnueData(), new NnueNnueData()};
+
         private void UpdateCurrentPosition(Board board)
         {
             _position.player = board.ColorToMove;
@@ -93,6 +96,26 @@ namespace ChessDotNet.Evaluation.Nnue
             {
                 _position.pieces[currentIndex] = 0;
                 _position.squares[currentIndex] = 0;
+            }
+
+            _position.nnue[0] = null;
+            _position.nnue[1] = null;
+            _position.nnue[2] = null;
+
+            //for (int i = board.NnueData.Ply; i >= 0; i--)
+            int nnueEntryIndex = 0;
+            for (; nnueEntryIndex < 3; nnueEntryIndex++)
+            {
+                var boardIndex = board.NnueData.Ply - nnueEntryIndex;
+                if (boardIndex < 0)
+                {
+                    break;
+                }
+
+                //_position.nnue[nnueEntryIndex] = new NnueNnueData();
+                _position.nnue[nnueEntryIndex] = _datas[nnueEntryIndex];
+                _position.nnue[nnueEntryIndex].accumulator = board.NnueData.Accumulators[boardIndex];
+                _position.nnue[nnueEntryIndex].dirtyPiece = board.NnueData.Dirty[boardIndex];
             }
         }
     }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.X86;
 using System.Text;
 
 namespace ChessDotNet.Evaluation.Nnue.Managed
@@ -12,22 +13,23 @@ namespace ChessDotNet.Evaluation.Nnue.Managed
         private const uint ExpectedNetworkHash = 1664315734U;
         private const uint ExpectedMainHash = 1046128366U;
 
-        public HalfKpParameters Load(string path)
+        public HalfKpParameters Load(string path, NnueArchitecture? architecture = null)
         {
             using var stream = File.OpenRead(path);
-            return Load(stream);
+            return Load(stream, architecture);
         }
 
-        public HalfKpParameters Load(Stream stream)
+        public HalfKpParameters Load(Stream stream, NnueArchitecture? architecture = null)
         {
             using var reader = new BinaryReader(stream, Encoding.ASCII, true);
-            return Load(reader);
+            return Load(reader, architecture);
         }
 
-        public HalfKpParameters Load(BinaryReader reader)
+        public HalfKpParameters Load(BinaryReader reader, NnueArchitecture? architecture = null)
         {
+            architecture ??= DetectArchitecture();
             ReadHeader(reader);
-            var parameters = ReadHalfKpParameters(reader);
+            var parameters = ReadHalfKpParameters(reader, architecture.Value);
 
             if (reader.BaseStream.Position != reader.BaseStream.Length)
             {
@@ -35,6 +37,12 @@ namespace ChessDotNet.Evaluation.Nnue.Managed
             }
 
             return parameters;
+        }
+
+        private NnueArchitecture DetectArchitecture()
+        {
+            if (Avx2.IsSupported) return NnueArchitecture.Avx2;
+            return NnueArchitecture.Fallback;
         }
 
         private NnueHeader ReadHeader(BinaryReader reader)
@@ -58,7 +66,7 @@ namespace ChessDotNet.Evaluation.Nnue.Managed
             return header;
         }
 
-        private HalfKpParameters ReadHalfKpParameters(BinaryReader reader)
+        private HalfKpParameters ReadHalfKpParameters(BinaryReader reader, NnueArchitecture architecture)
         {
             var featureTransformerHash = reader.ReadUInt32();
             if (featureTransformerHash != ExpectedFeatureTransformerHash)
@@ -75,16 +83,16 @@ namespace ChessDotNet.Evaluation.Nnue.Managed
                 throw new NnueException($"Invalid network hash, expected {ExpectedNetworkHash}, read {networkHash}");
             }
 
-            parameters.Hidden1 = ReadHiddenParameters(reader, 512, 32);
-            parameters.Hidden2 = ReadHiddenParameters(reader, 32, 32);
+            parameters.Hidden1 = ReadHiddenParameters(reader, 512, 32, architecture);
+            parameters.Hidden2 = ReadHiddenParameters(reader, 32, 32, architecture);
             parameters.Output = ReadOutputParameters(reader, 32, 1);
 
             return parameters;
         }
 
-        private uint GetWeightIndex(uint r, uint c, uint dims)
+        private uint GetWeightIndex(uint r, uint c, uint dims, NnueArchitecture architecture)
         {
-            if (true)
+            if (architecture == NnueArchitecture.Avx2)
             {
                 if (dims > 32)
                 {
@@ -97,7 +105,7 @@ namespace ChessDotNet.Evaluation.Nnue.Managed
             return c * 32 + r;
         }
 
-        private NnueParameters ReadHiddenParameters(BinaryReader reader, uint inputDimensions, uint outputDimensions)
+        private NnueParameters ReadHiddenParameters(BinaryReader reader, uint inputDimensions, uint outputDimensions, NnueArchitecture architecture)
         {
             var parameters = new NnueParameters();
             parameters.Biases = new int[outputDimensions];
@@ -108,7 +116,7 @@ namespace ChessDotNet.Evaluation.Nnue.Managed
                 parameters.Biases[i] = reader.ReadInt32();
             }
 
-            if (true)
+            if (architecture == NnueArchitecture.Avx2)
             {
                 permute_biases(parameters.Biases);
             }
@@ -117,15 +125,10 @@ namespace ChessDotNet.Evaluation.Nnue.Managed
             {
                 for (uint j = 0; j < inputDimensions; j++)
                 {
-                    var index = GetWeightIndex(i, j, inputDimensions);
+                    var index = GetWeightIndex(i, j, inputDimensions, architecture);
                     parameters.Weights[index] = reader.ReadSByte();
                 }
             }
-
-            //for (int i = 0; i < parameters.Weights.Length; i++)
-            //{
-            //    parameters.Weights[i] = reader.ReadSByte();
-            //}
 
             return parameters;
         }

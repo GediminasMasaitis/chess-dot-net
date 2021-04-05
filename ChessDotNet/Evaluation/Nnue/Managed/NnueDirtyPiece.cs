@@ -3,16 +3,16 @@
     public class NnueDirtyPiece
     {
         public int dirtyNum;
-        public int[] pc;
-        public int[] from;
-        public int[] to;
+        public byte[] pc;
+        public byte[] from;
+        public byte[] to;
 
         public NnueDirtyPiece()
         {
             dirtyNum = 0;
-            pc = new int[3];
-            from = new int[3];
-            to = new int[3];
+            pc = new byte[3];
+            from = new byte[3];
+            to = new byte[3];
         }
     }
 }

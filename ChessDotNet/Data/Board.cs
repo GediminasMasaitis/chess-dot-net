@@ -6,11 +6,13 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using ChessDotNet.Common;
 using ChessDotNet.Evaluation;
+using ChessDotNet.Evaluation.Nnue.Managed;
 using ChessDotNet.Evaluation.V2;
 using ChessDotNet.Fen;
 using ChessDotNet.Hashing;
 using ChessDotNet.MoveGeneration;
 using ChessDotNet.MoveGeneration.SlideGeneration;
+using ChessDotNet.Search2;
 using ChessDotNet.Testing;
 using Newtonsoft.Json;
 using Bitboard = System.UInt64;
@@ -22,6 +24,98 @@ using TTFlag = System.Byte;
 
 namespace ChessDotNet.Data
 {
+    public class NnueBoardData
+    {
+        public NnueAccumulator[] Accumulators { get; set; }
+        public NnueDirtyPiece[] Dirty { get; set; }
+        public int Ply { get; set; }
+
+        public NnueBoardData()
+        {
+            Accumulators = new NnueAccumulator[SearchConstants.MaxDepth];
+            Dirty = new NnueDirtyPiece[SearchConstants.MaxDepth];
+            for (int i = 0; i < SearchConstants.MaxDepth; i++)
+            {
+                Accumulators[i] = new NnueAccumulator();
+                Dirty[i] = new NnueDirtyPiece();
+            }
+            Ply = 0;
+        }
+
+        public void UndoMove(Move move)
+        {
+            if (move.NullMove)
+            {
+                return;
+            }
+
+            Ply--;
+        }
+
+        public void DoMove(Move move)
+        {
+            if (move.NullMove)
+            {
+                return;
+            }
+
+            Ply++;
+            var accumulator = Accumulators[Ply];
+            accumulator.computedAccumulation = false;
+
+            var dirty = Dirty[Ply];
+
+            dirty.dirtyNum = 1;
+            dirty.from[0] = move.From;
+            dirty.to[0] = move.To;
+            dirty.pc[0] = NnueConstants.GetNnuePiece(move.Piece);
+
+            if (move.Castle)
+            {
+                var kingSide = move.To % 8 > 3;
+                var isWhite = move.Piece == ChessPiece.WhiteKing;
+                var castlingRookPos = (byte)((kingSide ? 7 : 0) + (isWhite ? 0 : 56));
+                var castlingRookNewPos = (byte)((move.From + move.To) / 2);
+                var rookPiece = isWhite ? ChessPiece.WhiteRook : ChessPiece.BlackRook;
+
+                dirty.dirtyNum = 2;
+                dirty.from[1] = castlingRookPos;
+                dirty.to[1] = castlingRookNewPos;
+                dirty.pc[1] = NnueConstants.GetNnuePiece(rookPiece);
+            }
+
+            if (move.TakesPiece != ChessPiece.Empty)
+            {
+                byte killedPos = move.To;
+                if (move.EnPassant)
+                {
+                    if (move.Piece == ChessPiece.WhitePawn)
+                    {
+                        killedPos = (byte)(move.To - 8);
+                    }
+                    else
+                    {
+                        killedPos = (byte)(move.To + 8);
+                    }
+                }
+
+                dirty.dirtyNum = 2;
+                dirty.from[1] = killedPos;
+                dirty.to[1] = 64;
+                dirty.pc[1] = NnueConstants.GetNnuePiece(move.TakesPiece);
+            }
+
+            if (move.PawnPromoteTo != ChessPiece.Empty)
+            {
+                dirty.to[0] = 64;
+                dirty.from[dirty.dirtyNum] = 64;
+                dirty.to[dirty.dirtyNum] = move.To;
+                dirty.pc[dirty.dirtyNum] = NnueConstants.GetNnuePiece(move.PawnPromoteTo);
+                dirty.dirtyNum++;
+            }
+        }
+    }
+
     public class Board
     {
         public byte ColorToMove { get; set; }
@@ -57,43 +151,7 @@ namespace ChessDotNet.Data
         public Score[] PawnMaterial { get; set; }
         public Score[] PieceMaterial { get; set; }
 
-
-        //private bool _hasPinnedPieces;
-        //private ulong _pinnedPieces;
-        //public ulong PinnedPieces
-        //{
-        //    get
-        //    {
-        //        if (_hasPinnedPieces)
-        //        {
-        //            return _pinnedPieces;
-        //        }
-
-        //        _pinnedPieces = _pinDetector.GetPinned(this, ColorToMove, KingPositions[ColorToMove]);
-        //        _hasPinnedPieces = true;
-        //        return _pinnedPieces;
-        //    }
-        //}
-
-        //private bool _hasCheckers;
-        //private ulong _checkers;
-        //public ulong Checkers
-        //{
-        //    get
-        //    {
-        //        if (_hasCheckers)
-        //        {
-        //            return _checkers;
-        //        }
-
-        //        _checkers = _attacks.GetAttackersOfSide(this, KingPositions[ColorToMove], !WhiteToMove, AllPieces);
-        //        _hasCheckers = true;
-        //        return _checkers;
-        //    }
-        //}
-
-        //public ulong PinnedPieces { get; set; }
-        //public ulong Checkers { get; set; }
+        public NnueBoardData NnueData { get; set; }
 
         public Board()
         {
@@ -101,6 +159,8 @@ namespace ChessDotNet.Data
             EnPassantRankIndex = -1;
             HistoryDepth = 0;
             CastlingPermissions = CastlingPermission.None;
+
+            NnueData = new NnueBoardData();
         }
 
         public void SyncBitBoardsToArrayBoard()
@@ -261,6 +321,7 @@ namespace ChessDotNet.Data
         {
             var history = History2[HistoryDepth - 1];
             var move = history.Move;
+            NnueData.UndoMove(move);
 
             if (test)
             {
@@ -421,7 +482,7 @@ namespace ChessDotNet.Data
         public void DoMove2(Move move, bool test = false)
         {
             Debug.Assert(move.ColorToMove == ColorToMove || move.NullMove);
-
+            NnueData.DoMove(move);
             if (test)
             {
                 TestMove(move);
