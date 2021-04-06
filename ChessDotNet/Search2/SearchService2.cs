@@ -463,9 +463,10 @@ namespace ChessDotNet.Search2
 
             // PROBE TRANSPOSITION TABLE
             Move principalVariationMove = default;
+            bool hashEntryExists = true;
             if (EngineOptions.UseTranspositionTable)
             {
-                var probeSuccess = TryProbeTranspositionTable(board.Key, depth, alpha, beta, ref principalVariationMove, out var probedScore, out var exact);
+                var probeSuccess = TryProbeTranspositionTable(board.Key, depth, alpha, beta, ref principalVariationMove, out var probedScore, out hashEntryExists);
                 if (probeSuccess)
                 {
                     if (!isPrincipalVariation || (probedScore > alpha && probedScore < beta))
@@ -594,6 +595,17 @@ namespace ChessDotNet.Search2
                 futilityPruning = true;
             }
 
+            //if
+            //(
+            //    isPrincipalVariation
+            //    && !inCheck
+            //    && !hashEntryExists
+            //    && depth >= 6
+            //)
+            //{
+            //    depth -= 2;
+            //}
+
 
             var bestScore = -SearchConstants.Inf;
             Move bestMove = default;
@@ -609,12 +621,15 @@ namespace ChessDotNet.Search2
             var seeScores = threadState.SeeScores[ply];
             _see.CalculateSeeScores(board, potentialMoves, moveCount, seeScores);
             var moveStaticScores = threadState.MoveStaticScores[ply];
-            _moveOrdering.CalculateStaticScores(board, potentialMoves, moveCount, ply, principalVariationMove, threadState.Killers, EngineOptions.UseSeeOrdering, seeScores, moveStaticScores);
+            var previousMove = rootNode ? default : board.History2[board.HistoryDepth - 1].Move;
+            var countermove = threadState.Countermove[previousMove.Piece][previousMove.To];
+            _moveOrdering.CalculateStaticScores(board, potentialMoves, moveCount, ply, principalVariationMove, threadState.Killers, EngineOptions.UseSeeOrdering, seeScores, countermove, moveStaticScores);
 
             var pinnedPieces = pins[board.ColorToMove];
             for (var moveIndex = 0; moveIndex < moveCount; moveIndex++)
             {
-                _moveOrdering.OrderNextMove(moveIndex, potentialMoves, moveStaticScores, seeScores, moveCount, threadState.History);
+                //var countermove2 = threadState.Countermove[previousMove.Piece][previousMove.To];
+                _moveOrdering.OrderNextMove(moveIndex, potentialMoves, moveStaticScores, seeScores, moveCount, threadState);
                 var move = potentialMoves[moveIndex];
                 var seeScore = seeScores[moveIndex];
                 var kingSafe = _validator.IsKingSafeAfterMove2(board, move, checkers, pinnedPieces);
@@ -757,6 +772,7 @@ namespace ChessDotNet.Search2
                             {
                                 threadState.Killers[ply][1] = threadState.Killers[ply][0];
                                 threadState.Killers[ply][0] = move.Key2;
+                                threadState.Countermove[previousMove.Piece][previousMove.To] = move.Key2;
                             }
                             log.AddChild(childLog);
                             log.AddMessage($"Beta cutoff, move {move.ToPositionString()}, child score {childScore}", depth, alpha, beta, beta);
@@ -766,6 +782,11 @@ namespace ChessDotNet.Search2
                         if (move.TakesPiece == ChessPiece.Empty)
                         {
                             threadState.History[move.ColorToMove][move.From][move.To] += depth * depth;
+                            //threadState.PieceToHistory[move.Piece][move.To] += depth * depth;
+                        }
+                        else
+                        {
+                            threadState.CaptureHistory[move.Piece][move.To][move.TakesPiece] += depth * depth;
                         }
 
                         alpha = childScore;
@@ -904,12 +925,14 @@ namespace ChessDotNet.Search2
             var seeScores = threadState.SeeScores[ply];
             _see.CalculateSeeScores(board, potentialMoves, moveCount, seeScores);
             var moveStaticScores = threadState.MoveStaticScores[ply];
-            _moveOrdering.CalculateStaticScores(board, potentialMoves, moveCount, ply, principalVariationMove, threadState.Killers, EngineOptions.UseSeeOrdering, seeScores, moveStaticScores);
+            var previousMove = board.History2[board.HistoryDepth - 1].Move;
+            var countermove = threadState.Countermove[previousMove.Piece][previousMove.To];
+            _moveOrdering.CalculateStaticScores(board, potentialMoves, moveCount, ply, principalVariationMove, threadState.Killers, EngineOptions.UseSeeOrdering, seeScores, countermove, moveStaticScores);
             var checkers = _attacksService.GetAttackersOfSide(board, board.KingPositions[board.ColorToMove], !board.WhiteToMove, board.AllPieces);
             var pinnedPieces = pins[board.ColorToMove];
             for (var moveIndex = 0; moveIndex < moveCount; moveIndex++)
             {
-                _moveOrdering.OrderNextMove(moveIndex, potentialMoves, moveStaticScores, seeScores, moveCount, threadState.History);
+                _moveOrdering.OrderNextMove(moveIndex, potentialMoves, moveStaticScores, seeScores, moveCount, threadState);
                 var move = potentialMoves[moveIndex];
                 Debug.Assert(move.TakesPiece != ChessPiece.Empty);
 
@@ -1051,10 +1074,10 @@ namespace ChessDotNet.Search2
         }
 
         //[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool TryProbeTranspositionTable(ZobristKey key, int depth, int alpha, int beta, ref Move bestMove, out int score, out bool exact)
+        private bool TryProbeTranspositionTable(ZobristKey key, int depth, int alpha, int beta, ref Move bestMove, out int score, out bool entryExists)
         {
             score = default;
-            exact = false;
+            entryExists = false;
 
             var found = _state.TranspositionTable.TryProbe(key, out var entry, out var entryKey);
             if (!found)
@@ -1074,6 +1097,7 @@ namespace ChessDotNet.Search2
             //    var a = 123;
             //}
 
+            entryExists = true;
             bestMove = entry.Move;
 
             if (entry.Depth < depth)
@@ -1085,7 +1109,6 @@ namespace ChessDotNet.Search2
             switch (entry.Flag)
             {
                 case TranspositionTableFlags.Exact:
-                    exact = true;
                     score = entry.Score;
                     return true;
                 case TranspositionTableFlags.Alpha:

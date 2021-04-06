@@ -11,6 +11,8 @@ namespace ChessDotNet.Search2
         public uint[][] Killers { get; set; }
         public uint[][] Countermove { get; set;}
         public int[][][] History { get; set; }
+        //public int[][] PieceToHistory { get; set; }
+        public int[][][] CaptureHistory { get; set; }
         public int[][][] Cutoff { get; set; }
         public Move[][] Moves { get; set; }
         public int[][] SeeScores { get; set; }
@@ -32,7 +34,13 @@ namespace ChessDotNet.Search2
                 Killers[i] = new uint[2];
             }
 
-            Countermove = new uint[SearchConstants.MaxDepth][];
+            Killers = new uint[SearchConstants.MaxDepth][]; // Non-captures causing beta cutoffs
+            for (int i = 0; i < Killers.Length; i++)
+            {
+                Killers[i] = new uint[2];
+            }
+
+            Countermove = new uint[ChessPiece.Count][];
             for (int i = 0; i < Countermove.Length; i++)
             {
                 Countermove[i] = new uint[64];
@@ -45,6 +53,22 @@ namespace ChessDotNet.Search2
                 for (int j = 0; j < History[i].Length; j++)
                 {
                     History[i][j] = new int[64];
+                }
+            }
+
+            //PieceToHistory = new int[ChessPiece.Count][];
+            //for (int i = 0; i < PieceToHistory.Length; i++)
+            //{
+            //    PieceToHistory[i] = new int[64];
+            //}
+
+            CaptureHistory = new int[ChessPiece.Count][][];
+            for (int i = 0; i < CaptureHistory.Length; i++)
+            {
+                CaptureHistory[i] = new int[64][];
+                for (int j = 0; j < CaptureHistory[i].Length; j++)
+                {
+                    CaptureHistory[i][j] = new int[ChessPiece.Count];
                 }
             }
 
@@ -98,7 +122,20 @@ namespace ChessDotNet.Search2
                     Array.Clear(History[i][j], 0, History[i][j].Length);
                 }
             }
-            
+
+            //for (int i = 0; i < PieceToHistory.Length; i++)
+            //{
+            //    Array.Clear(PieceToHistory[i], 0, PieceToHistory[i].Length);
+            //}
+
+            for (int i = 0; i < CaptureHistory.Length; i++)
+            {
+                for (int j = 0; j < CaptureHistory[i].Length; j++)
+                {
+                    Array.Clear(CaptureHistory[i][j], 0, CaptureHistory[i][j].Length);
+                }
+            }
+
             for (var i = 0; i < 2; i++)
             {
                 for (int j = 0; j < 64; j++)
@@ -113,18 +150,18 @@ namespace ChessDotNet.Search2
 
         public void OnIterativeDeepen()
         {
-            for (int i = 0; i < Killers.Length; i++)
-            {
-                Array.Clear(Killers[i], 0, Killers[i].Length);
-            }
+            //for (int i = 0; i < Killers.Length; i++)
+            //{
+            //    Array.Clear(Killers[i], 0, Killers[i].Length);
+            //}
 
-            for (int i = 0; i < History.Length; i++)
-            {
-                for (int j = 0; j < History[i].Length; j++)
-                {
-                    Array.Clear(History[i][j], 0, History[i][j].Length);
-                }
-            }
+            //for (int i = 0; i < History.Length; i++)
+            //{
+            //    for (int j = 0; j < History[i].Length; j++)
+            //    {
+            //        Array.Clear(History[i][j], 0, History[i][j].Length);
+            //    }
+            //}
         }
 
         public ThreadUniqueState Clone()

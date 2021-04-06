@@ -12,18 +12,18 @@ namespace ChessDotNet.Search2
         {
         }
 
-        public void CalculateStaticScores(Board board, Move[] moves, int moveCount, int ply, Move pvMove, uint[][] killers, bool useSee, int[] seeScores, int[] staticScores)
+        public void CalculateStaticScores(Board board, Move[] moves, int moveCount, int ply, Move pvMove, uint[][] killers, bool useSee, int[] seeScores, uint countermove, int[] staticScores)
         {
             for (var i = 0; i < moveCount; i++)
             {
                 var seeScore = seeScores[i];
-                var score = CalculateStaticMoveScore(board, moves[i], ply, pvMove, killers, useSee, seeScore);
+                var score = CalculateStaticMoveScore(board, moves[i], ply, pvMove, killers, useSee, seeScore, countermove);
                 staticScores[i] = score;
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private int CalculateStaticMoveScore(Board board, Move move, int ply, Move pvMove, uint[][] killers, bool useSee, int seeScore)
+        private int CalculateStaticMoveScore(Board board, Move move, int ply, Move pvMove, uint[][] killers, bool useSee, int seeScore, uint countermove)
         {
             var moveKey = move.Key2;
             var isPrincipalVariation = pvMove.Key2 == moveKey;
@@ -57,10 +57,11 @@ namespace ChessDotNet.Search2
                         return mvvLvaScore / 2;
                     }
 
-                    return mvvLvaScore / 200;
+                    //return mvvLvaScore / 200;
 
                     //return seeScore * -1_000;
-                    //return mvvLvaScore - 200_000_000;
+                    return mvvLvaScore - 200_000_000;
+                    //return -200_000_000;
                 }
                 else
                 {
@@ -77,11 +78,16 @@ namespace ChessDotNet.Search2
             {
                 return 8_000_000;
             }
+
+            if (countermove == moveKey)
+            {
+                return 6_000_000;
+            }
             
             return 0;
         }
 
-        public void OrderNextMove(int currentIndex, Move[] moves, int[] staticScores, int[] seeScores, int moveCount, int[][][] history)
+        public void OrderNextMove(int currentIndex, Move[] moves, int[] staticScores, int[] seeScores, int moveCount, ThreadUniqueState state)
         {
             var bestScore = int.MinValue;
             var bestScoreIndex = -1;
@@ -89,13 +95,21 @@ namespace ChessDotNet.Search2
             {
                 var move = moves[i];
                 var score = staticScores[i];
-                if (score == 0)
+                if (move.TakesPiece != ChessPiece.Empty)
                 {
-                    var num = move.ColorToMove;
-                    score = history[num][move.From][move.To];
+                    score += state.CaptureHistory[move.Piece][move.To][move.TakesPiece];
+                }
+                else
+                {
+                    //if (score < 6_000_000 && move.Key2 == countermove)
+                    //{
+                    //    score = 7_000_000;
+                    //}
+                    score += state.History[move.ColorToMove][move.From][move.To];
+                    //score += state.PieceToHistory[move.Piece][move.To] >> 2;
                     //score = 0;
                 }
-                
+
                 if (score > bestScore)
                 {
                     bestScore = score;
