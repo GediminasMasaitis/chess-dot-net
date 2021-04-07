@@ -103,6 +103,25 @@ namespace ChessDotNet.Search2
             Rng = new Random(threadId);
         }
 
+        public void OnNewGame()
+        {
+            for (int i = 0; i < History.Length; i++)
+            {
+                for (int j = 0; j < History[i].Length; j++)
+                {
+                    Array.Clear(History[i][j], 0, History[i][j].Length);
+                }
+            }
+
+            for (int i = 0; i < CaptureHistory.Length; i++)
+            {
+                for (int j = 0; j < CaptureHistory[i].Length; j++)
+                {
+                    Array.Clear(CaptureHistory[i][j], 0, CaptureHistory[i][j].Length);
+                }
+            }
+        }
+
         public void OnNewSearch()
         {
             for (int i = 0; i < Killers.Length; i++)
@@ -119,7 +138,11 @@ namespace ChessDotNet.Search2
             {
                 for (int j = 0; j < History[i].Length; j++)
                 {
-                    Array.Clear(History[i][j], 0, History[i][j].Length);
+                    for (int k = 0; k < History[i][j].Length; k++)
+                    {
+                        History[i][j][k] >>= 3;
+                    }
+                    //Array.Clear(History[i][j], 0, History[i][j].Length);
                 }
             }
 
@@ -132,7 +155,11 @@ namespace ChessDotNet.Search2
             {
                 for (int j = 0; j < CaptureHistory[i].Length; j++)
                 {
-                    Array.Clear(CaptureHistory[i][j], 0, CaptureHistory[i][j].Length);
+                    for (int k = 0; k < CaptureHistory[i][j].Length; k++)
+                    {
+                        CaptureHistory[i][j][k] >>= 3;
+                    }
+                    //Array.Clear(CaptureHistory[i][j], 0, CaptureHistory[i][j].Length);
                 }
             }
 

@@ -18,16 +18,16 @@ namespace ChessDotNet.MoveGeneration
             _pinDetector = pinDetector;
         }
 
-        public void FilterMovesByKingSafety(Board board, Move[] moves, ref int moveCount)
+        public void FilterMovesByKingSafety(Board board, Move[] moves, ref int moveCount, ulong checkers, ulong pinned)
         {
-            var checkers = _attacksService.GetAttackersOfSide(board, board.KingPositions[board.ColorToMove], !board.WhiteToMove, board.AllPieces);
-            var pinnedPieces = _pinDetector.GetPinned(board, board.ColorToMove, board.KingPositions[board.ColorToMove]);
+            //var checkers = _attacksService.GetAttackersOfSide(board, board.KingPositions[board.ColorToMove], !board.WhiteToMove, board.AllPieces);
+            //var pinnedPieces = _pinDetector.GetPinned(board, board.ColorToMove, board.KingPositions[board.ColorToMove]);
 
             var toRemove = 0;
             for (var i = 0; i < moveCount; i++)
             {
                 var move = moves[i];
-                var safe = IsKingSafeAfterMove2(board, move, checkers, pinnedPieces);
+                var safe = IsKingSafeAfterMove2(board, move, checkers, pinned);
                 if (safe)
                 {
                     if (toRemove > 0)
@@ -50,33 +50,33 @@ namespace ChessDotNet.MoveGeneration
             var kingMove = move.Piece == ChessPiece.King + board.ColorToMove;
             //var checkers = board.Checkers;
             //var pinnedPieces = board.PinnedPieces;
-            var checkCount = checkers.BitCount();
+            //var checkCount = checkers.PopCount();
 
-            if (checkCount > 1 && !kingMove)
-            {
-                return false;
-            }
+            //if (checkCount > 1 && !kingMove)
+            //{
+            //    return false;
+            //}
 
             
             var isPinned = (pinnedPieces & (1UL << move.From)) != 0;
-            var toBitboard = 1UL << move.To;
-            if (checkCount == 1 && !kingMove)
-            {
-                if (isPinned)
-                {
-                    return false;
-                }
+            //var toBitboard = 1UL << move.To;
+            //if (checkCount == 1 && !kingMove)
+            //{
+            //    if (isPinned)
+            //    {
+            //        return false;
+            //    }
 
-                var checkerPos = checkers.BitScanForward();
-                var canMoveTo = BitboardConstants.Between[board.KingPositions[board.ColorToMove]][checkerPos] | checkers;
+            //    var checkerPos = checkers.BitScanForward();
+            //    var canMoveTo = BitboardConstants.Between[board.KingPositions[board.ColorToMove]][checkerPos] | checkers;
                 
-                if ((canMoveTo & toBitboard) == 0)
-                {
-                    return false;
-                }
+            //    if ((canMoveTo & toBitboard) == 0)
+            //    {
+            //        return false;
+            //    }
 
-                return true;
-            }
+            //    return true;
+            //}
 
             //if (isPinned)
             //{

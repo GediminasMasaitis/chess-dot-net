@@ -86,6 +86,55 @@ namespace ChessDotNet.Search2
             
             return 0;
         }
+        
+        public void OrderNextMove2(int currentIndex, Move[] moves, int[] staticScores, int[] seeScores, int moveCount, ThreadUniqueState state)
+        {
+            var bestScore = int.MinValue;
+            var bestScoreIndex = -1;
+            for (var i = currentIndex; i < moveCount; i++)
+            {
+                var move = moves[i];
+                var score = staticScores[i];
+                if (move.TakesPiece != ChessPiece.Empty)
+                {
+                    score += state.CaptureHistory[move.Piece][move.To][move.TakesPiece];
+                }
+                else if (score == 0)
+                {
+                    //if (score < 6_000_000 && move.Key2 == countermove)
+                    //{
+                    //    score = 7_000_000;
+                    //}
+                    score += state.History[move.ColorToMove][move.From][move.To];
+                    //score += state.PieceToHistory[move.Piece][move.To] >> 2;
+                    //score = 0;
+                }
+
+                if (score > bestScore)
+                {
+                    bestScore = score;
+                    bestScoreIndex = i;
+                }
+            }
+
+            if(currentIndex != bestScoreIndex)
+            { 
+                var bestMove = moves[bestScoreIndex];
+                var bestSee = seeScores[bestScoreIndex];
+                var bestStatic = staticScores[bestScoreIndex];
+
+                for (int i = bestScoreIndex - 1; i >= currentIndex; i--)
+                {
+                    moves[i + 1] = moves[i];
+                    seeScores[i + 1] = seeScores[i];
+                    staticScores[i + 1] = staticScores[i];
+                }
+
+                moves[currentIndex] = bestMove;
+                seeScores[currentIndex] = bestSee;
+                staticScores[currentIndex] = bestStatic;
+            }
+        }
 
         public void OrderNextMove(int currentIndex, Move[] moves, int[] staticScores, int[] seeScores, int moveCount, ThreadUniqueState state)
         {
@@ -99,7 +148,7 @@ namespace ChessDotNet.Search2
                 {
                     score += state.CaptureHistory[move.Piece][move.To][move.TakesPiece];
                 }
-                else
+                else if(score == 0)
                 {
                     //if (score < 6_000_000 && move.Key2 == countermove)
                     //{

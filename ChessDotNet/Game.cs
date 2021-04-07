@@ -36,7 +36,7 @@ namespace ChessDotNet
             var attacksService = new AttacksService(slidingMoveGenerator);
             var pinDetector = new PinDetector(slidingMoveGenerator);
             var validator = new MoveValidator(attacksService, slidingMoveGenerator, pinDetector);
-            var movesService = new MoveGenerator(attacksService, slidingMoveGenerator, validator);
+            var movesService = new MoveGenerator(attacksService, slidingMoveGenerator, pinDetector, validator);
             var searchService = new SearchService2(movesService, evaluationService);
 
             BoardFact = new BoardFactory();

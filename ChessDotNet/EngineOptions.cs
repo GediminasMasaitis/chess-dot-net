@@ -28,7 +28,7 @@ namespace ChessDotNet
         // EVALUATION
         public static bool UseEvalHashTable { get; set; } = true;
         public static bool UsePawnHashTable { get; set; } = true;
-        public static bool UseNnue { get; set; } = true;
+        public static bool UseNnue { get; set; } = false;
         public static string NnueDataPath { get; set; } = "C:/Temp/nn-62ef826d1a6d.nnue";
     }
 }

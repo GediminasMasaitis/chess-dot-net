@@ -85,7 +85,7 @@ namespace ChessDotNet.ConsoleTests
         private static readonly AttacksService Attacks = new AttacksService(Slides);
         private static readonly PinDetector PinDetector = new PinDetector(Slides);
         private static readonly MoveValidator Validator = new MoveValidator(Attacks, Slides, PinDetector);
-        private static readonly MoveGenerator MoveGenerator = new MoveGenerator(Attacks, Slides, Validator);
+        private static readonly MoveGenerator MoveGenerator = new MoveGenerator(Attacks, Slides, PinDetector, Validator);
 
         private static void TestNnueManaged()
         {
@@ -275,7 +275,6 @@ namespace ChessDotNet.ConsoleTests
 
             var fenSerializer = new FenSerializerService();
             //var slideMoveGenerator = new HyperbolaQuintessence();
-
             var client = new NnueManagedClient(new NnueLoader().Load("C:/Temp/nn-62ef826d1a6d.nnue"));
             //var client = new NnueImplFallback(new NnueLoader().Load("C:/Temp/nn-62ef826d1a6d.nnue", NnueArchitecture.Fallback));
             //var client = new NnueExternalClient();
@@ -295,7 +294,7 @@ namespace ChessDotNet.ConsoleTests
             var searchParameters = new SearchParameters();
             //searchParameters.WhiteTime = 1000;
             searchParameters.Infinite = true;
-            //searchParameters.MaxDepth = 9;
+            //searchParameters.MaxDepth = 5;
             EngineOptions.Debug = true;
             var stopwatch = new Stopwatch();
             var cancellationTokenSource = new CancellationTokenSource();
@@ -404,11 +403,11 @@ namespace ChessDotNet.ConsoleTests
             var attacksService = new AttacksService(slidingMoveGenerator);
             var pinDetector = new PinDetector(slidingMoveGenerator);
             var validator = new MoveValidator(attacksService, slidingMoveGenerator, pinDetector);
-            var movesService = new MoveGenerator(attacksService, slidingMoveGenerator, validator);
+            var movesService = new MoveGenerator(attacksService, slidingMoveGenerator, pinDetector, validator);
             var forWhite = true;
             var moves = new Move[218];
             var moveCount = 0;
-            movesService.GetAllPossibleMoves(board, moves, ref moveCount);
+            movesService.GetAllLegalMoves(board, moves, ref moveCount);
             //var dests = moves.Select(x => x.To);
             //var toMoveBoard = fact.PositionsToBitBoard(dests);
             //var attacked = attacksService.GetAllAttacked(board);

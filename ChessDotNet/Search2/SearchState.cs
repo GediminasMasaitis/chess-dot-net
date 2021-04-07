@@ -9,6 +9,7 @@ namespace ChessDotNet.Search2
         public ThreadUniqueState[] ThreadStates { get; set; }
         public PrincipalVariationTable PrincipalVariationTable { get; set; }
         public TranspositionTable TranspositionTable { get; set; }
+        public byte OriginalColor { get; set; }
 
         //public AbdadaTable AbdadaTable { get; }
 
@@ -27,6 +28,10 @@ namespace ChessDotNet.Search2
         public void OnNewGame()
         {
             TranspositionTable.Clear();
+            foreach (var threadState in ThreadStates)
+            {
+                threadState.OnNewGame();
+            }
         }
 
         public void OnNewSearch()

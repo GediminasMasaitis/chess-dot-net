@@ -75,6 +75,7 @@ namespace ChessDotNet.Search2
             _stopper.NewSearch(parameters, board.WhiteToMove, token);
             _statistics.Reset();
             _state.OnNewSearch();
+            _state.OriginalColor = board.ColorToMove;
             //board.NnueData.Reset();
             //_initialBoard = board.Clone();
             //_initialState = _state.Clone();
@@ -374,6 +375,18 @@ namespace ChessDotNet.Search2
         private int Contempt(Board board)
         {
             return 0;
+            var score = -10;
+            if (board.PieceMaterial[_state.OriginalColor] < SearchConstants.EndgameMaterial)
+            {
+                score = 0;
+            }
+
+            if (board.ColorToMove != _state.OriginalColor)
+            {
+                score = -score;
+            }
+
+            return score;
         }
 
         private int SearchToDepth(int threadId, Board board, int depth, int ply, int alpha, int beta, int currentReduction, bool nullMoveAllowed, bool isPrincipalVariation, SearchLog log)
@@ -441,7 +454,7 @@ namespace ChessDotNet.Search2
             //var myKing = board.WhiteToMove ? board.BitBoard[ChessPiece.WhiteKing] : board.BitBoard[ChessPiece.BlackKing];
             //var myKingPos = myKing.BitScanForward();
             //var inCheck = _attacksService.IsPositionAttacked(board, myKingPos, !board.WhiteToMove);
-            var checkers = _attacksService.GetAttackersOfSide(board, board.KingPositions[board.ColorToMove], !board.WhiteToMove, board.AllPieces);
+            var checkers = _attacksService.GetCheckers(board);
             var inCheck = checkers != 0;
 
             if (inCheck)
@@ -617,15 +630,15 @@ namespace ChessDotNet.Search2
             var movesEvaluated = 0;
             var raisedAlpha = false;
 
-            _possibleMoves.GetAllPotentialMoves(board, potentialMoves, ref moveCount);
+            var pinnedPieces = pins[board.ColorToMove];
+            _possibleMoves.GetAllPotentialMoves(board, potentialMoves, ref moveCount, checkers, pinnedPieces);
             var seeScores = threadState.SeeScores[ply];
             _see.CalculateSeeScores(board, potentialMoves, moveCount, seeScores);
             var moveStaticScores = threadState.MoveStaticScores[ply];
             var previousMove = rootNode ? default : board.History2[board.HistoryDepth - 1].Move;
             var countermove = threadState.Countermove[previousMove.Piece][previousMove.To];
             _moveOrdering.CalculateStaticScores(board, potentialMoves, moveCount, ply, principalVariationMove, threadState.Killers, EngineOptions.UseSeeOrdering, seeScores, countermove, moveStaticScores);
-
-            var pinnedPieces = pins[board.ColorToMove];
+            
             for (var moveIndex = 0; moveIndex < moveCount; moveIndex++)
             {
                 //var countermove2 = threadState.Countermove[previousMove.Piece][previousMove.To];
@@ -666,6 +679,29 @@ namespace ChessDotNet.Search2
                     }
                 }
 
+                //if
+                //(
+                //    !inCheck
+                //    && !rootNode
+                //    && !raisedAlpha
+                //    && !isPrincipalVariation
+                //    && movesEvaluated > 4
+                //    && seeScore < -10
+                //    && seeScore < depth * -350
+                //    && move.PawnPromoteTo == ChessPiece.Empty
+                //)
+                //{
+                //    var opponentKing = board.WhiteToMove ? board.BitBoard[ChessPiece.WhiteKing] : board.BitBoard[ChessPiece.BlackKing];
+                //    var opponentKingPos = opponentKing.BitScanForward();
+                //    var opponentInCheck = _attacksService.IsPositionAttacked(board, opponentKingPos, !board.WhiteToMove);
+                //    if (!opponentInCheck)
+                //    {
+                //        //_statistics.SeePruning++;
+                //        board.UndoMove();
+                //        continue;
+                //    }
+                //}
+
                 //var childDepth = depth - 1;
                 var reduction = 0;
                 // LATE MOVE REDUCTION
@@ -701,11 +737,23 @@ namespace ChessDotNet.Search2
                             _statistics.LateMoveReductions2++;
                             reduction++;
                         }
-                        //if (movesEvaluated > 10)
+
+                        //if (movesEvaluated > 12)
                         //{
                         //    _statistics.LateMoveReductions2++;
                         //    reduction++;
                         //}
+
+                        //if (seeScore < -1)
+                        //{
+                        //    reduction++;
+                        //}
+
+                        //if (seeScore < -150)
+                        //{
+                        //    reduction++;
+                        //}
+
                     }
                 }
 
@@ -921,15 +969,17 @@ namespace ChessDotNet.Search2
             var moveCount = 0;
             var movesEvaluated = 0;
 
-            _possibleMoves.GetAllPotentialCaptures(board, potentialMoves, ref moveCount);
+            var checkers = _attacksService.GetCheckers(board);
+            var pinnedPieces = pins[board.ColorToMove];
+            _possibleMoves.GetAllPotentialCaptures(board, potentialMoves, ref moveCount, checkers, pinnedPieces);
             var seeScores = threadState.SeeScores[ply];
             _see.CalculateSeeScores(board, potentialMoves, moveCount, seeScores);
             var moveStaticScores = threadState.MoveStaticScores[ply];
             var previousMove = board.History2[board.HistoryDepth - 1].Move;
             var countermove = threadState.Countermove[previousMove.Piece][previousMove.To];
             _moveOrdering.CalculateStaticScores(board, potentialMoves, moveCount, ply, principalVariationMove, threadState.Killers, EngineOptions.UseSeeOrdering, seeScores, countermove, moveStaticScores);
-            var checkers = _attacksService.GetAttackersOfSide(board, board.KingPositions[board.ColorToMove], !board.WhiteToMove, board.AllPieces);
-            var pinnedPieces = pins[board.ColorToMove];
+            
+            
             for (var moveIndex = 0; moveIndex < moveCount; moveIndex++)
             {
                 _moveOrdering.OrderNextMove(moveIndex, potentialMoves, moveStaticScores, seeScores, moveCount, threadState);
@@ -1148,7 +1198,7 @@ namespace ChessDotNet.Search2
             {
                 var move = moves[i];
                 moveCount = 0;
-                _possibleMoves.GetAllPossibleMoves(clone, possibleMoves, ref moveCount);
+                _possibleMoves.GetAllLegalMoves(clone, possibleMoves, ref moveCount);
                 var ok = false;
                 for (int j = 0; j < moveCount; j++)
                 {

@@ -57,7 +57,7 @@ namespace ChessDotNet.Perft
 
             var possibleMoves = _moves[depth];
             var moveCount = 0;
-            _moveGenerator.GetAllPossibleMoves(_currentBoard, possibleMoves, ref moveCount);
+            _moveGenerator.GetAllLegalMoves(_currentBoard, possibleMoves, ref moveCount);
             for (var i = 0; i < moveCount; i++)
             {
                 var move = possibleMoves[i];
@@ -82,7 +82,7 @@ namespace ChessDotNet.Perft
 
             var possibleMoves = _moves[depth];
             var moveCount = 0;
-            _moveGenerator.GetAllPossibleMoves(board, possibleMoves, ref moveCount);
+            _moveGenerator.GetAllLegalMoves(board, possibleMoves, ref moveCount);
             if (depth == 1)
             {
                 return moveCount;

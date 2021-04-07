@@ -48,7 +48,7 @@ namespace ChessDotNet
 
 #if NET5_0
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static byte BitCount(this ulong bb)
+        public static byte PopCount(this ulong bb)
         {
             return (byte)BitOperations.PopCount(bb);
         }

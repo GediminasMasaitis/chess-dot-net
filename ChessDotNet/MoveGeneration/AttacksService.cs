@@ -191,6 +191,12 @@ namespace ChessDotNet.MoveGeneration
             return result;
         }
 
+        public Bitboard GetCheckers(Board board)
+        {
+            var checkers = GetAttackersOfSide(board, board.KingPositions[board.ColorToMove], !board.WhiteToMove, board.AllPieces);
+            return checkers;
+        }
+
         public Bitboard GetAttackersOfSide(Board board, Position position, bool byWhite, Bitboard allPieces)
         {
             Bitboard result = 0UL;

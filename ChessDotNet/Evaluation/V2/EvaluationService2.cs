@@ -352,11 +352,11 @@ namespace ChessDotNet.Evaluation.V2
             if ((bitboard & pinned) == 0)
             {
                 var uncontrolled = emptyOrOpponent & ~pawnControl[side ^ 1];
-                mob += uncontrolled.BitCount();
+                mob += uncontrolled.PopCount();
             }
             
             var emptyOrOpponentNearKing = emptyOrOpponent & BitboardConstants.KingExtendedJumps[side ^ 1][b.KingPositions[side ^ 1]];
-            att += emptyOrOpponentNearKing.BitCount();
+            att += emptyOrOpponentNearKing.PopCount();
 
             /**************************************************************************
             *  Evaluate mobility. We try to do it in such a way that zero represents  *
@@ -402,12 +402,12 @@ namespace ChessDotNet.Evaluation.V2
             if ((bitboard & pinned) == 0)
             {
                 var emptyUncontrolled = b.EmptySquares & ~pawnControl[side ^ 1] & slide;
-                mob += emptyUncontrolled.BitCount();
-                mob += opponent.BitCount();
+                mob += emptyUncontrolled.PopCount();
+                mob += opponent.PopCount();
             }
 
             var emptyOrOpponentNearKing = (b.EmptySquares | opponent) & BitboardConstants.KingExtendedJumps[side ^ 1][b.KingPositions[side ^ 1]] & slide;
-            att += emptyOrOpponentNearKing.BitCount();
+            att += emptyOrOpponentNearKing.PopCount();
 
             v.mgMob[side] += 3 * (mob - 7);
             v.egMob[side] += 3 * (mob - 7);
@@ -499,11 +499,11 @@ namespace ChessDotNet.Evaluation.V2
             var bitboard = 1UL << sq;
             if ((bitboard & pinned) == 0)
             {
-                mob += emptyOrOpponent.BitCount();
+                mob += emptyOrOpponent.PopCount();
             }
             
             var emptyOrOpponentNearKing = emptyOrOpponent & BitboardConstants.KingExtendedJumps[side ^ 1][b.KingPositions[side ^ 1]];
-            att += emptyOrOpponentNearKing.BitCount();
+            att += emptyOrOpponentNearKing.PopCount();
 
             v.mgMob[side] += 2 * (mob - 7);
             v.egMob[side] += 4 * (mob - 7);
@@ -566,11 +566,11 @@ namespace ChessDotNet.Evaluation.V2
             var bitboard = 1UL << sq;
             if ((bitboard & pinned) == 0)
             {
-                mob += emptyOrOpponent.BitCount();
+                mob += emptyOrOpponent.PopCount();
             }
             
             var emptyOrOpponentNearKing = emptyOrOpponent & BitboardConstants.KingExtendedJumps[side ^ 1][b.KingPositions[side ^ 1]];
-            att += emptyOrOpponentNearKing.BitCount();
+            att += emptyOrOpponentNearKing.PopCount();
 
             v.mgMob[side] += 1 * (mob - 14);
             v.egMob[side] += 2 * (mob - 14);
@@ -843,7 +843,7 @@ namespace ChessDotNet.Evaluation.V2
 
             var inFront = BitboardConstants.ColumnInFront[side][sq];
             var ownPawnsInFront = inFront & b.BitBoard[ChessPiece.Pawn + side];
-            result -= ownPawnsInFront.BitCount() * 20;
+            result -= ownPawnsInFront.PopCount() * 20;
 
             var opponentPawnsInFront = inFront & b.BitBoard[ChessPiece.Pawn + (side ^ 1)];
             flagIsOpposed = opponentPawnsInFront != 0;

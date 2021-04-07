@@ -109,7 +109,7 @@ namespace ChessDotNet.Search2
                 gain[depth] = SeeWeights[piece] - gain[depth - 1]; // speculative store, if defended
                 if (Math.Max(-gain[depth - 1], gain[depth]) < 0)
                 {
-                    break; // pruning does not influence the result
+                    //break; // pruning does not influence the result
                 }
 
                 //attadef ^= fromSet; // reset bit in set to traverse
