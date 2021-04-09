@@ -1,15 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using ChessDotNet.Data;
-using Bitboard = System.UInt64;
-using Key = System.UInt64;
-using Position = System.Int32;
-using Piece = System.Int32;
+﻿using Bitboard = System.UInt64;
 
-namespace ChessDotNet.Init
+namespace ChessDotNet.MoveGeneration.SlideGeneration.Magics
 {
     public class KnownMagicNumberProvider : IMagicNumberCandidateProvider
     {
@@ -40,34 +31,6 @@ namespace ChessDotNet.Init
         public Bitboard GetMagicNumberCandidate(int pos, bool bishop)
         {
             return bishop ? BishopMagicNumbers[pos] : RookMagicNumbers[pos];
-        }
-    }
-
-    public class RandomMagicNumberCandidateProvider : IMagicNumberCandidateProvider
-    {
-        private Random RNG { get; }
-
-        public RandomMagicNumberCandidateProvider()
-        {
-            RNG = new Random(0);
-        }
-        private Bitboard GetRandomBitboard()
-        {
-            var buf = new byte[8];
-            RNG.NextBytes(buf);
-            var bb = BitConverter.ToUInt64(buf, 0);
-            return bb;
-        }
-
-        public Bitboard GetMagicNumberCandidate(int pos, bool bishop)
-        {
-            const int biasedness = 3;
-            Bitboard num = ~0UL;
-            for (var i = 0; i < biasedness; i++)
-            {
-                num &= GetRandomBitboard();
-            }
-            return num;
         }
     }
 }

@@ -5,8 +5,8 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using ChessDotNet.Data;
-using ChessDotNet.Init;
 using ChessDotNet.MoveGeneration.SlideGeneration;
+using ChessDotNet.MoveGeneration.SlideGeneration.Magics;
 using ChessDotNet.Search2;
 using ChessDotNet.Searching;
 

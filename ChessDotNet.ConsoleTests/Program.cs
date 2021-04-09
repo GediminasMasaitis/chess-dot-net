@@ -18,7 +18,6 @@ using ChessDotNet.Evaluation.Nnue.Managed;
 using ChessDotNet.Evaluation.V2;
 using ChessDotNet.Fen;
 using ChessDotNet.Hashing;
-using ChessDotNet.Init;
 using ChessDotNet.MoveGeneration;
 using ChessDotNet.MoveGeneration.SlideGeneration;
 using ChessDotNet.MoveGeneration.SlideGeneration.Magics;
@@ -82,8 +81,8 @@ namespace ChessDotNet.ConsoleTests
             Console.ReadLine();
         }
 
-        //private static readonly ISlideMoveGenerator Slides = new MagicBitboardsService();
-        private static readonly ISlideMoveGenerator Slides = new HyperbolaQuintessence();
+        private static readonly ISlideMoveGenerator Slides = new MagicBitboardsService();
+        //private static readonly ISlideMoveGenerator Slides = new HyperbolaQuintessence();
         private static readonly AttacksService Attacks = new AttacksService(Slides);
         private static readonly PinDetector PinDetector = new PinDetector(Slides);
         private static readonly MoveValidator Validator = new MoveValidator(Attacks, Slides, PinDetector);
@@ -328,7 +327,7 @@ namespace ChessDotNet.ConsoleTests
         private static void Init()
         {
             BitboardConstants.Init();
-            new MagicBitboardsInitializer(new HyperbolaQuintessence(), new KnownMagicNumberProvider()).Init();
+            new MagicBitboardsInitializer(new HyperbolaQuintessence(), new RandomMagicNumberCandidateProvider()).Init();
         }
 
         private static void DoMagicBitboards()

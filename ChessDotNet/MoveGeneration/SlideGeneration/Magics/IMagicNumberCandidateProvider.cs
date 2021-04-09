@@ -1,6 +1,4 @@
-﻿using ChessDotNet.Data;
-
-namespace ChessDotNet.Init
+﻿namespace ChessDotNet.MoveGeneration.SlideGeneration.Magics
 {
     public interface IMagicNumberCandidateProvider
     {
