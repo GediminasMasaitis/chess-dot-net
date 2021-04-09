@@ -5,16 +5,56 @@ using Newtonsoft.Json;
 
 namespace ChessDotNet.Search2
 {
+    public class ContinuationEntry
+    {
+        public int[][] Scores { get; set; }
+
+        public ContinuationEntry()
+        {
+            Scores = new int[ChessPiece.Count][];
+            for (int i = 0; i < Scores.Length; i++)
+            {
+                Scores[i] = new int[64];
+            }
+        }
+
+        public void Clear()
+        {
+            for (int i = 0; i < Scores.Length; i++)
+            {
+                Array.Clear(Scores[i], 0, Scores[i].Length);
+            }
+        }
+
+        public void Age()
+        {
+            for (int i = 0; i < Scores.Length; i++)
+            {
+                for (int j = 0; j < Scores[i].Length; j++)
+                {
+                    Scores[i][j] >>= 3;
+                }
+                //Array.Clear(Scores[i], 0, Scores[i].Length);
+            }
+        }
+    }
+
     public class ThreadUniqueState
     {
         public int ThreadId { get; set; }
         public uint[][] Killers { get; set; }
         public uint[][] Countermove { get; set;}
         public int[][][] History { get; set; }
-        //public int[][] PieceToHistory { get; set; }
+
+        // Piece * To * Piece * To
+        public ContinuationEntry[][] AllContinuations { get; set; }
+        public ContinuationEntry[] CurrentContinuations { get; set; }
+
+        public int[][] PieceToHistory { get; set; }
         public int[][][] CaptureHistory { get; set; }
         public int[][][] Cutoff { get; set; }
         public Move[][] Moves { get; set; }
+        public Move[][] FailedMoves { get; set; }
         public int[][] SeeScores { get; set; }
         public int[][] MoveStaticScores { get; set; }
 
@@ -56,11 +96,23 @@ namespace ChessDotNet.Search2
                 }
             }
 
-            //PieceToHistory = new int[ChessPiece.Count][];
-            //for (int i = 0; i < PieceToHistory.Length; i++)
-            //{
-            //    PieceToHistory[i] = new int[64];
-            //}
+            AllContinuations = new ContinuationEntry[ChessPiece.Count][];
+            for (int i = 0; i < AllContinuations.Length; i++)
+            {
+                AllContinuations[i] = new ContinuationEntry[64];
+                for (var j = 0; j < AllContinuations[i].Length; j++)
+                {
+                    AllContinuations[i][j] = new ContinuationEntry();
+                }
+            }
+
+            CurrentContinuations = new ContinuationEntry[4];
+
+            PieceToHistory = new int[ChessPiece.Count][];
+            for (int i = 0; i < PieceToHistory.Length; i++)
+            {
+                PieceToHistory[i] = new int[64];
+            }
 
             CaptureHistory = new int[ChessPiece.Count][][];
             for (int i = 0; i < CaptureHistory.Length; i++)
@@ -88,6 +140,12 @@ namespace ChessDotNet.Search2
                 Moves[i] = new Move[218];
             }
 
+            FailedMoves = new Move[SearchConstants.MaxDepth][];
+            for (int i = 0; i < FailedMoves.Length; i++)
+            {
+                FailedMoves[i] = new Move[218];
+            }
+
             SeeScores = new int[SearchConstants.MaxDepth][];
             for (int i = 0; i < SeeScores.Length; i++)
             {
@@ -112,6 +170,14 @@ namespace ChessDotNet.Search2
                     Array.Clear(History[i][j], 0, History[i][j].Length);
                 }
             }
+
+            //for (int i = 0; i < AllContinuations.Length; i++)
+            //{
+            //    for (int j = 0; j < AllContinuations[i].Length; j++)
+            //    {
+            //        AllContinuations[i][j].Clear();
+            //    }
+            //}
 
             for (int i = 0; i < CaptureHistory.Length; i++)
             {
@@ -145,6 +211,24 @@ namespace ChessDotNet.Search2
                     //Array.Clear(History[i][j], 0, History[i][j].Length);
                 }
             }
+
+            for (int i = 0; i < PieceToHistory.Length; i++)
+            {
+                for (int j = 0; j < PieceToHistory[i].Length; j++)
+                {
+                    PieceToHistory[i][j] >>= 3;
+                    //Array.Clear(History[i][j], 0, History[i][j].Length);
+                }
+            }
+
+            //for (int i = 0; i < AllContinuations.Length; i++)
+            //{
+            //    for (int j = 0; j < AllContinuations[i].Length; j++)
+            //    {
+            //        AllContinuations[i][j].Age();
+            //    }
+            //}
+
 
             //for (int i = 0; i < PieceToHistory.Length; i++)
             //{

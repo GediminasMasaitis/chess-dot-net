@@ -1,9 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
-using ChessDotNet.MoveGeneration;
-
-namespace ChessDotNet.Data
+﻿namespace ChessDotNet.MoveGeneration.SlideGeneration.Magics
 {
     public static class MagicBitboards
     {

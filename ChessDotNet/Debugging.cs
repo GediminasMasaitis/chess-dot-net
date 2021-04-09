@@ -6,7 +6,7 @@ using System.Reflection;
 using ChessDotNet.Data;
 using ChessDotNet.Evaluation;
 using ChessDotNet.Hashing;
-
+using ChessDotNet.MoveGeneration.SlideGeneration.Magics;
 using Piece = System.Byte;
 
 namespace ChessDotNet

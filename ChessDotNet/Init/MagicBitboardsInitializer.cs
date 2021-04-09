@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using ChessDotNet.Common;
 using ChessDotNet.Data;
-
+using ChessDotNet.MoveGeneration.SlideGeneration.Magics;
 using Bitboard = System.UInt64;
 using Key = System.UInt64;
 using Position = System.Int32;

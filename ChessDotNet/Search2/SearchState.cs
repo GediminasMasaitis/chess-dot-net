@@ -10,6 +10,7 @@ namespace ChessDotNet.Search2
         public PrincipalVariationTable PrincipalVariationTable { get; set; }
         public TranspositionTable TranspositionTable { get; set; }
         public byte OriginalColor { get; set; }
+        public ContinuationEntry EmptyContinuation { get; set; }
 
         //public AbdadaTable AbdadaTable { get; }
 
@@ -23,6 +24,7 @@ namespace ChessDotNet.Search2
             {
                 ThreadStates[i] = new ThreadUniqueState(i);
             }
+            EmptyContinuation = new ContinuationEntry();
         }
 
         public void OnNewGame()

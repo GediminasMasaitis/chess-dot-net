@@ -12,6 +12,7 @@ using ChessDotNet.Evaluation;
 using ChessDotNet.Evaluation.V2;
 using ChessDotNet.MoveGeneration;
 using ChessDotNet.MoveGeneration.SlideGeneration;
+using ChessDotNet.MoveGeneration.SlideGeneration.Magics;
 using ChessDotNet.Searching;
 using ChessDotNet.Testing;
 using Force.DeepCloner;
@@ -474,9 +475,33 @@ namespace ChessDotNet.Search2
                 return evaluatedScore;
             }
 
+            //Array.Fill(threadState.CurrentContinuations, _state.EmptyContinuation);
+            //if (ply > 0)
+            //{
+            //    var move = board.History2[board.HistoryDepth - 1].Move;
+            //    threadState.CurrentContinuations[0] = threadState.AllContinuations[move.Piece][move.To];
+            //    if (ply > 1)
+            //    {
+            //        move = board.History2[board.HistoryDepth - 2].Move;
+            //        threadState.CurrentContinuations[1] = threadState.AllContinuations[move.Piece][move.To];
+            //        if (ply > 3)
+            //        {
+            //            move = board.History2[board.HistoryDepth - 4].Move;
+            //            threadState.CurrentContinuations[2] = threadState.AllContinuations[move.Piece][move.To];
+            //            if (ply > 5)
+            //            {
+            //                move = board.History2[board.HistoryDepth - 6].Move;
+            //                threadState.CurrentContinuations[3] = threadState.AllContinuations[move.Piece][move.To];
+            //            }
+            //        }
+            //    }
+            //}
+
+
             // PROBE TRANSPOSITION TABLE
             Move principalVariationMove = default;
             bool hashEntryExists = true;
+            var bonus = depth * depth + depth - 1;
             if (EngineOptions.UseTranspositionTable)
             {
                 var probeSuccess = TryProbeTranspositionTable(board.Key, depth, alpha, beta, ref principalVariationMove, out var probedScore, out hashEntryExists);
@@ -498,6 +523,11 @@ namespace ChessDotNet.Search2
                             probedScore += ply;
                         }
 
+                        if (principalVariationMove.TakesPiece == ChessPiece.Empty)
+                        {
+                            UpdateHistory(threadState, principalVariationMove, bonus);
+                        }
+
                         return probedScore;
                     }
                 }
@@ -508,6 +538,8 @@ namespace ChessDotNet.Search2
             
             // STATIC EVALUATION PRUNING
             var staticScore = _evaluation.Evaluate(board, pins);
+            board.Evaluation = staticScore;
+            var improving = board.HistoryDepth < 2 || staticScore >= board.History2[board.HistoryDepth - 2].Evaluation;
             //board.WhiteToMove = !board.WhiteToMove;
             //var staticScore2 = _evaluation.Evaluate(board);
             //Debug.Assert(staticScore == staticScore2);
@@ -619,11 +651,14 @@ namespace ChessDotNet.Search2
             //    depth -= 2;
             //}
 
-
+            // CHILD SEARCH
             var bestScore = -SearchConstants.Inf;
             Move bestMove = default;
             SearchLog bestLog = default;
-            // CHILD SEARCH
+
+
+
+
             var initialAlpha = alpha;
             var potentialMoves = threadState.Moves[ply];
             var moveCount = 0;
@@ -637,8 +672,12 @@ namespace ChessDotNet.Search2
             var moveStaticScores = threadState.MoveStaticScores[ply];
             var previousMove = rootNode ? default : board.History2[board.HistoryDepth - 1].Move;
             var countermove = threadState.Countermove[previousMove.Piece][previousMove.To];
+            //var searched = new List<Move>();
+            var failedMoves = threadState.FailedMoves[ply];
+            var failedMoveCount = 0;
             _moveOrdering.CalculateStaticScores(board, potentialMoves, moveCount, ply, principalVariationMove, threadState.Killers, EngineOptions.UseSeeOrdering, seeScores, countermove, moveStaticScores);
-            
+
+            var betaCutoff = false;
             for (var moveIndex = 0; moveIndex < moveCount; moveIndex++)
             {
                 //var countermove2 = threadState.Countermove[previousMove.Piece][previousMove.To];
@@ -653,6 +692,44 @@ namespace ChessDotNet.Search2
 
                 board.DoMove2(move);
                 var childLog = SearchLog.New(move);
+
+                //if
+                //(
+                //    !rootNode
+                //    && move.TakesPiece == ChessPiece.Empty
+                //    && move.PawnPromoteTo == ChessPiece.Empty
+                //    && move.Key2 != threadState.Killers[ply][0]
+                //    && move.Key2 != threadState.Killers[ply][1]
+                //    && !inCheck
+                //)
+                //{
+                //    var opponentKing = board.WhiteToMove ? board.BitBoard[ChessPiece.WhiteKing] : board.BitBoard[ChessPiece.BlackKing];
+                //    var opponentKingPos = opponentKing.BitScanForward();
+                //    var opponentInCheck = _attacksService.IsPositionAttacked(board, opponentKingPos, !board.WhiteToMove);
+                //    //var opponentInCheck = board.Checkers != 0;
+                //    if (!opponentInCheck)
+                //    {
+                //        if (depth < 16)
+                //        {
+                //            if (movesEvaluated >= SearchConstants.FutilityMoveCounts[improving ? 1 : 0][depth])
+                //            {
+                //                board.UndoMove();
+                //                continue;
+                //            }
+                //        }
+
+                //        if
+                //        (
+                //            depth <= 4
+                //            && threadState.History[move.ColorToMove][move.From][move.To] < 0
+                //            && threadState.PieceToHistory[move.Piece][move.To] < 0
+                //        )
+                //        {
+                //            board.UndoMove();
+                //            continue;
+                //        }
+                //    }
+                //}
 
                 // FUTILITY PRUNING - EXECUTION
                 if
@@ -705,11 +782,12 @@ namespace ChessDotNet.Search2
                 //var childDepth = depth - 1;
                 var reduction = 0;
                 // LATE MOVE REDUCTION
+
                 threadState.Cutoff[move.ColorToMove][move.From][move.To] -= 1;
                 if
                 (
                     EngineOptions.UseLateMoveReductions
-                    && !isPrincipalVariation
+                    //&& !isPrincipalVariation
                     && movesEvaluated > 1
                     && (!rootNode || movesEvaluated > 3)
                     && depth >= 3
@@ -723,20 +801,53 @@ namespace ChessDotNet.Search2
                     && move.PawnPromoteTo == ChessPiece.Empty
                 )
                 {
-                    var opponentKing = board.WhiteToMove ? board.BitBoard[ChessPiece.WhiteKing] : board.BitBoard[ChessPiece.BlackKing];
-                    var opponentKingPos = opponentKing.BitScanForward();
-                    var opponentInCheck = _attacksService.IsPositionAttacked(board, opponentKingPos, !board.WhiteToMove);
-                    //var opponentInCheck = board.Checkers != 0;
-                    if (!opponentInCheck)
+                    //var opponentKing = board.WhiteToMove ? board.BitBoard[ChessPiece.WhiteKing] : board.BitBoard[ChessPiece.BlackKing];
+                    //var opponentKingPos = opponentKing.BitScanForward();
+                    //var opponentInCheck = _attacksService.IsPositionAttacked(board, opponentKingPos, !board.WhiteToMove);
+                    ////var opponentInCheck = board.Checkers != 0;
+                    //if (!opponentInCheck)
                     {
-                        threadState.Cutoff[move.ColorToMove][move.From][move.To] = 50;
-                        _statistics.LateMoveReductions1++;
-                        reduction++;
-                        if (movesEvaluated > 6)
-                        {
-                            _statistics.LateMoveReductions2++;
-                            reduction++;
-                        }
+                        reduction = SearchConstants.Reductions[isPrincipalVariation ? 1 : 0][improving ? 1 : 0][depth][movesEvaluated];
+
+                        //if
+                        //(
+                        //    false
+                        //    //|| !isPrincipalVariation
+                        //    || threadState.PieceToHistory[move.Piece][move.To] < 0
+                        //)
+                        //{
+                        //    reduction++;
+                        //}
+
+                        //if
+                        //((
+                        //    false
+                        //    //|| !isPrincipalVariation
+                        //    || threadState.PieceToHistory[move.Piece][move.To] > 0
+                        //) && reduction > 0)
+                        //{
+                        //    reduction--;
+                        //}
+
+                        //if
+                        //((
+                        //    false
+                        //    //|| !isPrincipalVariation
+                        //    || threadState.PieceToHistory[move.Piece][move.To] > 0
+                        //) && reduction > 0)
+                        //{
+
+                        //    reduction--;
+                        //}
+
+                        //threadState.Cutoff[move.ColorToMove][move.From][move.To] = 50;
+                        //_statistics.LateMoveReductions1++;
+                        //reduction++;
+                        //if (movesEvaluated > 6)
+                        //{
+                        //    _statistics.LateMoveReductions2++;
+                        //    reduction++;
+                        //}
 
                         //if (movesEvaluated > 12)
                         //{
@@ -797,7 +908,6 @@ namespace ChessDotNet.Search2
                 //log.AddMessage($"Searched move {move.ToPositionString()}, child score {childScore}", depth, alpha, beta);
 
                 movesEvaluated++;
-
                 if (childScore > bestScore)
                 {
                     bestScore = childScore;
@@ -807,6 +917,32 @@ namespace ChessDotNet.Search2
                     if (childScore > alpha)
                     {
                         threadState.Cutoff[move.ColorToMove][move.From][move.To] += 6;
+
+                        //if (bestMove.TakesPiece == ChessPiece.Empty)
+                        //{
+                        //    //threadState.History[bestMove.ColorToMove][bestMove.From][bestMove.To] -= (threadState.History[bestMove.ColorToMove][bestMove.From][bestMove.To] * bonus) >> 9;
+                        //    threadState.History[bestMove.ColorToMove][bestMove.From][bestMove.To] += bonus/* << 6*/;
+                        //    //foreach (var continuation in threadState.CurrentContinuations)
+                        //    //{
+                        //    //    if (continuation == null)
+                        //    //    {
+                        //    //        break;
+                        //    //    }
+
+                        //    //    continuation.Scores[bestMove.Piece][bestMove.To] -= (continuation.Scores[bestMove.Piece][bestMove.To] * bonus) >> 9;
+                        //    //    continuation.Scores[bestMove.Piece][bestMove.To] += bonus << 6;
+                        //    //}
+
+                        //    //threadState.PieceToHistory[move.Piece][move.To] += depth * depth;
+                        //}
+                        //else
+                        //{
+                        //    //threadState.CaptureHistory[bestMove.Piece][bestMove.To][bestMove.TakesPiece] -= (threadState.CaptureHistory[bestMove.Piece][bestMove.To][bestMove.TakesPiece] * bonus) >> 9;
+                        //    threadState.CaptureHistory[bestMove.Piece][bestMove.To][bestMove.TakesPiece] += bonus/* << 6*/;
+                        //}
+                        alpha = childScore;
+                        raisedAlpha = true;
+
                         if (childScore >= beta)
                         {
                             _statistics.StoresBeta++;
@@ -822,25 +958,98 @@ namespace ChessDotNet.Search2
                                 threadState.Killers[ply][0] = move.Key2;
                                 threadState.Countermove[previousMove.Piece][previousMove.To] = move.Key2;
                             }
+
+                            betaCutoff = true;
                             log.AddChild(childLog);
                             log.AddMessage($"Beta cutoff, move {move.ToPositionString()}, child score {childScore}", depth, alpha, beta, beta);
-                            return beta;
+                            break;
                         }
+                    }
+                    else
+                    {
+                        //if (move.TakesPiece == ChessPiece.Empty)
+                        //{
+                        //    threadState.History[move.ColorToMove][move.From][move.To] -= depth * depth / 50;
+                        //    foreach (var continuation in threadState.CurrentContinuations)
+                        //    {
+                        //        if (continuation == null)
+                        //        {
+                        //            break;
+                        //        }
+                        //        continuation.Scores[move.Piece][move.To] -= depth * depth / 50;
+                        //    }
 
-                        if (move.TakesPiece == ChessPiece.Empty)
-                        {
-                            threadState.History[move.ColorToMove][move.From][move.To] += depth * depth;
-                            //threadState.PieceToHistory[move.Piece][move.To] += depth * depth;
-                        }
-                        else
-                        {
-                            threadState.CaptureHistory[move.Piece][move.To][move.TakesPiece] += depth * depth;
-                        }
-
-                        alpha = childScore;
-                        raisedAlpha = true;
+                        //    //threadState.PieceToHistory[move.Piece][move.To] += depth * depth;
+                        //}
+                        //else
+                        //{
+                        //    threadState.CaptureHistory[move.Piece][move.To][move.TakesPiece] -= depth * depth / 50;
+                        //}
                     }
                 }
+                else
+                {
+                    failedMoves[failedMoveCount++] = move;
+                }
+            }
+
+            if (raisedAlpha)
+            {
+                if (bestMove.TakesPiece == ChessPiece.Empty)
+                {
+                    //threadState.History[bestMove.ColorToMove][bestMove.From][bestMove.To] -= (threadState.History[bestMove.ColorToMove][bestMove.From][bestMove.To] * bonus) >> 9;
+                    //threadState.History[bestMove.ColorToMove][bestMove.From][bestMove.To] += bonus /*<< 6*/;
+                    UpdateHistory(threadState, bestMove, bonus);
+                    //foreach (var continuation in threadState.CurrentContinuations)
+                    //{
+                    //    if (continuation == null)
+                    //    {
+                    //        break;
+                    //    }
+
+                    //    continuation.Scores[bestMove.Piece][bestMove.To] -= (continuation.Scores[bestMove.Piece][bestMove.To] * bonus) >> 9;
+                    //    continuation.Scores[bestMove.Piece][bestMove.To] += bonus << 6;
+                    //}
+
+                    //threadState.PieceToHistory[move.Piece][move.To] += depth * depth;
+                }
+                else
+                {
+                    //threadState.CaptureHistory[bestMove.Piece][bestMove.To][bestMove.TakesPiece] -= (threadState.CaptureHistory[bestMove.Piece][bestMove.To][bestMove.TakesPiece] * bonus) >> 9;
+                    threadState.CaptureHistory[bestMove.Piece][bestMove.To][bestMove.TakesPiece] += bonus /*<< 6*/;
+                }
+
+                for (var i = 0; i < failedMoveCount; i++)
+                {
+                    var move = failedMoves[i];
+                    if (move.TakesPiece == ChessPiece.Empty)
+                    {
+                        UpdateHistory(threadState, move, -bonus);
+                        //threadState.History[move.ColorToMove][move.From][move.To] -= (threadState.History[move.ColorToMove][move.From][move.To] * bonus) >> 9;
+                        //threadState.History[move.ColorToMove][move.From][move.To] -= bonus << 6;
+                        //foreach (var continuation in threadState.CurrentContinuations)
+                        //{
+                        //    if (continuation == null)
+                        //    {
+                        //        break;
+                        //    }
+                        //    continuation.Scores[move.Piece][move.To] -= (continuation.Scores[move.Piece][move.To] * bonus) >> 9;
+                        //    continuation.Scores[move.Piece][move.To] -= bonus << 6;
+                        //}
+
+                        //threadState.PieceToHistory[move.Piece][move.To] += depth * depth;
+                    }
+                    else
+                    {
+                        //threadState.CaptureHistory[move.Piece][move.To][move.TakesPiece] -= (threadState.CaptureHistory[move.Piece][move.To][move.TakesPiece] * bonus) >> 9;
+                        //threadState.CaptureHistory[move.Piece][move.To][move.TakesPiece] -= bonus << 6;
+                    }
+                }
+            }
+
+            if(betaCutoff)
+            {
+                return beta;
             }
 
             if (movesEvaluated == 0)
@@ -883,6 +1092,32 @@ namespace ChessDotNet.Search2
 
             log.AddChild(bestLog);
             return alpha;
+        }
+
+        private void UpdateHistory(ThreadUniqueState state, Move move, int value)
+        {
+            var abs = Math.Abs(value);
+            if (abs >= 324)
+            {
+                return;
+            }
+
+            state.History[move.ColorToMove][move.From][move.To] -= state.History[move.ColorToMove][move.From][move.To] * abs / 324;
+            state.History[move.ColorToMove][move.From][move.To] += value * 32;
+
+            state.PieceToHistory[move.Piece][move.To] -= state.PieceToHistory[move.Piece][move.To] * abs / 324;
+            state.PieceToHistory[move.Piece][move.To] += value * 32;
+
+            foreach (var continuation in state.CurrentContinuations)
+            {
+                if (continuation == null)
+                {
+                    break;
+                }
+
+                continuation.Scores[move.Piece][move.To] -= (continuation.Scores[move.Piece][move.To] * value) / 324;
+                continuation.Scores[move.Piece][move.To] += value * 32;
+            }
         }
 
         private bool IsRepetitionOr50Move(Board board)

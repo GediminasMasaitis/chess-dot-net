@@ -7,6 +7,7 @@ using ChessDotNet.Data;
 using ChessDotNet.Hashing;
 using ChessDotNet.MoveGeneration;
 using ChessDotNet.MoveGeneration.SlideGeneration;
+using ChessDotNet.MoveGeneration.SlideGeneration.Magics;
 using Score = System.Int32;
 using Position = System.Byte;
 using Piece = System.Byte;

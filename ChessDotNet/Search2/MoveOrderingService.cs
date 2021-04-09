@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using ChessDotNet.Data;
 using ChessDotNet.Evaluation;
@@ -98,6 +99,8 @@ namespace ChessDotNet.Search2
                 if (move.TakesPiece != ChessPiece.Empty)
                 {
                     score += state.CaptureHistory[move.Piece][move.To][move.TakesPiece];
+
+
                 }
                 else if (score == 0)
                 {
@@ -148,15 +151,35 @@ namespace ChessDotNet.Search2
                 {
                     score += state.CaptureHistory[move.Piece][move.To][move.TakesPiece];
                 }
-                else if(score == 0)
+                else
                 {
-                    //if (score < 6_000_000 && move.Key2 == countermove)
-                    //{
-                    //    score = 7_000_000;
-                    //}
-                    score += state.History[move.ColorToMove][move.From][move.To];
-                    //score += state.PieceToHistory[move.Piece][move.To] >> 2;
-                    //score = 0;
+                    if(score == 0)
+                    {
+                        //if (score < 6_000_000 && move.Key2 == countermove)
+                        //{
+                        //    score = 7_000_000;
+                        //}
+                        var historyScore = state.History[move.ColorToMove][move.From][move.To];
+                        //var continuation1 = state.CurrentContinuations[0].Scores[move.Piece][move.To];
+                        //var continuation2 = state.CurrentContinuations[1].Scores[move.Piece][move.To];
+                        //var continuation3 = state.CurrentContinuations[2].Scores[move.Piece][move.To];
+                        //var continuation4 = state.CurrentContinuations[3].Scores[move.Piece][move.To];
+
+
+                        //var continuationScores = state.CurrentContinuations.Select(x => x?.Scores[move.Piece][move.To]).ToList();
+                        score += historyScore;
+                        //score += continuation1 * 2;
+                        //score += continuation2;
+                        //score += continuation3;
+                        //score += continuation4;
+                        //if (score == 0)
+                        //{
+                        //    score += historyScore >> 2;
+                        //}
+                        //var a = state.CurrentContinuations;
+                        //score += state.PieceToHistory[move.Piece][move.To] >> 2;
+                        //score = 0;
+                    }
                 }
 
                 if (score > bestScore)

@@ -11,8 +11,7 @@ namespace ChessDotNet.Data
         public const Piece White = 0;
         public const Piece Black = 1;
         public const Piece NoColor = 2;
-
-
+        
         public const Piece Empty = 0;
 
         public const Piece Pawn = 2 << 1;

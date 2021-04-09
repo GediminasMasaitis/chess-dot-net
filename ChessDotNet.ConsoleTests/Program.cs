@@ -21,6 +21,7 @@ using ChessDotNet.Hashing;
 using ChessDotNet.Init;
 using ChessDotNet.MoveGeneration;
 using ChessDotNet.MoveGeneration.SlideGeneration;
+using ChessDotNet.MoveGeneration.SlideGeneration.Magics;
 using ChessDotNet.Perft;
 using ChessDotNet.Perft.External;
 using ChessDotNet.Perft.Suite;
@@ -60,9 +61,9 @@ namespace ChessDotNet.ConsoleTests
             //TestRepetitions();
 
             //DoPerftClient();
-            //DoPerft();
+            DoPerft();
             //DoPerftSuite();
-            DoSearch2Async();
+            //DoSearch2Async();
             //TestLoadState();
             //TestPins();
             //DoSpeedTest();
@@ -81,7 +82,8 @@ namespace ChessDotNet.ConsoleTests
             Console.ReadLine();
         }
 
-        private static readonly ISlideMoveGenerator Slides = new MagicBitboardsService();
+        //private static readonly ISlideMoveGenerator Slides = new MagicBitboardsService();
+        private static readonly ISlideMoveGenerator Slides = new HyperbolaQuintessence();
         private static readonly AttacksService Attacks = new AttacksService(Slides);
         private static readonly PinDetector PinDetector = new PinDetector(Slides);
         private static readonly MoveValidator Validator = new MoveValidator(Attacks, Slides, PinDetector);

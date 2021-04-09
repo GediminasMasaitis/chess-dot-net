@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using ChessDotNet.Common;
-using ChessDotNet.Data;
 
-namespace ChessDotNet.MoveGeneration.SlideGeneration
+namespace ChessDotNet.MoveGeneration.SlideGeneration.Magics
 {
     public class MagicBitboardsService : ISlideMoveGenerator
     {

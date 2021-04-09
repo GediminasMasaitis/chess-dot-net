@@ -10,6 +10,7 @@ using ChessDotNet.Fen;
 using ChessDotNet.Hashing;
 using ChessDotNet.MoveGeneration;
 using ChessDotNet.MoveGeneration.SlideGeneration;
+using ChessDotNet.MoveGeneration.SlideGeneration.Magics;
 using ChessDotNet.Search2;
 using Bitboard = System.UInt64;
 using ZobristKey = System.UInt64;
@@ -169,13 +170,16 @@ namespace ChessDotNet.Data
 
         public NnueBoardData NnueData { get; set; }
 
+        public int Evaluation { get; set; }
+
+
         public Board(bool createNnue = true)
         {
             EnPassantFileIndex = -1;
             EnPassantRankIndex = -1;
             HistoryDepth = 0;
             CastlingPermissions = CastlingPermission.None;
-
+            Evaluation = int.MinValue;
             if (createNnue)
             {
                 NnueData = new NnueBoardData();
@@ -354,6 +358,7 @@ namespace ChessDotNet.Data
             Key = history.Key;
             PawnKey = history.PawnKey;
             FiftyMoveRuleIndex = history.FiftyMoveRuleIndex;
+            Evaluation = history.Evaluation;
             //_hasPinnedPieces = history.HasPinnedPieces;
             //_pinnedPieces = history.PinnedPieces;
             //_hasCheckers = history.HasCheckers;
@@ -515,6 +520,7 @@ namespace ChessDotNet.Data
             History2[HistoryDepth].EnPassantFileIndex = EnPassantFileIndex;
             History2[HistoryDepth].EnPassantRankIndex = EnPassantRankIndex;
             History2[HistoryDepth].FiftyMoveRuleIndex = FiftyMoveRuleIndex;
+            History2[HistoryDepth].Evaluation = Evaluation;
             //History2[HistoryDepth].HasPinnedPieces = _hasPinnedPieces;
             //History2[HistoryDepth].PinnedPieces = _pinnedPieces;
             //History2[HistoryDepth].HasCheckers = _hasCheckers;
